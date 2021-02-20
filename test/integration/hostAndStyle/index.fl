@@ -1,0 +1,6 @@
+style
+	:host(div)
+		color: black
+
+view
+	div

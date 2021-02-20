@@ -1,0 +1,6 @@
+properties
+	foo string
+
+view
+	div
+		"concat-${properties.foo}"
