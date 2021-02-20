@@ -1,4 +1,8 @@
 module Main where
+import System.Environment
+import Compiler
 
-main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main = do
+    args <- getArgs
+    fileContents <- mapM readFile args
+    mapM putStrLn (parse fileContents)

@@ -1,4 +1,11 @@
-module Compiler (compileWasm) where
+module Compiler (parse, getWasm, getWat, getJs) where
 
-compileWasm :: IO ()
-compileWasm = putStrLn "someFunc"
+parse fileContent = getAst fileContent
+
+getAst fileContent = fileContent;
+
+getWasm = putStrLn "getWasm"
+
+getWat = putStrLn "getWat"
+
+getJs = putStrLn "getJs"
