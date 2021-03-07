@@ -1,8 +1,11 @@
 module Main where
-import System.Environment
-import Compiler
+import System.Environment ( getArgs )
+import Compiler ( parse )
 
+main :: IO [()]
 main = do
     args <- getArgs
     fileContents <- mapM readFile args
-    mapM putStrLn (parse fileContents)
+    let parsedContent = map parse fileContents
+    let linedContent = map unlines parsedContent;
+    mapM putStrLn linedContent

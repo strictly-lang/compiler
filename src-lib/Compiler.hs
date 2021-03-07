@@ -1,8 +1,6 @@
 module Compiler (parse, getWasm, getWat, getJs) where
 
-parse fileContent = getAst fileContent
-
-getAst fileContent = fileContent;
+import Parser.Main
 
 getWasm = putStrLn "getWasm"
 

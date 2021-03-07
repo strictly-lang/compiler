@@ -1,2 +1,4 @@
 view
 	div
+		foo
+			bar
