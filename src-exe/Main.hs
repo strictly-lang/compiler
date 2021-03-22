@@ -1,11 +1,14 @@
 module Main where
 import System.Environment ( getArgs )
 import Compiler ( parse )
+import Parser.Main
 
-main :: IO [()]
 main = do
     args <- getArgs
     fileContents <- mapM readFile args
-    let parsedContent = map parse fileContents
-    let linedContent = map unlines parsedContent;
-    mapM putStrLn linedContent
+    let parsedContent = map readFramelessFile fileContents
+    return True
+
+readFramelessFile fileName = do
+    fileContent <- readFile fileName
+    return (parse fileContent);
