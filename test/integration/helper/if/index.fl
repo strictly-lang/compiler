@@ -1,0 +1,8 @@
+properties
+	foo boolean
+
+view
+	#if(properties.foo)
+		div
+	#else
+		span

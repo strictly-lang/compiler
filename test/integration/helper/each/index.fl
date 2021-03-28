@@ -1,0 +1,10 @@
+properties
+	foo Array Number
+
+view
+	#each(properties.foo as bar)
+		div
+			"${bar}"
+	#else
+		span
+			"Empty list"

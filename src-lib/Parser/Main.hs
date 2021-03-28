@@ -18,7 +18,10 @@ type NodeTuple = (NodeName, Line, [Option], [Expr])
 
 newtype Expr = Node NodeTuple
 
+type Parser a = [IndentedLine] -> ([a], [IndentedLine], [Error]);
+
 data Error = TypeError String Position Position
+
 
 parse content = parseRoot (map getIndentation (lines content))
 

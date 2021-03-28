@@ -1,7 +1,6 @@
 module Main where
 import System.Environment ( getArgs )
 import Compiler ( parse )
-import Parser.Main
 
 main = do
     args <- getArgs
