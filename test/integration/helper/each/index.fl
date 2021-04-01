@@ -1,10 +1,13 @@
 properties
-	foo Array Number
+	foo [Number]
+
+models
+	props {foo: "" } <- properties
 
 view
-	#each(properties.foo as bar)
+	#each(bar, index <- props.foo)
 		div
-			"${bar}"
+			"${bar}-${index}"
 	#else
 		span
 			"Empty list"

@@ -1,8 +1,11 @@
 properties
-	foo boolean
+	foo Boolean
+
+models
+	props {foo: true } <- properties
 
 view
-	#if(properties.foo)
+	#if(props.foo)
 		div
 	#else
 		span

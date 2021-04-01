@@ -1,6 +1,9 @@
 properties
-	foo string
+	foo String
+
+models
+	props {foo: "" } <- properties
 
 view
 	div
-		"concat-${properties.foo}"
+		"concat-${props.foo}"
