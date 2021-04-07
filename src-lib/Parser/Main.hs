@@ -18,7 +18,7 @@ newtype NodeTuple = NodeTuple (NodeName, Line, [Option], [Expr NodeTuple])
 
 data Expr a = Node a | TypeError String Position Position
 
-type Scanner a = [IndentedLine] -> ([Expr a], [IndentedLine])
+type Scanner a = [IndentedLine] ->  IndentationLevel -> ([Expr a], [IndentedLine])
 
 parse content = parseRoot (getIndentedLines (lines content) 0)
 
@@ -39,50 +39,60 @@ getIndentation xs = (0, xs)
 
 parseRoot :: [IndentedLine] -> [Expr NodeTuple]
 parseRoot indentedLines =
-  let (rootNodes, restLines) = parseLines indentedLines 0
+  let (rootNodes, restLines) = parseLines [genericScanner] indentedLines 0
    in rootNodes
 
-parseLines :: [IndentedLine] -> IndentationLevel -> ([Expr NodeTuple], [IndentedLine])
-parseLines [] _ = ([], [])
-parseLines indentedLines indentLevel
+parseLines :: [Scanner a] -> [IndentedLine] -> IndentationLevel -> ([Expr a], [IndentedLine])
+parseLines _ [] _ = ([], [])
+parseLines scanners indentedLines indentationLevel
   -- Current indent-level
-  | currentIndentation == indentLevel =
-    -- Children processing
-    let (children, restIndentedChildLines) = parseLines (tail indentedLines) (currentIndentation + 1)
-        -- Sibling Processing
-        (siblings, restIndentedSiblingLines) = parseLines (tail restIndentedChildLines) currentIndentation
-     in (Node (NodeTuple (currentLineValue, line, [], children)) : siblings, restIndentedSiblingLines)
+  | currentIndentation == indentationLevel = parseWithScanner scanners indentedLines indentationLevel
   -- Outer indent level
-  | currentIndentation < indentLevel = ([], indentedLines)
+  | currentIndentation < indentationLevel = ([], indentedLines)
   -- To much indented
-  | currentIndentation > indentLevel =
-    let (nodes, restIndentedLines) = parseLines (tail indentedLines) currentIndentation
+  | currentIndentation > indentationLevel =
+    let (nodes, restIndentedLines) = parseLines scanners (tail indentedLines) currentIndentation
      in ( nodes
             ++ [ TypeError
                    "Wrong indentation"
-                   (line, indentLevel)
-                   (line, indentLevel + length currentLineValue)
+                   (line, indentationLevel)
+                   (line, indentationLevel + length currentLineValue)
                ],
           restIndentedLines
         )
   where
     (line, currentIndentation, currentLineValue) = head indentedLines
 
-parseWithScanner :: [Scanner NodeTuple] -> [IndentedLine] -> IndentationLevel -> ([Expr NodeTuple], [IndentedLine])
+parseWithScanner :: [Scanner a] -> [IndentedLine] -> IndentationLevel -> ([Expr a], [IndentedLine])
 -- No Scanners left
-parseWithScanner [] (l : ls) indentLevel =
+parseWithScanner [] (l : ls) indentationLevel =
   ( [ TypeError
         "Cant be parsed"
-        (currentLine, indentLevel)
-        (currentLine, indentLevel + length currentLineValue)
+        (currentLine, indentationLevel)
+        (currentLine, indentationLevel + length currentLineValue)
     ],
     ls
   )
   where
     (currentLine, currentIndentation, currentLineValue) = l
-parseWithScanner (scanner : scanners) indentedLines indentLevel
+parseWithScanner (scanner : scanners) indentedLines indentationLevel
   -- Scanner didnt take any lines, means scanner didnt care about lines
-  | length scannedRestLines == length indentedLines = parseWithScanner scanners indentedLines indentLevel
+  | length scannedRestLines == length indentedLines = parseWithScanner scanners indentedLines indentationLevel
   | otherwise = (scannedExprResult, scannedRestLines)
   where
-    (scannedExprResult, scannedRestLines) = scanner indentedLines
+    (scannedExprResult, scannedRestLines) = scanner indentedLines indentationLevel
+
+
+genericScanner :: [IndentedLine] -> IndentationLevel -> ([Expr NodeTuple], [IndentedLine])
+genericScanner indentedLines indentationLevel
+  = let
+      (children, restIndentedChildLines)
+        = parseLines [genericScanner] (tail indentedLines) (currentIndentation + 1)
+      (siblings, restIndentedSiblingLines)
+        = parseLines [genericScanner] (tail restIndentedChildLines) currentIndentation
+    in
+      (Node (NodeTuple (currentLineValue, line, [], children))
+         : siblings, 
+       restIndentedSiblingLines)
+  where
+      (line, currentIndentation, currentLineValue) = head indentedLines
