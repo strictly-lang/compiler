@@ -68,16 +68,21 @@ parseLines indentedLines indentLevel
   where
     (line, currentIndentation, currentLineValue) = head indentedLines
 
--- parseWithScanner :: a => [Scanner a] -> IndentationLevel -> Line -> [IndentedLine] -> ([Expr a], [IndentedLine])
--- -- No Scanners left
--- parseWithScanner [] indentLevel line (l:ls) = [TypeError "Cant be parsed"
---             (line, indentLevel)
---             (line, indentLevel + length currentLineValue)]
---   where
---     (currentIndentation, currentLineValue) = head indentedLines
--- parseWithScanner (scanner:scanners) indentLevel line indentedLines
---   -- Scanner didnt take any lines, means scanner didnt care about lines
---   | count scannedRestLines === count indentedLines = parseWithScanner scanners indentLevel line indentedLines
---   | otherwise = (scannedExprResult, scannedRestLines)
---   where
---     (scannedExprResult, scannedRestLines) = scanner indentedLines
+parseWithScanner :: [Scanner NodeTuple] -> [IndentedLine] -> IndentationLevel -> ([Expr NodeTuple], [IndentedLine])
+-- No Scanners left
+parseWithScanner [] (l : ls) indentLevel =
+  ( [ TypeError
+        "Cant be parsed"
+        (currentLine, indentLevel)
+        (currentLine, indentLevel + length currentLineValue)
+    ],
+    ls
+  )
+  where
+    (currentLine, currentIndentation, currentLineValue) = l
+parseWithScanner (scanner : scanners) indentedLines indentLevel
+  -- Scanner didnt take any lines, means scanner didnt care about lines
+  | length scannedRestLines == length indentedLines = parseWithScanner scanners indentedLines indentLevel
+  | otherwise = (scannedExprResult, scannedRestLines)
+  where
+    (scannedExprResult, scannedRestLines) = scanner indentedLines
