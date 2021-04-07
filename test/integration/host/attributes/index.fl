@@ -1,0 +1,4 @@
+view
+	div
+	@class "some-class"
+		"some text"
