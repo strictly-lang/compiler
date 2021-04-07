@@ -11,14 +11,12 @@ models
 		| ("REMOVE_SELECTION, id) = List.filter selection (!=, id)
 
 view
-	#each([page * 10 .. page * 10 + 10] -> entity)
-		#let(
-			disabled=List.contains selection (==, entity)
-		)
-			div(
-				class:selected=disabled
-				onclick=(disabled ? "REMOVE_SELECTION" : "ADD_SELECTION", entity) -> selection
-			)
+	#each (entity) <- [page * 10 .. page * 10 + 10]
+		#let
+		@disabled List.contains selection (==, entity)
+			div
+			@class:selected=disabled
+			@onclick=(disabled ? "REMOVE_SELECTION" : "ADD_SELECTION", entity) -> selection
 				"${entity}"
 	#else
 		-

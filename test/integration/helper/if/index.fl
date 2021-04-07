@@ -5,7 +5,7 @@ models
 	props {foo: true } <- properties
 
 view
-	#if(props.foo)
+	#if props.foo
 		div
 	#else
 		span

@@ -16,12 +16,9 @@ type NodeName = String
 
 type NodeTuple = (NodeName, Line, [Option], [Expr])
 
-newtype Expr = Node NodeTuple
+data Expr = Node NodeTuple | TypeError String Position Position
 
-type Parser a = [IndentedLine] -> ([a], [IndentedLine], [Error]);
-
-data Error = TypeError String Position Position
-
+type Parser a = [IndentedLine] -> ([a], [IndentedLine]);
 
 parse content = parseRoot (map getIndentation (lines content))
 
@@ -33,33 +30,31 @@ getIndentation xs = (0, xs)
 
 parseRoot :: [IndentedLine] -> [Expr]
 parseRoot indentedLines =
-  let (rootNodes, restLines, errors) = parseLines 0 0 indentedLines
+  let (rootNodes, restLines) = parseLines 0 0 indentedLines
    in rootNodes
 
-parseLines :: IndentationLevel -> Line -> [IndentedLine] -> ([Expr], [IndentedLine], [Error])
-parseLines _ _ [] = ([], [], [])
+parseLines :: IndentationLevel -> Line -> [IndentedLine] -> ([Expr], [IndentedLine])
+parseLines _ _ [] = ([], [])
 parseLines indentLevel line indentedLines
   -- Empty Line
   | currentLineValue == "" = parseLines indentLevel (line + 1) (tail indentedLines)
   -- Current indent-level
   | currentIndentation == indentLevel =
     -- Children processing
-    let (children, restIndentedChildLines, childrenErrors) = parseLines (currentIndentation + 1) (line + 1) (tail indentedLines)
+    let (children, restIndentedChildLines) = parseLines (currentIndentation + 1) (line + 1) (tail indentedLines)
         -- Sibling Processing
-        (siblings, restIndentedSiblingLines, siblingErrors) = parseLines currentIndentation (line + length indentedLines - length restIndentedChildLines) (tail restIndentedChildLines)
-     in (Node (currentLineValue, line, [], children) : siblings, restIndentedSiblingLines, childrenErrors ++ siblingErrors)
+        (siblings, restIndentedSiblingLines) = parseLines currentIndentation (line + length indentedLines - length restIndentedChildLines) (tail restIndentedChildLines)
+     in (Node (currentLineValue, line, [], children) : siblings, restIndentedSiblingLines)
   -- Outer indent level
-  | currentIndentation < indentLevel = ([], indentedLines, [])
+  | currentIndentation < indentLevel = ([], indentedLines)
   -- To much indented
   | currentIndentation > indentLevel =
-    let (nodes, restIndentedLines, siblingErrors) = parseLines currentIndentation (line + 1) (tail indentedLines)
-     in ( nodes,
-          restIndentedLines,
-          TypeError
+    let (nodes, restIndentedLines) = parseLines currentIndentation (line + 1) (tail indentedLines)
+     in ( nodes ++ [TypeError
             "Wrong indentation"
             (line, indentLevel)
-            (line, indentLevel + length currentLineValue) :
-          siblingErrors
+            (line, indentLevel + length currentLineValue)],
+          restIndentedLines
         )
   where
     (currentIndentation, currentLineValue) = head indentedLines

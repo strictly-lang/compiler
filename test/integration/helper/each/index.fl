@@ -5,9 +5,11 @@ models
 	props {foo: "" } <- properties
 
 view
-	#each(bar, index <- props.foo)
-		div
-			"${bar}-${index}"
-	#else
-		span
-			"Empty list"
+	ul
+		#each
+		@(value,index) <- props.foo
+			li
+				"${value}-${index}"
+		#else
+			span
+				"Empty list"

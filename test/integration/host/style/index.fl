@@ -1,6 +1,6 @@
 style
 	:host(div)
-		color: black
+		color black
 
 view
 	div
