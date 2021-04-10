@@ -1,6 +1,6 @@
 module Main where
 
-import Compiler (getJs, parse)
+import Compiler.Main (getJs, parse)
 import Control.Exception (Exception, throwIO)
 import System.Directory (getCurrentDirectory)
 import System.Environment (getArgs)

@@ -1,4 +1,4 @@
-module Compiler (parse, getWasm, getWat, getJs) where
+module Compiler.Main (parse, getWasm, getWat, getJs) where
 
 import Compiler.Javascript (getJs)
 import Parser.Main (parse)

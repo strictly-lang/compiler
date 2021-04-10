@@ -18,7 +18,7 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md, README.md
 
 library
-  exposed-modules:     Compiler
+  exposed-modules:     Compiler.Main
   other-modules:       Types, Parser.Main, Parser.Util, Parser.Scanner.Root, Parser.Scanner.View, Compiler.Javascript, Compiler.Util
   -- other-extensions:
   build-depends:       base >=4.14 && <4.15
