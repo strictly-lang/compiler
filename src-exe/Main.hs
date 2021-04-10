@@ -17,7 +17,6 @@ main = do
 
 readFramelessFile fileName = do
   cwd <- System.Directory.getCurrentDirectory
-  putStrLn fileName
   fileContent <- readFile fileName
   maybeToIO (getJs cwd (cwd ++ fileName) (parse fileContent))
 
