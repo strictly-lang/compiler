@@ -1,8 +1,10 @@
 module Compiler.Javascript (getJs) where
 
 import Types
+import Compiler.Util
 
-type Path = String
+type AbsolutePath = String
+type ComponentPath  = String
 
-getJs :: Path -> [Expr NodeTuple] -> String
-getJs path exprs = ""
+getJs :: AbsolutePath -> ComponentPath -> [Expr NodeTuple] -> Maybe String
+getJs absolutePath componentPath exprs = pathToComponent absolutePath componentPath

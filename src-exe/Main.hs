@@ -1,13 +1,26 @@
 module Main where
-import System.Environment ( getArgs )
-import Compiler ( parse, getJs )
+
+import Compiler (getJs, parse)
+import Control.Exception (Exception, throwIO)
+import System.Directory (getCurrentDirectory)
+import System.Environment (getArgs)
+
+data NoString = NoString deriving (Show)
+
+instance Exception NoString
 
 main = do
-    args <- getArgs
-    fileContents <- mapM readFile args
-    let parsedContent = map readFramelessFile fileContents
-    return True
+  args <- getArgs
+  compiledContent <- mapM readFramelessFile args
+  mapM_ putStrLn compiledContent
+  return True
 
 readFramelessFile fileName = do
-    fileContent <- readFile fileName
-    return (parse fileContent);
+  cwd <- System.Directory.getCurrentDirectory
+  putStrLn fileName
+  fileContent <- readFile fileName
+  maybeToIO (getJs cwd (cwd ++ fileName) (parse fileContent))
+
+maybeToIO :: Maybe String -> IO String
+maybeToIO Nothing = throwIO NoString
+maybeToIO (Just x) = return x
