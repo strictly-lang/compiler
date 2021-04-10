@@ -6,5 +6,5 @@ import Compiler.Util
 type AbsolutePath = String
 type ComponentPath  = String
 
-getJs :: AbsolutePath -> ComponentPath -> [Expr NodeTuple] -> Maybe String
+getJs :: AbsolutePath -> ComponentPath -> [Expr Root] -> Maybe String
 getJs absolutePath componentPath exprs = pathToComponent absolutePath componentPath
