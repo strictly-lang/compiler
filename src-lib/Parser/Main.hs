@@ -1,24 +1,12 @@
 module Parser.Main where
 
-type Line = Int
-
-type Column = Int
+import Types
 
 type IndentationLevel = Int
 
 type IndentedLine = (Line, IndentationLevel, String)
 
-type Option = [String]
-
-type Position = (Line, Column)
-
-type NodeName = String
-
-newtype NodeTuple = NodeTuple (NodeName, Line, [Option], [Expr NodeTuple])
-
-data Expr a = Node a | TypeError String Position Position
-
-type Scanner a = [IndentedLine] -> IndentationLevel -> ([Expr a], [IndentedLine])
+type Scanner a = [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr a], ExprId, [IndentedLine])
 
 parse content = parseRoot (getIndentedLines (lines content) 0)
 
@@ -39,57 +27,61 @@ getIndentation xs = (0, xs)
 
 parseRoot :: [IndentedLine] -> [Expr NodeTuple]
 parseRoot indentedLines =
-  let (rootNodes, restLines) = parseLines [genericScanner] indentedLines 0
+  let (rootNodes, _, restLines) = parseLines [genericScanner] indentedLines 0 0
    in rootNodes
 
-parseLines :: [Scanner a] -> [IndentedLine] -> IndentationLevel -> ([Expr a], [IndentedLine])
-parseLines _ [] _ = ([], [])
-parseLines scanners indentedLines indentationLevel
+parseLines :: [Scanner a] -> [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr a], ExprId, [IndentedLine])
+parseLines _ [] _ exprId = ([], exprId, [])
+parseLines scanners indentedLines indentationLevel exprId
   -- Current indent-level
   | currentIndentation == indentationLevel =
-    let (nodes, restIndentedLines) = parseWithScanner scanners scanners indentedLines indentationLevel
-        (siblingNodes, restSiblingLines) = parseLines scanners restIndentedLines indentationLevel
-     in (nodes ++ siblingNodes, restSiblingLines)
+    let (nodes, exprId', restIndentedLines) = parseWithScanner scanners scanners indentedLines indentationLevel exprId
+        (siblingNodes, exprId'', restSiblingLines) = parseLines scanners restIndentedLines indentationLevel exprId'
+     in (nodes ++ siblingNodes, exprId'', restSiblingLines)
   -- Outer indent level
-  | currentIndentation < indentationLevel = ([], indentedLines)
+  | currentIndentation < indentationLevel = ([], exprId, indentedLines)
   -- To much indented
   | currentIndentation > indentationLevel =
-    let (nodes, restIndentedLines) = parseLines scanners (tail indentedLines) currentIndentation
+    let (nodes, exprId', restIndentedLines) = parseLines scanners (tail indentedLines) currentIndentation exprId
      in ( nodes
-            ++ [ TypeError
+            ++ [ SyntaxError
                    "Wrong indentation"
                    (line, indentationLevel)
                    (line, indentationLevel + length currentLineValue)
                ],
+          exprId',
           restIndentedLines
         )
   where
     (line, currentIndentation, currentLineValue) = head indentedLines
 
-parseWithScanner :: [Scanner a] -> [Scanner a] -> [IndentedLine] -> IndentationLevel -> ([Expr a], [IndentedLine])
+parseWithScanner :: [Scanner a] -> [Scanner a] -> [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr a], ExprId, [IndentedLine])
 -- No Scanners left
-parseWithScanner [] _ (l : ls) indentationLevel =
-  ( [ TypeError
+parseWithScanner [] _ (l : ls) indentationLevel exprId =
+  ( [ SyntaxError
         "Cant be parsed"
         (currentLine, indentationLevel)
         (currentLine, indentationLevel + length currentLineValue)
     ],
+    exprId,
     ls
   )
   where
     (currentLine, currentIndentation, currentLineValue) = l
-parseWithScanner (currentScanner : restCurrentScanners) allScanners indentedLines indentationLevel
+parseWithScanner (currentScanner : restCurrentScanners) allScanners indentedLines indentationLevel exprId
   -- Scanner didnt take any lines, means scanner didnt care about lines
-  | length scannedRestLines == length indentedLines = parseWithScanner restCurrentScanners allScanners indentedLines indentationLevel
-  | otherwise = (scannedExprResult, scannedRestLines)
+  | length scannedRestLines == length indentedLines = parseWithScanner restCurrentScanners allScanners indentedLines indentationLevel exprId'
+  | otherwise = (scannedExprResult, exprId', scannedRestLines)
   where
-    (scannedExprResult, scannedRestLines) = currentScanner indentedLines indentationLevel
+    (scannedExprResult, exprId', scannedRestLines) = currentScanner indentedLines indentationLevel exprId
 
-genericScanner :: [IndentedLine] -> IndentationLevel -> ([Expr NodeTuple], [IndentedLine])
-genericScanner indentedLines indentationLevel =
-  let (children, restIndentedChildLines) =
-        parseLines [genericScanner] (tail indentedLines) (currentIndentation + 1)
-   in ( [Node (NodeTuple (currentLineValue, line, [], children))],
+genericScanner :: [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr NodeTuple], ExprId, [IndentedLine])
+genericScanner indentedLines indentationLevel exprId =
+  let exprId' = exprId' + 1
+      (children, exprId'', restIndentedChildLines) =
+        parseLines [genericScanner] (tail indentedLines) (currentIndentation + 1) exprId'
+   in ( [Node exprId' (NodeTuple (currentLineValue, line, [], children))],
+        exprId'',
         restIndentedChildLines
       )
   where
