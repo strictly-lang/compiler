@@ -11,7 +11,7 @@ getIndentedLines [] _ = []
 getIndentedLines (l : ls) line
   -- Empty line can be just be thrown away
   | indentationLevel == 0 && value == "" = getIndentedLines ls (line + 1)
-  | otherwise = (indentationLevel, line, value) : getIndentedLines ls (line + 1)
+  | otherwise = (line, indentationLevel, value) : getIndentedLines ls (line + 1)
   where
     (indentationLevel, value) = getIndentation l
 
