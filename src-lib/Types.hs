@@ -27,3 +27,5 @@ data Root = View [Expr View] | Properties [Properties]
 data View = Host NodeName [Expr View] [Option] | StaticText String | DynamicString String
 
 newtype Properties = Property (String, String)
+
+type Compiler a = String -> [Expr Root] -> Expr a -> String
