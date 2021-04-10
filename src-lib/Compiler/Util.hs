@@ -1,6 +1,6 @@
 module Compiler.Util (pathToComponent) where
 
-import Data.Char
+import Data.Char ( toUpper )
 
 type AbsolutePath = String
 

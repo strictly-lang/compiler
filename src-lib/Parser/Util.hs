@@ -4,17 +4,17 @@ import Types
 
 parseLines :: [Scanner a] -> [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr a], ExprId, [IndentedLine])
 parseLines _ [] _ exprId = ([], exprId, [])
-parseLines scanners indentedLines indentationLevel exprId
+parseLines scanners indentedLines@((line, currentIndentation, currentLineValue) : restIndentedLines) indentationLevel exprId
   -- Current indent-level
   | currentIndentation == indentationLevel =
-    let (nodes, exprId', restIndentedLines) = parseWithScanner scanners scanners indentedLines indentationLevel exprId
-        (siblingNodes, exprId'', restSiblingLines) = parseLines scanners restIndentedLines indentationLevel exprId'
-     in (nodes ++ siblingNodes, exprId'', restSiblingLines)
+    let (nodes, exprId', indentedLines') = parseWithScanner scanners scanners indentedLines indentationLevel exprId
+        (siblingNodes, exprId'', indentedLines'') = parseLines scanners indentedLines' indentationLevel exprId'
+     in (nodes ++ siblingNodes, exprId'', indentedLines'')
   -- Outer indent level
   | currentIndentation < indentationLevel = ([], exprId, indentedLines)
   -- To much indented
   | currentIndentation > indentationLevel =
-    let (nodes, exprId', restIndentedLines) = parseLines scanners (tail indentedLines) currentIndentation exprId
+    let (nodes, exprId', indentedLines') = parseLines scanners restIndentedLines currentIndentation exprId
      in ( nodes
             ++ [ SyntaxError
                    "Wrong indentation"
@@ -22,16 +22,14 @@ parseLines scanners indentedLines indentationLevel exprId
                    (line, indentationLevel + length currentLineValue)
                ],
           exprId',
-          restIndentedLines
+          indentedLines'
         )
-  where
-    (line, currentIndentation, currentLineValue) = head indentedLines
 
 parseWithScanner :: [Scanner a] -> [Scanner a] -> [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr a], ExprId, [IndentedLine])
 -- No Scanners left
 parseWithScanner [] _ (l : ls) indentationLevel exprId =
   ( [ SyntaxError
-        "Cant be parsed"
+        "I don't know what to do with this"
         (currentLine, indentationLevel)
         (currentLine, indentationLevel + length currentLineValue)
     ],
@@ -41,8 +39,8 @@ parseWithScanner [] _ (l : ls) indentationLevel exprId =
   where
     (currentLine, currentIndentation, currentLineValue) = l
 parseWithScanner (currentScanner : restCurrentScanners) allScanners indentedLines indentationLevel exprId
-  -- Scanner didnt take any lines, means scanner didnt care about lines
+  -- Scanner didnt consume any lines, means scanner didnt care about lines
   | length scannedRestLines == length indentedLines = parseWithScanner restCurrentScanners allScanners indentedLines indentationLevel exprId'
-  | otherwise = (scannedExprResult, exprId', scannedRestLines)
+  | otherwise = (scannedExprResult, exprId, scannedRestLines)
   where
     (scannedExprResult, exprId', scannedRestLines) = currentScanner indentedLines indentationLevel exprId

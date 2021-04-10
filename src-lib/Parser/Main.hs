@@ -1,4 +1,4 @@
-module Parser.Main (parse) where
+module Parser.Main (parse, getIndentedLines) where
 
 import Parser.Util (parseLines)
 import Parser.Scanner.Root (rootScanners)

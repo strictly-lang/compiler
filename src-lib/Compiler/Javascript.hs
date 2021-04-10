@@ -1,8 +1,8 @@
 module Compiler.Javascript (getJs) where
 
-import Compiler.Util
+import Compiler.Util ( pathToComponent )
 import Types
-import Compiler.Types.Root
+import Compiler.Types.Root ( compileRoot )
 
 type AbsolutePath = String
 
