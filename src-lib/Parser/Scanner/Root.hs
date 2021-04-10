@@ -13,6 +13,7 @@ viewScanner indentedLines indentationLevel exprId
           exprId',
           restIndentedChildLines
         )
+  | otherwise = ([], exprId, indentedLines)
   where
     (line, currentIndentation, currentLineValue) = head indentedLines
 
