@@ -77,11 +77,10 @@ parseWithScanner (currentScanner : restCurrentScanners) allScanners indentedLine
 
 genericScanner :: [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr NodeTuple], ExprId, [IndentedLine])
 genericScanner indentedLines indentationLevel exprId =
-  let exprId' = exprId' + 1
-      (children, exprId'', restIndentedChildLines) =
-        parseLines [genericScanner] (tail indentedLines) (currentIndentation + 1) exprId'
-   in ( [Node exprId' (NodeTuple (currentLineValue, line, [], children))],
-        exprId'',
+  let (children, exprId', restIndentedChildLines) =
+        parseLines [genericScanner] (tail indentedLines) (currentIndentation + 1) (exprId + 1)
+   in ( [Node exprId (NodeTuple (currentLineValue, line, [], children))],
+        exprId',
         restIndentedChildLines
       )
   where
