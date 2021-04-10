@@ -1,6 +1,6 @@
 module Main where
 import System.Environment ( getArgs )
-import Compiler ( parse )
+import Compiler ( parse, getJs )
 
 main = do
     args <- getArgs

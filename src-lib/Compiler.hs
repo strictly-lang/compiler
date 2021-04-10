@@ -1,9 +1,8 @@
 module Compiler (parse, getWasm, getWat, getJs) where
 
-import Parser.Main
+import Compiler.Javascript (getJs)
+import Parser.Main (parse)
 
 getWasm = putStrLn "getWasm"
 
 getWat = putStrLn "getWat"
-
-getJs = putStrLn "getJs"

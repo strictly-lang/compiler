@@ -1,4 +1,4 @@
-module Parser.Main where
+module Parser.Main (parse) where
 
 import Types
 
