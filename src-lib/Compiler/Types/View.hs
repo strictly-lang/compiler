@@ -16,7 +16,7 @@ compileView parent (Node exprId (Host nodeName children option) : ns) =
 \       const " ++ elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");\n\
 \       " ++ parent ++ ".insertBefore(" ++ elementVariable ++ ", " ++ predecessorElement ++ ");\n\
 \",
-        show exprId
+        elementVariable
       )
   where
     (predecessorContent, predecessorElement) = compileView parent ns
