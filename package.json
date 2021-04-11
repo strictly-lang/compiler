@@ -1,0 +1,35 @@
+{
+  "name": "frameless-compiler",
+  "description": "a compiler for the programming language frameless",
+  "version": "0.1.0",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "karma": "^6.3.2",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-jasmine": "^4.0.1"
+  },
+  "scripts": {
+    "test": "karma start",
+    "test:watch": "karma start --no-single-run --auto-watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frameless-wasm/compiler.git"
+  },
+  "keywords": [
+    "functional",
+    "template",
+    "language",
+    "webcomponents"
+  ],
+  "author": "Carlo Jeske",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/frameless-wasm/compiler/issues"
+  },
+  "homepage": "https://github.com/frameless-wasm/compiler#readme"
+}
