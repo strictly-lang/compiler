@@ -8,7 +8,7 @@ module.exports = function (config) {
         autoWatch: false,
         singleRun: true,
         files: [
-            "test/**/*.fl"
+            "test/integration/host/base/index.fl"
         ],
         preprocessors: {
             "**/*.fl": ["frameless"]

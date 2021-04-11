@@ -18,7 +18,11 @@ main = do
 readFramelessFile fileName = do
   cwd <- System.Directory.getCurrentDirectory
   fileContent <- readFile fileName
-  maybeToIO (getJs cwd (cwd ++ fileName) (parse fileContent))
+  maybeToIO (getJs cwd (normalizePath cwd fileName) (parse fileContent))
+
+normalizePath :: String -> String -> String
+normalizePath cwd filePath@('/':_) = filePath
+normalizePath cwd filePath = cwd ++ "/" ++ filePath
 
 maybeToIO :: Maybe String -> IO String
 maybeToIO Nothing = throwIO NoString
