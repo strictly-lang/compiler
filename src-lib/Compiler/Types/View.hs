@@ -10,6 +10,16 @@ type Parent = String
 
 compileView :: [Expr View] -> Parent -> (Content, String)
 compileView [] _ = ("", "null")
+compileView (Node exprId (StaticText textValue) : ns) parent =
+  let elementVariable = "el" ++ show exprId
+   in ( "\
+\       const " ++ elementVariable ++ " =  document.createTextNode(\"" ++ textValue ++ "\");\n\
+\       " ++ parent ++ ".appendChild(" ++ elementVariable ++ ");\n\
+\\n" ++ successorContent,
+        elementVariable
+      )
+  where
+    (successorContent, successorElement) = compileView ns parent
 compileView (Node exprId (Host nodeName children option) : ns) parent =
   let elementVariable = "el" ++ show exprId
    in ( "\

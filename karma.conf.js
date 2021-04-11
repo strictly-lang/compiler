@@ -11,6 +11,7 @@ module.exports = function (config) {
             "test/components/host/base/index.fl",
             "test/components/host/siblings/index.fl",
             "test/components/host/nested/index.fl",
+            "test/components/text/base/index.fl",
             "test/**/*.js"
         ],
         preprocessors: {
