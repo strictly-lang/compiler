@@ -20,6 +20,16 @@ compileView (Node exprId (StaticText textValue) : ns) parent =
       )
   where
     (successorContent, successorElement) = compileView ns parent
+compileView (Node exprId (DynamicText textValue) : ns) parent =
+  let elementVariable = "el" ++ show exprId
+   in ( "\
+\       this." ++ elementVariable ++ " =  document.createTextNode(\"" ++ textValue ++ "\");\n\
+\       " ++ parent ++ ".appendChild(this." ++ elementVariable ++ ");\n\
+\\n" ++ successorContent,
+        elementVariable
+      )
+  where
+    (successorContent, successorElement) = compileView ns parent
 compileView (Node exprId (Host nodeName children option) : ns) parent =
   let elementVariable = "el" ++ show exprId
    in ( "\

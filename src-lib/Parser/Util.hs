@@ -14,14 +14,13 @@ parseLines scanners indentedLines@((line, currentIndentation, currentLineValue) 
   | currentIndentation < indentationLevel = ([], exprId, indentedLines)
   -- To much indented
   | currentIndentation > indentationLevel =
-    let (nodes, exprId', indentedLines') = parseLines scanners restIndentedLines currentIndentation exprId
-     in ( nodes
-            ++ [ SyntaxError
-                   "Wrong indentation"
-                   (line, indentationLevel)
-                   (line, indentationLevel + length currentLineValue)
-               ],
-          exprId',
+    let (_, _, indentedLines') = parseLines scanners restIndentedLines (currentIndentation + 1) exprId
+     in ( [ SyntaxError
+              "Wrong indentation"
+              (line, indentationLevel)
+              (line, indentationLevel + length currentLineValue)
+          ],
+          exprId,
           indentedLines'
         )
 

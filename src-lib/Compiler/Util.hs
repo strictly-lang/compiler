@@ -1,6 +1,6 @@
 module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase) where
 
-import Data.Char ( toUpper )
+import Data.Char (toUpper)
 
 type AbsolutePath = String
 
@@ -20,9 +20,8 @@ slashToDash [] = []
 slashToDash ('/' : ps) = '-' : slashToDash ps
 slashToDash (p : ps) = p : slashToDash ps
 
-
 slashToCamelCase :: String -> String
-slashToCamelCase (p:ps) = toUpper p : slashToCamelCase' ps
+slashToCamelCase (p : ps) = toUpper p : slashToCamelCase' ps
 
 slashToCamelCase' :: String -> String
 slashToCamelCase' [] = []

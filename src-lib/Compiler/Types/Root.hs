@@ -13,9 +13,10 @@ compileRoot componentPath ast (Node exprId (View children)) = "\
 \       this._mounted = false;\n\
 \    }\n\
 \    connectedCallback() {\n\
+\       this._mounted = true;\n\
 \       this.attachShadow({mode: 'open'});\n\
 \" ++  fst (compileView children "this.shadowRoot") ++ "\n\
-\   }\n\
+\    }\n\
 \}\n\n\
 \customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");\n\
 \})()\n";

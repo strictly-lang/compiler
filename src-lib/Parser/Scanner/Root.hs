@@ -1,12 +1,13 @@
-module Parser.Scanner.Root where
+module Parser.Scanner.Root (rootScanners) where
 
+import Parser.Scanner.Properties (propertiesScanner)
 import Parser.Scanner.View (viewScanners)
 import Parser.Util (parseLines)
 import Types
 
-viewScanner :: Scanner Root
-viewScanner [] indentationLevel exprId = ([], exprId, [])
-viewScanner indentedLines@((line, currentIndentation, currentLineValue) : restIndentedLines) indentationLevel exprId
+rootScanner :: Scanner Root
+rootScanner [] indentationLevel exprId = ([], exprId, [])
+rootScanner indentedLines@((line, currentIndentation, currentLineValue) : restIndentedLines) indentationLevel exprId
   | currentIndentation == 0 && currentLineValue == "view" =
     let (children, exprId', restIndentedChildLines) = parseLines viewScanners restIndentedLines (currentIndentation + 1) (exprId + 1)
      in ( [Node exprId (View children)],
@@ -14,10 +15,11 @@ viewScanner indentedLines@((line, currentIndentation, currentLineValue) : restIn
           restIndentedChildLines
         )
   | currentIndentation == 0 && currentLineValue == "properties" =
-    ( [Node exprId (Properties [])],
-      exprId + 1,
-      restIndentedLines
-    )
+    let (children, exprId', restIndentedChildLines) = parseLines propertiesScanner restIndentedLines (currentIndentation + 1) (exprId + 1)
+     in ( [Node exprId (Properties children)],
+          exprId',
+          restIndentedChildLines
+        )
   | otherwise = ([], exprId, indentedLines)
 
-rootScanners = [viewScanner]
+rootScanners = [rootScanner]

@@ -1,7 +1,7 @@
 module Parser.Main (parse, getIndentedLines) where
 
-import Parser.Util (parseLines)
 import Parser.Scanner.Root (rootScanners)
+import Parser.Util (parseLines)
 import Types
 
 parse content = parseRoot (getIndentedLines (lines content) 0)

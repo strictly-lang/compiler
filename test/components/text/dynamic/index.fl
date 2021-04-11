@@ -1,9 +1,6 @@
 properties
 	foo String
 
-models
-	props {foo: "" } <- properties
-
 view
 	div
-		"concat-${props.foo}"
+		"con-${properties.foo}-cat"

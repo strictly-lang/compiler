@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Compiler
+import Compiler.Main
 
 main :: IO ()
 main = putStrLn "Test suite not yet implemented."
