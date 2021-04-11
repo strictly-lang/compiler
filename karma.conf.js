@@ -27,8 +27,7 @@ module.exports = function (config) {
                                 resolve(stdout);
                             }
                         });
-                    }
-                    )
+                    })
                 }],
             },
             "karma-jasmine",
