@@ -28,3 +28,6 @@ Frameless is a declarative programming language for interactive web-uis.
     * no integration to css libraries
 - no feature richness
     * the scope of this language is very small and aims to solve only a limited scope
+
+## State
+This project is currently in its very early stages, the featureset and the apis will change.
