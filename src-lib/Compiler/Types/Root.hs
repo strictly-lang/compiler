@@ -12,7 +12,7 @@ compileRoot componentName ast (Node exprId (View children)) = "\
 \    }\n\
 \    connectedCallback() {\n\
 \       this.attachShadow({mode: 'open'});\n\
-\" ++  fst (compileView "this.shadowRoot" (reverse children)) ++ "\n\
+\" ++  fst (compileView children "this.shadowRoot") ++ "\n\
 \   }\n\
 \}\n"
 compileRoot _ _ _ = ""

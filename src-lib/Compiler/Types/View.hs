@@ -1,4 +1,4 @@
-module Compiler.Types.View where
+module Compiler.Types.View (compileView) where
 
 import Types
 
@@ -8,9 +8,11 @@ type Predecessor = String
 
 type Parent = String
 
-compileView :: Parent -> [Expr View] -> (Content, String)
-compileView _ [] = ("", "null")
-compileView parent (Node exprId (Host nodeName children option) : ns) =
+compileView exprs = compileView' (reverse exprs)
+
+compileView' :: [Expr View] -> Parent -> (Content, String)
+compileView' [] _ = ("", "null")
+compileView' (Node exprId (Host nodeName children option) : ns) parent =
   let elementVariable = "el" ++ show exprId
    in ( predecessorContent ++ "\
 \       const " ++ elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");\n\
@@ -19,4 +21,4 @@ compileView parent (Node exprId (Host nodeName children option) : ns) =
         elementVariable
       )
   where
-    (predecessorContent, predecessorElement) = compileView parent ns
+    (predecessorContent, predecessorElement) = compileView' ns parent
