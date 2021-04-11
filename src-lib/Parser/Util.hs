@@ -40,7 +40,8 @@ parseWithScanner [] _ (l : ls) indentationLevel exprId =
     (currentLine, currentIndentation, currentLineValue) = l
 parseWithScanner (currentScanner : restCurrentScanners) allScanners indentedLines indentationLevel exprId
   -- Scanner didnt consume any lines, means scanner didnt care about lines
-  | length scannedRestLines == length indentedLines = parseWithScanner restCurrentScanners allScanners indentedLines indentationLevel exprId'
-  | otherwise = (scannedExprResult, exprId, scannedRestLines)
+  | length scannedRestLines == length indentedLines = parseWithScanner restCurrentScanners allScanners indentedLines indentationLevel exprId
+  -- Scanner did consume lines, therefore scanned results should be used
+  | otherwise = (scannedExprResult, exprId', scannedRestLines)
   where
     (scannedExprResult, exprId', scannedRestLines) = currentScanner indentedLines indentationLevel exprId
