@@ -15,7 +15,7 @@ compileView (Node exprId (Host nodeName children option) : ns) parent =
    in ( "\
 \       const " ++ elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");\n\
 \       " ++ parent ++ ".appendChild(" ++ elementVariable ++ ");\n\
-\\n" ++ successorContent,
+\\n" ++ fst (compileView children elementVariable) ++ successorContent,
         elementVariable
       )
   where
