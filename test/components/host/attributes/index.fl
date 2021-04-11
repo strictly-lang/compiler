@@ -1,4 +1,3 @@
 view
-	div
-	@class "some-class"
+	div class "some-class"
 		"some text"

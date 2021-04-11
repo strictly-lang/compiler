@@ -8,8 +8,7 @@ module.exports = function (config) {
         autoWatch: false,
         singleRun: true,
         files: [
-            "test/components/host/base/index.fl",
-            "test/components/host/siblings/index.fl",
+            "test/components/host/**/*.fl",
             "test/**/*.js"
         ],
         preprocessors: {
