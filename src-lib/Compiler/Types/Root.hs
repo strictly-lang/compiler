@@ -6,6 +6,7 @@ import Compiler.Util (slashToDash, slashToCamelCase )
 
 compileRoot :: Compiler Root
 compileRoot componentPath ast (Node exprId (View children)) = "\
+\(() => {\n\
 \class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {\n\
 \    constructor() {\n\
 \       super();\n\
@@ -16,6 +17,7 @@ compileRoot componentPath ast (Node exprId (View children)) = "\
 \" ++  fst (compileView children "this.shadowRoot") ++ "\n\
 \   }\n\
 \}\n\n\
-\customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");\n";
+\customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");\n\
+\})()\n";
 
 compileRoot _ _ _ = ""
