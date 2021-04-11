@@ -2,10 +2,11 @@ module Compiler.Types.Root where
 
 import Types
 import Compiler.Types.View ( compileView )
+import Compiler.Util (slashToDash, slashToCamelCase )
 
 compileRoot :: Compiler Root
-compileRoot componentName ast (Node exprId (View children)) = "\
-\class " ++ componentName ++ " extends HTMLElement {\n\
+compileRoot componentPath ast (Node exprId (View children)) = "\
+\class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {\n\
 \    constructor() {\n\
 \       super();\n\
 \       this._mounted = false;\n\
@@ -14,5 +15,7 @@ compileRoot componentName ast (Node exprId (View children)) = "\
 \       this.attachShadow({mode: 'open'});\n\
 \" ++  fst (compileView children "this.shadowRoot") ++ "\n\
 \   }\n\
-\}\n"
+\}\n\n\
+\customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");\n";
+
 compileRoot _ _ _ = ""
