@@ -1,13 +1,6 @@
-properties
-	foo [Number]
-
-models
-	props {foo: "" } <- properties
-
 view
 	ul
-		#each
-		@(value,index) <- props.foo
+		#each (value,index) <- props.foo
 			li
 				"${value}-${index}"
 		#else

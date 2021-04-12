@@ -1,6 +1,3 @@
-properties
-	foo String
-
 view
 	div
-		"con-${properties.foo}-cat"
+		"con-${props.foo}-cat"

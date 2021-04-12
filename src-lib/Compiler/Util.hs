@@ -1,6 +1,8 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase) where
+module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal) where
 
+import Compiler.Types
 import Data.Char (toUpper)
+import Data.List (isPrefixOf)
 
 type AbsolutePath = String
 
@@ -27,3 +29,10 @@ slashToCamelCase' :: String -> String
 slashToCamelCase' [] = []
 slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
+
+publicVariableToInternal :: VariableStack -> String -> Maybe String
+publicVariableToInternal [] _ = Nothing
+publicVariableToInternal (stack@(publicStack, internalStack) : vs) search
+  | publicStack == search = Just internalStack
+  | (publicStack ++ ".") `isPrefixOf` search = Just (internalStack ++ "." ++ drop (length publicStack + 1) search)
+  | otherwise = publicVariableToInternal vs search

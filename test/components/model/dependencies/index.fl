@@ -1,6 +1,3 @@
-properties
-	page Number
-
 models
 	props <- properties
 		{ page: 0 }

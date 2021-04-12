@@ -23,13 +23,10 @@ type IndentedLine = (Line, IndentationLevel, String)
 
 type Scanner a = [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr a], ExprId, [IndentedLine])
 
-data Root = View [Expr View] | Properties [Expr Properties]
+data Root = View [Expr View] | Model
   deriving (Show)
 
 data View = Host NodeName [Expr View] [Option] | StaticText String | DynamicText String
-  deriving (Show)
-
-newtype Properties = Property (String, String)
   deriving (Show)
 
 type Compiler a = String -> [Expr Root] -> Expr a -> String

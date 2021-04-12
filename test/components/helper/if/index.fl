@@ -1,9 +1,3 @@
-properties
-	foo Boolean
-
-models
-	props {foo: true } <- properties
-
 view
 	#if props.foo
 		div

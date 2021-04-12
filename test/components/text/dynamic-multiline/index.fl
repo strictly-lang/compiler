@@ -1,7 +1,0 @@
-properties 
-	bar String
-
-view
-	"foo"
-	"${properties.bar}"
-	"baz"

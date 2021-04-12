@@ -1,0 +1,4 @@
+view
+	"foo"
+	"${props.bar}"
+	"baz"

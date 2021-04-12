@@ -1,4 +1,4 @@
-describe("host element handling", () => {
+describe("text element handling", () => {
     let container;
     beforeEach(() => {
         container = document.createElement("div");
@@ -23,10 +23,10 @@ describe("host element handling", () => {
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-        expect(element.shadowRoot.childNodes[0].innerHTML).toBe("con-bar-cat");
+        expect(element.shadowRoot.childNodes[0].textContent).toBe("con-bar-cat");
 
         element.foo = "baz";
 
-        expect(element.shadowRoot.childNodes[0].innerHTML).toBe("con-baz-cat");
+        expect(element.shadowRoot.childNodes[0].textContent).toBe("con-baz-cat");
     });
 });
