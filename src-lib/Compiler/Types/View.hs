@@ -12,39 +12,39 @@ type Successor = String
 
 type Parent = String
 
-compileView :: [Expr View] -> Context -> Parent -> Predecessor  -> (Content, Successor, UpdateCode )
+compileView :: [Expr View] -> Context -> Parent -> Predecessor  -> (Content, Successor, UpdateCodes )
 compileView [] context _ _= ("", "null", [])
 compileView ((Node exprId (StaticText textValue):ns)) context parent predecessor =
   let elementVariable = "el" ++ show exprId
-      (successorContent, successorElement, updateCode) = compileView ns context parent (Predecessor elementVariable)
+      (successorContent, successorElement, updateCodes) = compileView ns context parent (Predecessor elementVariable)
    in ( "\
 \       const " ++ elementVariable ++ " =  document.createTextNode(\"" ++ textValue ++ "\");\n\
 \       " ++ appendChild parent predecessor elementVariable ++ "\n\
 \\n" ++ successorContent,
         elementVariable,
-        updateCode
+        updateCodes
       )
 compileView (Node exprId (DynamicText variable) : ns) context@(Context variableStack) parent predecessor =
   let elementVariable = "this._el" ++ show exprId
-      (successorContent, successorElement, updateCode) = compileView ns context parent (Predecessor elementVariable)
+      (successorContent, successorElement, updateCodes) = compileView ns context parent (Predecessor elementVariable)
       internalVariableName = unsafeVariable (publicVariableToInternal variableStack variable)
    in ( "\
 \       " ++ elementVariable ++ " =  document.createTextNode(" ++ internalVariableName ++ ");\n\
 \       " ++ appendChild parent predecessor elementVariable ++ "\n\
 \\n" ++ successorContent,
         elementVariable,
-        (internalVariableName, elementVariable ++ ".textContent = " ++ internalVariableName) : updateCode
+        (internalVariableName, elementVariable ++ ".textContent = " ++ internalVariableName) : updateCodes
       )
 compileView (Node exprId (Host nodeName children option) : ns) context parent predecessor =
   let elementVariable = "el" ++ show exprId
-      (childrenContent, _, childrenUpdateCode) = compileView children context elementVariable FirstElement
-      (successorContent, successorElement, successorUpdateCode) = compileView ns context parent (Predecessor elementVariable)
+      (childrenContent, _, childrenUpdateCodes) = compileView children context elementVariable FirstElement
+      (successorContent, successorElement, successorUpdateCodes) = compileView ns context parent (Predecessor elementVariable)
    in ( "\
 \       const " ++ elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");\n\
 \       " ++ appendChild parent predecessor elementVariable ++ "\n\
 \\n" ++ childrenContent ++ successorContent,
         elementVariable,
-        childrenUpdateCode ++ successorUpdateCode
+        childrenUpdateCodes ++ successorUpdateCodes
       )
 
 -- TODO: a compileerror should be thrown instead

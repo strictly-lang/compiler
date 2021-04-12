@@ -27,7 +27,7 @@ compileRoot componentPath ast (Node exprId (View children)) =
 \       this.attachShadow({mode: 'open'});\n\
 \" ++  viewContent ++ "\n\
 \    }\n\
-\" ++ unlines [ getSetter (head (drop (length (splitByDot propertiesScope)) (splitByDot internalName))) updateCode| (internalName, updateCode) <- updateCodes ] ++ "\
+\" ++ unlines (walkDependencies updateCodes) ++ "\
 \}\n\
 \customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");\n\
 \})()\n";
@@ -38,6 +38,26 @@ splitBy delimiter = foldr f [[]]
                              | otherwise = (c:x):xs
 
 splitByDot = splitBy '.'
+
+walkDependencies :: UpdateCodes -> [String]
+walkDependencies [] = []
+walkDependencies ((internalName, updateCode):updateCodes) =
+    let
+        setterName = internalNameToSetterName internalName
+        (matchedUpdateCodes, unmatchedUpdateCodes) = filter' ((setterName ==) . internalNameToSetterName .fst) updateCodes
+    in getSetter setterName (unlines (updateCode : map snd matchedUpdateCodes)) : walkDependencies unmatchedUpdateCodes
+
+internalNameToSetterName :: String -> String 
+internalNameToSetterName internalName = (head (drop (length (splitByDot propertiesScope)) (splitByDot internalName)));
+
+filter' :: (a -> Bool) -> [a] -> ([a], [a])
+filter' _ []= ([], [])
+filter' predicate (a:as)
+    | matched = (a : nextMatches, nextUnmatches)
+    | otherwise = (nextMatches, a:nextUnmatches)
+    where
+        matched = predicate a
+        (nextMatches, nextUnmatches) = filter' predicate as
 
 getSetter :: String -> String -> String 
 getSetter name updateCode= "\

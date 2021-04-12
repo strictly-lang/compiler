@@ -8,6 +8,6 @@ type VariableStack = [(PublicVariableName, InternalVariableName)]
 
 newtype Context = Context VariableStack
 
-type UpdateCode = [(InternalVariableName, String)]
+type UpdateCodes = [(InternalVariableName, String)]
 
 data Predecessor = FirstElement | Predecessor String
