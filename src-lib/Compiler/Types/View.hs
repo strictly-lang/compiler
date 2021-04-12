@@ -50,7 +50,6 @@ compileView (Node exprId (Host nodeName children option) : ns) context parent pr
 -- TODO: a compileerror should be thrown instead
 unsafeVariable :: Maybe String -> String
 unsafeVariable (Just variable) = variable
-unsafeVariable Nothing = "Sorry-There is a fuckup"
 
 type Child = String;
 appendChild :: Parent -> Predecessor -> Child -> String
