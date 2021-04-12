@@ -12,7 +12,7 @@ mountedBool = "this._mounted";
 compileRoot :: Compiler Root
 compileRoot componentPath ast (Node exprId (View children)) =
     let 
-        (viewContent, _, updateCodes) = compileView children (Context [("props", propertiesScope)])"this.shadowRoot"
+        (viewContent, _, updateCodes) = compileView children (Context [("props", propertiesScope)])"this.shadowRoot" FirstElement
 
     in "\
 \(() => {\n\

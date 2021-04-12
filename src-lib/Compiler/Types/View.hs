@@ -12,36 +12,36 @@ type Successor = String
 
 type Parent = String
 
-compileView :: [Expr View] -> Context -> Parent -> (Content, Successor, UpdateCode )
-compileView [] context _ = ("", "null", [])
-compileView ((Node exprId (StaticText textValue):ns)) context parent =
+compileView :: [Expr View] -> Context -> Parent -> Predecessor  -> (Content, Successor, UpdateCode )
+compileView [] context _ _= ("", "null", [])
+compileView ((Node exprId (StaticText textValue):ns)) context parent predecessor =
   let elementVariable = "el" ++ show exprId
-      (successorContent, successorElement, updateCode) = compileView ns context parent
+      (successorContent, successorElement, updateCode) = compileView ns context parent (Predecessor elementVariable)
    in ( "\
 \       const " ++ elementVariable ++ " =  document.createTextNode(\"" ++ textValue ++ "\");\n\
-\       " ++ parent ++ ".appendChild(" ++ elementVariable ++ ");\n\
+\       " ++ appendChild parent predecessor elementVariable ++ "\n\
 \\n" ++ successorContent,
         elementVariable,
         updateCode
       )
-compileView (Node exprId (DynamicText variable) : ns) context@(Context variableStack) parent =
-  let (successorContent, successorElement, updateCode) = compileView ns context parent
-      elementVariable = "this._el" ++ show exprId
+compileView (Node exprId (DynamicText variable) : ns) context@(Context variableStack) parent predecessor =
+  let elementVariable = "this._el" ++ show exprId
+      (successorContent, successorElement, updateCode) = compileView ns context parent (Predecessor elementVariable)
       internalVariableName = unsafeVariable (publicVariableToInternal variableStack variable)
    in ( "\
 \       " ++ elementVariable ++ " =  document.createTextNode(" ++ internalVariableName ++ ");\n\
-\       " ++ parent ++ ".appendChild(" ++ elementVariable ++ ");\n\
+\       " ++ appendChild parent predecessor elementVariable ++ "\n\
 \\n" ++ successorContent,
         elementVariable,
         (internalVariableName, elementVariable ++ ".textContent = " ++ internalVariableName) : updateCode
       )
-compileView (Node exprId (Host nodeName children option) : ns) context parent =
+compileView (Node exprId (Host nodeName children option) : ns) context parent predecessor =
   let elementVariable = "el" ++ show exprId
-      (childrenContent, _, childrenUpdateCode) = compileView children context elementVariable
-      (successorContent, successorElement, successorUpdateCode) = compileView ns context parent
+      (childrenContent, _, childrenUpdateCode) = compileView children context elementVariable FirstElement
+      (successorContent, successorElement, successorUpdateCode) = compileView ns context parent (Predecessor elementVariable)
    in ( "\
 \       const " ++ elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");\n\
-\       " ++ parent ++ ".appendChild(" ++ elementVariable ++ ");\n\
+\       " ++ appendChild parent predecessor elementVariable ++ "\n\
 \\n" ++ childrenContent ++ successorContent,
         elementVariable,
         childrenUpdateCode ++ successorUpdateCode
@@ -51,3 +51,8 @@ compileView (Node exprId (Host nodeName children option) : ns) context parent =
 unsafeVariable :: Maybe String -> String
 unsafeVariable (Just variable) = variable
 unsafeVariable Nothing = "Sorry-There is a fuckup"
+
+type Child = String;
+appendChild :: Parent -> Predecessor -> Child -> String
+appendChild _ (Predecessor predecessor) child = predecessor ++ ".after(" ++ child ++ ");";
+appendChild parent FirstElement child = parent ++ ".prepend(" ++  child ++ ");";
