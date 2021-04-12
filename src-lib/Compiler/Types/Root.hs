@@ -48,7 +48,7 @@ walkDependencies ((internalName, updateCode):updateCodes) =
     in getSetter setterName (unlines (updateCode : map snd matchedUpdateCodes)) : walkDependencies unmatchedUpdateCodes
 
 internalNameToSetterName :: String -> String 
-internalNameToSetterName internalName = (head (drop (length (splitByDot propertiesScope)) (splitByDot internalName)));
+internalNameToSetterName internalName = head (drop (length (splitByDot propertiesScope)) (splitByDot internalName));
 
 filter' :: (a -> Bool) -> [a] -> ([a], [a])
 filter' _ []= ([], [])

@@ -33,7 +33,7 @@ compileView (Node exprId (DynamicText variable) : ns) context@(Context variableS
 \       " ++ appendChild parent predecessor elementVariable ++ "\n\
 \\n" ++ successorContent,
         elementVariable,
-        (internalVariableName, elementVariable ++ ".textContent = " ++ internalVariableName) : updateCodes
+        (internalVariableName, elementVariable ++ ".textContent = " ++ internalVariableName ++ ";") : updateCodes
       )
 compileView (Node exprId (Host nodeName children option) : ns) context parent predecessor =
   let elementVariable = "el" ++ show exprId
