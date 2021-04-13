@@ -1,4 +1,4 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal) where
+module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent) where
 
 import Compiler.Types
 import Data.Char (toUpper)
@@ -36,3 +36,8 @@ publicVariableToInternal (stack@(publicStack, internalStack) : vs) search
   | publicStack == search = Just internalStack
   | (publicStack ++ ".") `isPrefixOf` search = Just (internalStack ++ "." ++ drop (length publicStack + 1) search)
   | otherwise = publicVariableToInternal vs search
+
+indent :: [String] -> [String]
+indent [] = []
+indent ("":ls) = "\n" : indent ls
+indent (l:ls) = ("\t" ++ l) : indent ls

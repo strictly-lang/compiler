@@ -30,6 +30,20 @@ describe("text element handling", () => {
         expect(element.shadowRoot.childNodes[0].textContent).toBe("con-baz-cat");
     });
 
+    it("dynamic text with number", () => {
+        const element = document.createElement("test-components-text-dynamic-index");
+        element.foo = 1;
+        container.appendChild(element);
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].textContent).toBe("con-1-cat");
+
+        element.foo = "baz";
+
+        expect(element.shadowRoot.childNodes[0].textContent).toBe("con-baz-cat");
+    });
+
     it("multi dynamic text", () => {
         const element = document.createElement("test-components-text-multidynamic-index");
         element.foo = "foo";
