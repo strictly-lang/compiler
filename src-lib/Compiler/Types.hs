@@ -6,7 +6,9 @@ type InternalVariableName = String
 
 type VariableStack = [(PublicVariableName, InternalVariableName)]
 
-newtype Context = Context VariableStack
+type Scope = String
+
+newtype Context = Context (Scope, VariableStack)
 
 type UpdateCodes = [(InternalVariableName, String)]
 

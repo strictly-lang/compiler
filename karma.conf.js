@@ -1,4 +1,5 @@
-const { exec } = require("child_process");
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 module.exports = function (config) {
     config.set({
@@ -10,6 +11,7 @@ module.exports = function (config) {
         files: [
             "test/components/host/**/*.fl",
             "test/components/text/**/*.fl",
+            "test/components/helper/if/**/*.fl",
             "test/**/*.js"
         ],
         preprocessors: {
@@ -18,17 +20,16 @@ module.exports = function (config) {
         plugins: [
             {
                 "preprocessor:frameless": ["factory", function () {
-                    return (_, file) => new Promise((resolve, reject) => {
+                    return async (_, file) => {
                         file.path = file.originalPath.replace(/\.fl$/, '.js');
 
-                        return exec(`cabal run --verbose=silent frameless-compiler ${file.originalPath}`, (error, stdout, stderr) => {
-                            if (error) {
-                                reject(stderr);
-                            } else {
-                                resolve(stdout);
-                            }
-                        });
-                    })
+                        const { stdout, stderror } = await exec(`cabal new-run --verbose=silent frameless-compiler ${file.originalPath}`);
+                        if (stderror) {
+                            throw stderror;
+                        }
+
+                        return stdout;
+                    }
                 }],
             },
             "karma-jasmine",

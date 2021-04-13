@@ -10,23 +10,26 @@ type Position = (Line, Column)
 
 type NodeName = String
 
-newtype NodeTuple = NodeTuple (NodeName, Line, [Option], [Expr NodeTuple])
+newtype NodeTuple = NodeTuple (NodeName, Line, [Option], [Node NodeTuple])
 
 type ExprId = Int
 
-data Expr a = Node ExprId a | SyntaxError String Position Position
+data Node a = Node ExprId a | SyntaxError String Position Position
   deriving (Show)
 
 type IndentationLevel = Int
 
 type IndentedLine = (Line, IndentationLevel, String)
 
-type Scanner a = [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr a], ExprId, [IndentedLine])
+type Scanner a = [IndentedLine] -> IndentationLevel -> ExprId -> ([Node a], ExprId, [IndentedLine])
 
-data Root = View [Expr View] | Model
+data Root = View [Node View] | Model
   deriving (Show)
 
-data View = Host NodeName [Expr View] [Option] | StaticText String | DynamicText String
+newtype Expr = Expr String
   deriving (Show)
 
-type Compiler a = String -> [Expr Root] -> Expr a -> String
+data View = Host NodeName [Node View] [Option] | StaticText String | DynamicText String | Condition Expr [Node View] [Node View]
+  deriving (Show)
+
+type Compiler a = String -> [Node Root] -> Node a -> String

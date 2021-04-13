@@ -1,5 +1,7 @@
 view
+	header
 	#if props.foo
 		div
 	#else
 		span
+	footer

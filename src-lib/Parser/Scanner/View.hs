@@ -5,11 +5,20 @@ import Types
 
 viewScanner :: Scanner View
 viewScanner [] indentationLevel exprId = ([], exprId, [])
-viewScanner (indentedLines@(line, currentIndentation, '"' : currentLineValue) : restIndentedLines) indentationLevel exprId =
-  (textNodes, exprId', restIndentedLines)
+viewScanner ((line, currentIndentation, '"' : currentLineValue) : restIndentedLines) indentationLevel exprId =
+  let (textNodes, exprId') = staticTextParserWrapper currentLineValue exprId
+   in (textNodes, exprId', restIndentedLines)
+viewScanner ((line, currentIndentation, '#' : currentLineValue) : restIndentedLines) indentationLevel exprId
+  | head currentLineValueWords == "if" =
+    let (positiveChildren, exprId', indentedLines') = parseLines viewScanners restIndentedLines (currentIndentation + 1) (exprId + 1)
+        (negativeChildren, exprId'', indentedLines'') = elseScanner indentedLines' currentIndentation exprId'
+     in ( [Node exprId (Condition (Expr (currentLineValueWords !! 1)) positiveChildren negativeChildren)],
+          exprId'',
+          indentedLines''
+        )
   where
-    (textNodes, exprId') = staticTextParserWrapper currentLineValue exprId
-viewScanner (indentedLines@(line, currentIndentation, currentLineValue) : restIndentedLines) indentationLevel exprId =
+    currentLineValueWords = words currentLineValue
+viewScanner ((line, currentIndentation, currentLineValue) : restIndentedLines) indentationLevel exprId =
   let (children, exprId', indentedLines') = parseLines viewScanners restIndentedLines (currentIndentation + 1) (exprId + 1)
       nodeName = head (words currentLineValue)
    in ( [Node exprId (Host nodeName children [])],
@@ -19,7 +28,7 @@ viewScanner (indentedLines@(line, currentIndentation, currentLineValue) : restIn
 
 viewScanners = [viewScanner]
 
-staticTextParserWrapper :: String -> ExprId -> ([Expr View], ExprId)
+staticTextParserWrapper :: String -> ExprId -> ([Node View], ExprId)
 -- Do a syntax-error here, you cant end without a closing "
 staticTextParserWrapper [] exprId = ([], exprId)
 staticTextParserWrapper ['"'] exprId = ([], exprId)
@@ -49,3 +58,11 @@ staticTextParser all@('$' : '{' : rest) = ("", all)
 staticTextParser (c : cs) = (c : cs', rest)
   where
     (cs', rest) = staticTextParser cs
+
+elseScanner :: Scanner View
+elseScanner ((line, currentIndentation, '#' : currentLineValue) : restIndentedLines) indentationLevel exprId
+  | currentIndentation == indentationLevel && head currentLineValueWords == "else" =
+      parseLines viewScanners restIndentedLines (currentIndentation + 1) exprId
+  where
+    currentLineValueWords = words currentLineValue
+elseScanner indentedLines _ exprId = ([], exprId, indentedLines)

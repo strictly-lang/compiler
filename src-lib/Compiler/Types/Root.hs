@@ -12,7 +12,8 @@ mountedBool = "this._mounted";
 compileRoot :: Compiler Root
 compileRoot componentPath ast (Node exprId (View children)) =
     let 
-        (viewContent, _, updateCodes) = compileView children (Context [("props", propertiesScope)])"this.shadowRoot" FirstElement
+        scope = "this._el"
+        (viewContent, _, updateCodes) = compileView children (Context (scope, [("props", propertiesScope)]))"this.shadowRoot" FirstElement
 
     in "\
 \(() => {\n\
@@ -24,6 +25,7 @@ compileRoot componentPath ast (Node exprId (View children)) =
 \    }\n\
 \    connectedCallback() {\n\
 \       " ++ mountedBool ++ " = true;\n\
+\       " ++ scope ++ " = {} \n\
 \       this.attachShadow({mode: 'open'});\n\
 \" ++  viewContent ++ "\n\
 \    }\n\

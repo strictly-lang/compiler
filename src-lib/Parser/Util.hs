@@ -2,7 +2,7 @@ module Parser.Util where
 
 import Types
 
-parseLines :: [Scanner a] -> [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr a], ExprId, [IndentedLine])
+parseLines :: [Scanner a] -> [IndentedLine] -> IndentationLevel -> ExprId -> ([Node a], ExprId, [IndentedLine])
 parseLines _ [] _ exprId = ([], exprId, [])
 parseLines scanners indentedLines@((line, currentIndentation, currentLineValue) : restIndentedLines) indentationLevel exprId
   -- Current indent-level
@@ -24,7 +24,7 @@ parseLines scanners indentedLines@((line, currentIndentation, currentLineValue) 
           indentedLines'
         )
 
-parseWithScanner :: [Scanner a] -> [Scanner a] -> [IndentedLine] -> IndentationLevel -> ExprId -> ([Expr a], ExprId, [IndentedLine])
+parseWithScanner :: [Scanner a] -> [Scanner a] -> [IndentedLine] -> IndentationLevel -> ExprId -> ([Node a], ExprId, [IndentedLine])
 -- No Scanners left
 parseWithScanner [] _ (l : ls) indentationLevel exprId =
   ( [ SyntaxError

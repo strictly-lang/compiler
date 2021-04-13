@@ -21,7 +21,7 @@ getIndentation ('\t' : xs) =
    in (indent + 1, value)
 getIndentation xs = (0, xs)
 
-parseRoot :: [IndentedLine] -> [Expr Root]
+parseRoot :: [IndentedLine] -> [Node Root]
 parseRoot indentedLines =
   let (rootNodes, _, restLines) = parseLines rootScanners indentedLines 0 0
    in rootNodes
