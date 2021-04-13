@@ -12,7 +12,7 @@ mountedBool = "this._mounted"
 compileRoot :: Compiler Root
 compileRoot componentPath ast (Node exprId (View children)) =
   let scope = "this._el"
-      (viewContent, _, updateCodes) = compileView children (Context (scope, [("props", propertiesScope)])) "this.shadowRoot" FirstElement
+      (viewContent, _, updateCallbacks) = compileView children (Context (scope, [("props", propertiesScope)])) "this.shadowRoot" FirstElement
    in unlines
         ( ( "(() => {" :
             indent
@@ -36,7 +36,7 @@ compileRoot componentPath ast (Node exprId (View children)) =
                       ++ indent viewContent
                       ++ ["}"]
                   )
-                  ++ indent (walkDependencies updateCodes)
+                  ++ indent (walkDependencies updateCallbacks)
                   ++ ["}"]
                   ++ ["customElements.define(\"" ++ slashToDash componentPath ++ "\"," ++ slashToCamelCase componentPath ++ ");"]
               )
@@ -45,6 +45,7 @@ compileRoot componentPath ast (Node exprId (View children)) =
         )
 compileRoot _ _ _ = ""
 
+splitBy :: (Foldable t, Eq a) => a -> t a -> [[a]]
 splitBy delimiter = foldr f [[]]
   where
     f c l@(x : xs)
@@ -53,12 +54,12 @@ splitBy delimiter = foldr f [[]]
 
 splitByDot = splitBy '.'
 
-walkDependencies :: UpdateCodes -> [String]
-walkDependencies [] = []
-walkDependencies ((internalName, updateCode) : updateCodes) =
+walkDependencies :: UpdateCallbacks -> [String]
+walkDependencies (UpdateCallbacks []) = []
+walkDependencies (UpdateCallbacks ((internalName, updateCallback) : updateCallbacks)) =
   let setterName = internalNameToSetterName internalName
-      (matchedUpdateCodes, unmatchedUpdateCodes) = filter' ((setterName ==) . internalNameToSetterName . fst) updateCodes
-   in getSetter setterName (unlines (updateCode : map snd matchedUpdateCodes)) : walkDependencies unmatchedUpdateCodes
+      (matchedUpdateCallbacks, unmatchedUpdateCallbacks) = filter' ((setterName ==) . internalNameToSetterName . fst) updateCallbacks
+   in getSetter setterName (unlines (updateCallback : map snd matchedUpdateCallbacks)) : walkDependencies (UpdateCallbacks unmatchedUpdateCallbacks)
 
 internalNameToSetterName :: String -> String
 internalNameToSetterName internalName = head (drop (length (splitByDot propertiesScope)) (splitByDot internalName))
@@ -73,7 +74,7 @@ filter' predicate (a : as)
     (nextMatches, nextUnmatches) = filter' predicate as
 
 getSetter :: String -> String -> String
-getSetter name updateCode =
+getSetter name updateCallback =
   "\
   \   set "
     ++ name
@@ -87,7 +88,7 @@ getSetter name updateCode =
     ++ mountedBool
     ++ ") {\n\
        \           "
-    ++ updateCode
+    ++ updateCallback
     ++ "\n\
        \       }\n\
        \   }"

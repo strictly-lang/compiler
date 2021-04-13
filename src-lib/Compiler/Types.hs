@@ -10,6 +10,8 @@ type Scope = String
 
 newtype Context = Context (Scope, VariableStack)
 
-type UpdateCodes = [(InternalVariableName, String)]
+newtype UpdateCallbacks = UpdateCallbacks [(InternalVariableName, String)]
+
+newtype RemoveCallback = RemoveCallback String
 
 data Predecessor = FirstElement | Predecessor String
