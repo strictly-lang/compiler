@@ -118,7 +118,7 @@ compileView (Node exprId (Condition (Expr expr) positiveChildren negativeChildre
                    | (internalVariableName, updateCallback) <- positiveChildrenUpdateCallbacks
                  ]
                ++ [ ( internalVariableName,
-                     [ Ln ("if (" ++ conditionVariable ++ " === false) {"),
+                     [ Ln ("if (!" ++ conditionVariable ++ ") {"),
                        Ind updateCallback,
                        Ln "}"
                      ]
