@@ -10,7 +10,7 @@ type Scope = String
 
 newtype Context = Context (Scope, VariableStack)
 
-newtype UpdateCallbacks = UpdateCallbacks [(InternalVariableName, Indent)]
+newtype UpdateCallbacks = UpdateCallbacks [(InternalVariableName, [Indent])]
 
 newtype RemoveCallbacks = RemoveCallbacks [Indent]
 

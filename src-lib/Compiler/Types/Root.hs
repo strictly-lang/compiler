@@ -74,13 +74,13 @@ filter' predicate (a : as)
     matched = predicate a
     (nextMatches, nextUnmatches) = filter' predicate as
 
-getSetter :: String -> [Indent] -> [Indent]
+getSetter :: String -> [[Indent]] -> [Indent]
 getSetter name updateCallback =
   [ Ln ("set " ++ name ++ "(value) {"),
     Ind
       [ Ln (propertiesScope ++ "." ++ name ++ " = value;"),
         Ln ("if (" ++ mountedBool ++ ") {"),
-        Ind updateCallback,
+        Ind (concat updateCallback),
         Ln "}"
       ],
     Ln "}",

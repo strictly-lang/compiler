@@ -36,7 +36,7 @@ compileView (Node exprId (DynamicText variable) : ns) context@(Context (scope, v
         ]
           ++ successorContent,
         elementVariable,
-        UpdateCallbacks ((internalVariableName, Ln (updateCallback ++ "();")) : successorUpdateCallbacks),
+        UpdateCallbacks ((internalVariableName, [Ln (updateCallback ++ "();")]) : successorUpdateCallbacks),
         RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallbacks)
       )
 compileView (Node exprId (Host nodeName children option) : ns) context@(Context (scope, _)) parent predecessor =
@@ -106,7 +106,27 @@ compileView (Node exprId (Condition (Expr expr) positiveChildren negativeChildre
         ]
           ++ successorContent,
         successor,
-        UpdateCallbacks ([(internalVariableName, Ln (updateCallback ++ "();"))] ++ positiveChildrenUpdateCallbacks ++ successorUpdateCallbacks),
+        UpdateCallbacks
+          ( [ (internalVariableName, [Ln (updateCallback ++ "();")])
+            ]
+              ++ [ ( internalVariableName,
+                     [ Ln ("if (" ++ conditionVariable ++ ") {"),
+                       Ind updateCallback,
+                       Ln "}"
+                     ]
+                   )
+                   | (internalVariableName, updateCallback) <- positiveChildrenUpdateCallbacks
+                 ]
+               ++ [ ( internalVariableName,
+                     [ Ln ("if (" ++ conditionVariable ++ " === false) {"),
+                       Ind updateCallback,
+                       Ln "}"
+                     ]
+                   )
+                   | (internalVariableName, updateCallback) <- negativeChildrenUpdateCallbacks
+                 ]
+              ++ successorUpdateCallbacks
+          ),
         RemoveCallbacks successorRemoveCallbacks -- TODO add self removage
       )
 

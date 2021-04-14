@@ -2,6 +2,8 @@ view
 	header
 	#if props.foo
 		div
+			"foo-${props.bar}"
 	#else
 		span
+			"not-foo-${props.bar}"
 	footer
