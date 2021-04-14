@@ -37,7 +37,13 @@ publicVariableToInternal (stack@(publicStack, internalStack) : vs) search
   | (publicStack ++ ".") `isPrefixOf` search = Just (internalStack ++ "." ++ drop (length publicStack + 1) search)
   | otherwise = publicVariableToInternal vs search
 
-indent :: [String] -> [String]
-indent [] = []
-indent ("":ls) = "\n" : indent ls
-indent (l:ls) = ("\t" ++ l) : indent ls
+indent :: [Indent] -> String
+indent = indent' 0
+
+indent' :: Int -> [Indent] -> String
+indent' _ [] = []
+indent' 0 ((Ln line) : lines) = line ++ "\n" ++ indent' 0 lines
+indent' indentationLevel ((Ln line) : lines)
+  | line == "" = "\n" ++  indent' indentationLevel lines
+  | otherwise  = "\t" ++ indent' (indentationLevel - 1) [Ln line] ++ indent' indentationLevel lines
+indent' indentationLevel ((Ind indentedLines) : lines) = indent' (indentationLevel + 1) indentedLines ++ indent' indentationLevel lines

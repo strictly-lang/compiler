@@ -10,8 +10,11 @@ type Scope = String
 
 newtype Context = Context (Scope, VariableStack)
 
-newtype UpdateCallbacks = UpdateCallbacks [(InternalVariableName, String)]
+newtype UpdateCallbacks = UpdateCallbacks [(InternalVariableName, Indent)]
 
-newtype RemoveCallback = RemoveCallback String
+newtype RemoveCallbacks = RemoveCallbacks [Indent]
 
 data Predecessor = FirstElement | Predecessor String
+
+data Indent = Ln String | Ind [Indent]
+    deriving (Show)

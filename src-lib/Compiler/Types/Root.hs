@@ -12,37 +12,38 @@ mountedBool = "this._mounted"
 compileRoot :: Compiler Root
 compileRoot componentPath ast (Node exprId (View children)) =
   let scope = "this._el"
-      (viewContent, _, updateCallbacks) = compileView children (Context (scope, [("props", propertiesScope)])) "this.shadowRoot" FirstElement
-   in unlines
-        ( ( "(() => {" :
-            indent
-              ( ("class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {") :
-                indent
-                  ( ( "constructor() {" :
-                      indent
-                        [ "super();",
-                          mountedBool ++ " = false;",
-                          propertiesScope ++ " = {};"
+      (viewContent, _, updateCallbacks, _) = compileView children (Context (scope, [("props", propertiesScope)])) "this.shadowRoot" FirstElement
+   in indent
+        [ Ln "(() => {",
+          Ind
+            [ Ln ("class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {"),
+              Ind
+                ( [ Ln "constructor() {",
+                    Ind
+                      [ Ln "super();",
+                        Ln (mountedBool ++ " = false;"),
+                        Ln (propertiesScope ++ " = {};")
+                      ],
+                    Ln "}",
+                    Ln "",
+                    Ln "connectedCallback() {",
+                    Ind
+                      ( [ Ln (mountedBool ++ " = true;"),
+                          Ln (scope ++ " = {};"),
+                          Ln "this.attachShadow({mode: 'open'});"
                         ]
-                        ++ ["}"]
-                    )
-                      ++ [ "connectedCallback() {"
-                         ]
-                      ++ indent
-                        [ mountedBool ++ " = true;",
-                          scope ++ " = {};",
-                          "this.attachShadow({mode: 'open'});"
-                        ]
-                      ++ indent viewContent
-                      ++ ["}"]
-                  )
-                  ++ indent (walkDependencies updateCallbacks)
-                  ++ ["}"]
-                  ++ ["customElements.define(\"" ++ slashToDash componentPath ++ "\"," ++ slashToCamelCase componentPath ++ ");"]
-              )
-          )
-            ++ ["})()"]
-        )
+                          ++ viewContent
+                      ),
+                    Ln "}",
+                    Ln ""
+                  ]
+                    ++ walkDependencies updateCallbacks
+                ),
+              Ln "}",
+              Ln ("customElements.define(\"" ++ slashToDash componentPath ++ "\"," ++ slashToCamelCase componentPath ++ ");")
+            ],
+          Ln "})()"
+        ]
 compileRoot _ _ _ = ""
 
 splitBy :: (Foldable t, Eq a) => a -> t a -> [[a]]
@@ -54,12 +55,12 @@ splitBy delimiter = foldr f [[]]
 
 splitByDot = splitBy '.'
 
-walkDependencies :: UpdateCallbacks -> [String]
+walkDependencies :: UpdateCallbacks -> [Indent]
 walkDependencies (UpdateCallbacks []) = []
 walkDependencies (UpdateCallbacks ((internalName, updateCallback) : updateCallbacks)) =
   let setterName = internalNameToSetterName internalName
       (matchedUpdateCallbacks, unmatchedUpdateCallbacks) = filter' ((setterName ==) . internalNameToSetterName . fst) updateCallbacks
-   in getSetter setterName (unlines (updateCallback : map snd matchedUpdateCallbacks)) : walkDependencies (UpdateCallbacks unmatchedUpdateCallbacks)
+   in getSetter setterName (updateCallback : map snd matchedUpdateCallbacks) ++ walkDependencies (UpdateCallbacks unmatchedUpdateCallbacks)
 
 internalNameToSetterName :: String -> String
 internalNameToSetterName internalName = head (drop (length (splitByDot propertiesScope)) (splitByDot internalName))
@@ -73,22 +74,15 @@ filter' predicate (a : as)
     matched = predicate a
     (nextMatches, nextUnmatches) = filter' predicate as
 
-getSetter :: String -> String -> String
+getSetter :: String -> [Indent] -> [Indent]
 getSetter name updateCallback =
-  "\
-  \   set "
-    ++ name
-    ++ "(value) {\n\
-       \       "
-    ++ propertiesScope
-    ++ "."
-    ++ name
-    ++ " = value\n\
-       \       if ("
-    ++ mountedBool
-    ++ ") {\n\
-       \           "
-    ++ updateCallback
-    ++ "\n\
-       \       }\n\
-       \   }"
+  [ Ln ("set " ++ name ++ "(value) {"),
+    Ind
+      [ Ln (propertiesScope ++ "." ++ name ++ " = value;"),
+        Ln ("if (" ++ mountedBool ++ ") {"),
+        Ind updateCallback,
+        Ln "}"
+      ],
+    Ln "}",
+    Ln ""
+  ]
