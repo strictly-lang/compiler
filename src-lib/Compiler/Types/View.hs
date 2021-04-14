@@ -63,6 +63,8 @@ compileView (Node exprId (Condition (Expr expr) positiveChildren negativeChildre
       createPositiveCallback = scope ++ ".createPositive" ++ show exprId
       createNegativeCallback = scope ++ ".createNegative" ++ show exprId
       removeCallback = scope ++ ".removeCallback" ++ show exprId
+      createCallback = "createCondition" ++ show exprId
+      updateCallback = scope ++ "updateCondition" ++ show exprId
       (successorContent, successorElement, UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent (Predecessor successor)
    in ( [ Ln (createPositiveCallback ++ " = () => {"),
           Ind positiveChildrenContent,
@@ -70,16 +72,28 @@ compileView (Node exprId (Condition (Expr expr) positiveChildren negativeChildre
           Ln (createNegativeCallback ++ " = ()=> {"),
           Ind negativeChildrenContent,
           Ln "}",
-          Ln (conditionVariable ++ " = " ++ internalVariableName ++ ";"),
-          Ln ("if(" ++ conditionVariable ++ ") {"),
+          Ln ("const " ++ createCallback ++ " = () => {"),
           Ind
-            [ Ln (createPositiveCallback ++ "();")
+            [ Ln (conditionVariable ++ " = " ++ internalVariableName ++ ";"),
+              Ln ("if (" ++ conditionVariable ++ ") {"),
+              Ind
+                [ Ln (createPositiveCallback ++ "();")
+                ],
+              Ln "} else {",
+              Ind
+                [ Ln (createNegativeCallback ++ "();")
+                ],
+              Ln "}"
             ],
-          Ln "} else {",
+          Ln "};",
+          Ln (createCallback ++ "();"),
+          Ln (updateCallback ++ " = () => {"),
           Ind
-            [ Ln (createNegativeCallback ++ "();")
+            [ Ln (removeCallback ++ "()"),
+              Ln (conditionVariable ++ " = " ++ internalVariableName ++ ";"),
+              Ln (createCallback ++ "()")
             ],
-          Ln "}",
+          Ln "};",
           Ln (removeCallback ++ " = () => {"),
           Ind
             [ Ln ("if( " ++ conditionVariable ++ " ) {"),
@@ -92,7 +106,7 @@ compileView (Node exprId (Condition (Expr expr) positiveChildren negativeChildre
         ]
           ++ successorContent,
         successor,
-        UpdateCallbacks ([(internalVariableName, Ln "")] ++ positiveChildrenUpdateCallbacks ++ successorUpdateCallbacks),
+        UpdateCallbacks ([(internalVariableName, Ln (updateCallback ++ "();"))] ++ positiveChildrenUpdateCallbacks ++ successorUpdateCallbacks),
         RemoveCallbacks successorRemoveCallbacks -- TODO add self removage
       )
 
