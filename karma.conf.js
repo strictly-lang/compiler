@@ -9,7 +9,10 @@ module.exports = function (config) {
         autoWatch: false,
         singleRun: true,
         files: [
-            "test/components/host/**/*.fl",
+            "test/components/host/base/*.fl",
+            "test/components/host/siblings/*.fl",
+            "test/components/host/withtext/*.fl",
+            "test/components/host/nested/*.fl",
             "test/components/text/**/*.fl",
             "test/components/helper/if/**/*.fl",
             "test/**/*.js"

@@ -31,7 +31,6 @@ slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
 
 publicVariableToInternal :: VariableStack -> String -> Maybe String
-publicVariableToInternal [] _ = Nothing
 publicVariableToInternal (stack@(publicStack, internalStack) : vs) search
   | publicStack == search = Just internalStack
   | (publicStack ++ ".") `isPrefixOf` search = Just (internalStack ++ "." ++ drop (length publicStack + 1) search)
@@ -44,6 +43,6 @@ indent' :: Int -> [Indent] -> String
 indent' _ [] = []
 indent' 0 ((Ln line) : lines) = line ++ "\n" ++ indent' 0 lines
 indent' indentationLevel ((Ln line) : lines)
-  | line == "" = "\n" ++  indent' indentationLevel lines
-  | otherwise  = "\t" ++ indent' (indentationLevel - 1) [Ln line] ++ indent' indentationLevel lines
+  | line == "" = "\n" ++ indent' indentationLevel lines
+  | otherwise = "\t" ++ indent' (indentationLevel - 1) [Ln line] ++ indent' indentationLevel lines
 indent' indentationLevel ((Ind indentedLines) : lines) = indent' (indentationLevel + 1) indentedLines ++ indent' indentationLevel lines

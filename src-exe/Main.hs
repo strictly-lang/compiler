@@ -1,6 +1,6 @@
 module Main where
 
-import Compiler.Main (getJs, parse)
+import Compiler.Main (getJs, parse, tokenize)
 import Control.Exception (Exception, throwIO)
 import System.Directory (getCurrentDirectory)
 import System.Environment (getArgs)
@@ -18,7 +18,7 @@ main = do
 readFramelessFile fileName = do
   cwd <- System.Directory.getCurrentDirectory
   fileContent <- readFile fileName
-  maybeToIO (getJs cwd (normalizePath cwd fileName) (parse fileContent))
+  maybeToIO (getJs cwd (normalizePath cwd fileName) (parse (tokenize fileContent)))
 
 normalizePath :: String -> String -> String
 normalizePath cwd filePath@('/':_) = filePath

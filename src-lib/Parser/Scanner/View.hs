@@ -5,64 +5,63 @@ import Types
 
 viewScanner :: Scanner View
 viewScanner [] indentationLevel exprId = ([], exprId, [])
-viewScanner ((line, currentIndentation, '"' : currentLineValue) : restIndentedLines) indentationLevel exprId =
-  let (textNodes, exprId') = staticTextParserWrapper currentLineValue exprId
+viewScanner (((Token _ Quote) : restLineTokens) : restIndentedLines) indentationLevel exprId =
+  let (textNodes, exprId') = staticTextParserWrapper restLineTokens exprId
    in (textNodes, exprId', restIndentedLines)
-viewScanner ((line, currentIndentation, '#' : currentLineValue) : restIndentedLines) indentationLevel exprId
-  | head currentLineValueWords == "if" =
-    let (positiveChildren, exprId', indentedLines') = parseLines viewScanners restIndentedLines (currentIndentation + 1) (exprId + 1)
-        (negativeChildren, exprId'', indentedLines'') = elseScanner indentedLines' currentIndentation exprId'
-     in ( [Node exprId (Condition (Expr (currentLineValueWords !! 1)) positiveChildren negativeChildren)],
+viewScanner (((Token _ Hash) : (Token _ (Identity currentLineNameSpace)) : restLineTokens) : restIndentedLines) indentationLevel exprId
+  | currentLineNameSpace == "if" =
+    let (positiveChildren, exprId', indentedLines') = parseLines viewScanners restIndentedLines (indentationLevel + 1) (exprId + 1)
+        (negativeChildren, exprId'', indentedLines'') = elseScanner indentedLines' indentationLevel exprId'
+     in ( [Node exprId (Condition (Expr (conditionParser restLineTokens)) positiveChildren negativeChildren)],
           exprId'',
           indentedLines''
         )
-  where
-    currentLineValueWords = words currentLineValue
-viewScanner ((line, currentIndentation, currentLineValue) : restIndentedLines) indentationLevel exprId =
-  let (children, exprId', indentedLines') = parseLines viewScanners restIndentedLines (currentIndentation + 1) (exprId + 1)
-      nodeName = head (words currentLineValue)
+viewScanner (((Token _ (Identity currentLineNameSpace)) : restLineTokens) : restIndentedLines) indentationLevel exprId =
+  let (children, exprId', indentedLines') = parseLines viewScanners restIndentedLines (indentationLevel + 1) (exprId + 1)
+      nodeName = currentLineNameSpace
    in ( [Node exprId (Host nodeName children [])],
         exprId',
         indentedLines'
       )
 
+conditionParser :: [Token] -> String
+conditionParser [] = ""
+conditionParser (t : ts) = (show t ++ conditionParser ts)
+
 viewScanners = [viewScanner]
 
-staticTextParserWrapper :: String -> ExprId -> ([Node View], ExprId)
+staticTextParserWrapper :: [Token] -> ExprId -> ([Node View], ExprId)
 -- Do a syntax-error here, you cant end without a closing "
 staticTextParserWrapper [] exprId = ([], exprId)
-staticTextParserWrapper ['"'] exprId = ([], exprId)
-staticTextParserWrapper ('$' : '{' : rest) exprId =
-  (Node exprId (DynamicText dynamicText) : expr', exprId')
-  where
-    (dynamicText, rest') = dynamicTextParser rest
-    (expr', exprId') = staticTextParserWrapper rest' (exprId + 1)
-staticTextParserWrapper cs exprId = (Node exprId (StaticText staticText) : expr', exprId')
-  where
-    (staticText, rest) = staticTextParser cs
-    (expr', exprId') = staticTextParserWrapper rest (exprId + 1)
+staticTextParserWrapper [Token _ Quote] exprId = ([], exprId)
+staticTextParserWrapper ((Token _ Dollar) : (Token _ LBrace) : rest) exprId =
+  let (dynamicText, rest') = dynamicTextParser rest
+      (expr', exprId') = staticTextParserWrapper rest' (exprId + 1)
+   in (Node exprId (DynamicText dynamicText) : expr', exprId')
+staticTextParserWrapper cs exprId =
+  let (staticText, rest) = staticTextParser cs
+      (expr', exprId') = staticTextParserWrapper rest (exprId + 1)
+   in (Node exprId (StaticText staticText) : expr', exprId')
 
-dynamicTextParser :: String -> (String, String)
--- Do a syntax-error here, you cant end without a closing }
-dynamicTextParser [] = ("", "")
-dynamicTextParser ('}' : rest) = ("", rest)
-dynamicTextParser (c : cs) = (c : cs', rest)
-  where
-    (cs', rest) = dynamicTextParser cs
+data Text = Static String | Dynamic String
 
-staticTextParser :: String -> (String, String)
+dynamicTextParser :: [Token] -> (String, [Token])
 -- Do a syntax-error here, you cant end without a closing }
-staticTextParser [] = ("", "")
-staticTextParser ['"'] = ("", "")
-staticTextParser all@('$' : '{' : rest) = ("", all)
-staticTextParser (c : cs) = (c : cs', rest)
-  where
-    (cs', rest) = staticTextParser cs
+dynamicTextParser ((Token _ RBrace) : rest) = ("", rest)
+dynamicTextParser (Token _ (Identity c) : cs) =
+  let (cs', rest) = dynamicTextParser cs
+   in (c ++ cs', rest)
+
+staticTextParser :: [Token] -> (String, [Token])
+-- Do a syntax-error here, you cant end without a closing }
+staticTextParser [Token _ Quote] = ("", [])
+staticTextParser all@((Token _ Dollar) : (Token _ LBrace) : rest) = ("", all)
+staticTextParser (c : cs) =
+  let (cs', rest) = staticTextParser cs
+   in (show c ++ cs', rest)
 
 elseScanner :: Scanner View
-elseScanner ((line, currentIndentation, '#' : currentLineValue) : restIndentedLines) indentationLevel exprId
-  | currentIndentation == indentationLevel && head currentLineValueWords == "else" =
-      parseLines viewScanners restIndentedLines (currentIndentation + 1) exprId
-  where
-    currentLineValueWords = words currentLineValue
+elseScanner (((Token currentPosition (Indentation currentIndentation)) : (Token _ Hash) : (Token _ (Identity currentLineNameSpace)) : restLineTokens) : restIndentedLines) indentationLevel exprId
+  | currentIndentation == indentationLevel && currentLineNameSpace == "else" =
+    parseLines viewScanners restIndentedLines (currentIndentation + 1) exprId
 elseScanner indentedLines _ exprId = ([], exprId, indentedLines)

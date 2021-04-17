@@ -1,0 +1,9 @@
+view
+	header
+	#each (value, index) <- props.foo
+		div
+			"${index}-${value}-${props.bar}"
+	#else
+		span
+			"Empty list"
+	footer
