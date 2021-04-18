@@ -4,10 +4,10 @@ import Types
 
 parseLines :: [Scanner a] -> [[Token]] -> IndentationLevel -> ExprId -> ([Node a], ExprId, [[Token]])
 parseLines _ [] _ exprId = ([], exprId, [])
-parseLines scanners indentedLines@(((Token currentPosition (Indentation currentIndentation)):currentLineTokens):restIndentedLines) indentationLevel exprId
+parseLines scanners indentedLines@(((Token currentPosition (Indentation currentIndentation)) : currentLineTokens) : restIndentedLines) indentationLevel exprId
   -- Current indent-level
   | currentIndentation == indentationLevel =
-    let (nodes, exprId', indentedLines') = parseWithScanner scanners scanners (currentLineTokens:restIndentedLines) indentationLevel exprId
+    let (nodes, exprId', indentedLines') = parseWithScanner scanners scanners (currentLineTokens : restIndentedLines) indentationLevel exprId
         (siblingNodes, exprId'', indentedLines'') = parseLines scanners indentedLines' indentationLevel exprId'
      in (nodes ++ siblingNodes, exprId'', indentedLines'')
   -- Outer indent level
@@ -23,9 +23,10 @@ parseLines scanners indentedLines@(((Token currentPosition (Indentation currentI
           exprId,
           indentedLines'
         )
+
 parseWithScanner :: [Scanner a] -> [Scanner a] -> [[Token]] -> IndentationLevel -> ExprId -> ([Node a], ExprId, [[Token]])
 -- No Scanners left
-parseWithScanner [] _ indentedLines@(((Token (currentLine, _) (Indentation currentIndentation)):currentLineTokens):restIndentedLines) indentationLevel exprId =
+parseWithScanner [] _ indentedLines@(((Token (currentLine, _) (Indentation currentIndentation)) : currentLineTokens) : restIndentedLines) indentationLevel exprId =
   ( [ SyntaxError
         "I don't know what to do with this"
         (currentLine, indentationLevel)

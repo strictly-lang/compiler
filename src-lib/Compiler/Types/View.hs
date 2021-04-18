@@ -1,7 +1,7 @@
 module Compiler.Types.View (compileView) where
 
 import Compiler.Types
-import Compiler.Util (indent, publicVariableToInternal)
+import Compiler.Util (filter', indent, publicVariableToInternal)
 import Types
 
 type Successor = String
@@ -70,7 +70,8 @@ compileView (Node exprId (Each [Attribute (LeftTuple [LeftVariable publicEntityV
       (entityChildrenContent, entitySuccessor, UpdateCallbacks entityChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView entityChildren (Context (entityScope, entityVariableStack)) parent (Predecessor entityPredecessor : predecessors)
       (negativeChildrenContent, negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) = compileView negativeChildren context parent predecessors
       (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent [Predecessor successor]
-      updateCallbacks = []
+      (_, updateCallbacks) = filter' ((== indexVariable) . fst) entityChildrenUpdateCallbacks
+      (entityUpdateCallback, restUpdateCallbacks') = filter' ((== entityValue) . fst) updateCallbacks
    in ( [ Ln (entitiesScope ++ " = [];"),
           Ln (predecessorOf ++ " = (" ++ indexVariable ++ ") => {"),
           Ind
@@ -105,8 +106,8 @@ compileView (Node exprId (Each [Attribute (LeftTuple [LeftVariable publicEntityV
           ++ successorContent,
         predecessors',
         UpdateCallbacks
-          [ (internalEntitiesVariable, [])
-          ],
+          ( (internalEntitiesVariable, []) : restUpdateCallbacks'
+          ),
         RemoveCallbacks []
       )
 compileView (Node exprId (Condition (Expr expr) positiveChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
@@ -164,6 +165,7 @@ compileView (Node exprId (Condition (Expr expr) positiveChildren negativeChildre
         UpdateCallbacks
           ( [ (internalVariableName, [Ln (updateCallback ++ "();")])
             ]
+              -- TODO move to inline code section, instead of in callback section
               ++ [ ( internalVariableName,
                      [ Ln ("if (" ++ conditionVariable ++ ") {"),
                        Ind updateCallback,

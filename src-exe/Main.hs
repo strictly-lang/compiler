@@ -21,7 +21,7 @@ readFramelessFile fileName = do
   maybeToIO (getJs cwd (normalizePath cwd fileName) (parse (tokenize fileContent)))
 
 normalizePath :: String -> String -> String
-normalizePath cwd filePath@('/':_) = filePath
+normalizePath cwd filePath@('/' : _) = filePath
 normalizePath cwd filePath = cwd ++ "/" ++ filePath
 
 maybeToIO :: Maybe String -> IO String

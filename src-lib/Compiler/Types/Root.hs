@@ -2,7 +2,7 @@ module Compiler.Types.Root (compileRoot) where
 
 import Compiler.Types
 import Compiler.Types.View (compileView)
-import Compiler.Util (indent, slashToCamelCase, slashToDash, filter')
+import Compiler.Util (filter', indent, slashToCamelCase, slashToDash)
 import Types
 
 propertiesScope = "this._properties"
