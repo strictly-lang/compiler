@@ -14,7 +14,7 @@ module.exports = function (config) {
             "test/components/host/withtext/*.fl",
             "test/components/host/nested/*.fl",
             "test/components/text/**/*.fl",
-            "test/components/helper/if/**/*.fl",
+            "test/components/helper/**/*.fl",
             "test/**/*.js"
         ],
         preprocessors: {
@@ -26,7 +26,7 @@ module.exports = function (config) {
                     return async (_, file) => {
                         file.path = file.originalPath.replace(/\.fl$/, '.js');
 
-                        const { stdout, stderror } = await exec(`cabal new-run --verbose=silent frameless-compiler ${file.originalPath}`);
+                        const { stdout, stderror } = await exec(`cabal v2-run --verbose=silent frameless-compiler ${file.originalPath}`);
                         if (stderror) {
                             throw stderror;
                         }

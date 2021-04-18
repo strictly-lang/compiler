@@ -16,6 +16,14 @@ viewScanner (((Token _ Hash) : (Token _ (Identity currentLineNameSpace)) : restL
           exprId'',
           indentedLines''
         )
+  | currentLineNameSpace == "each" =
+    let attributes = attributeParser restLineTokens
+        (eachChild, exprId', indentedLines') = parseLines viewScanners restIndentedLines (indentationLevel + 1) (exprId + 1)
+        (negativeChildren, exprId'', indentedLines'') = elseScanner indentedLines' indentationLevel exprId'
+     in ( [Node exprId (Each attributes eachChild negativeChildren)],
+          exprId'',
+          indentedLines''
+        )
 viewScanner (((Token _ (Identity currentLineNameSpace)) : restLineTokens) : restIndentedLines) indentationLevel exprId =
   let (children, exprId', indentedLines') = parseLines viewScanners restIndentedLines (indentationLevel + 1) (exprId + 1)
       nodeName = currentLineNameSpace
@@ -24,11 +32,42 @@ viewScanner (((Token _ (Identity currentLineNameSpace)) : restLineTokens) : rest
         indentedLines'
       )
 
-conditionParser :: [Token] -> String
-conditionParser [] = ""
-conditionParser (t : ts) = (show t ++ conditionParser ts)
-
 viewScanners = [viewScanner]
+
+conditionParser :: [Token] -> String
+conditionParser = concatMap show
+
+attributeParser :: [Token] -> [Attribute]
+attributeParser [] = []
+attributeParser ts =
+  let (l, ts') = leftExprParser ts
+      (o, ts'') = operatorParser ts'
+      (e, ts''') = exprParser ts''
+      as = attributeParser ts'''
+   in Attribute (l, o, e) : as
+
+leftExprParser :: [Token] -> (LeftExpr, [Token])
+leftExprParser (Token _ LParen : ts) =
+  let (ls, ts') = leftExprParser' ts
+   in (LeftTuple ls, ts')
+leftExprParser (Token _ (Identity value) : ts) = (LeftVariable value, ts)
+
+leftExprParser' :: [Token] -> ([LeftExpr], [Token])
+leftExprParser' ((Token _ Comma) : ts) =
+  let (l, ts') = leftExprParser ts
+      (ls, ts'') = leftExprParser' ts'
+   in (l : ls, ts'')
+leftExprParser' ((Token _ RParen) : ts) = ([], ts)
+leftExprParser' ts = 
+  let (l, ts' ) = leftExprParser ts
+      (ls, ts'') = leftExprParser' ts'
+   in (l:ls, ts'')
+
+operatorParser :: [Token] -> (Operator, [Token])
+operatorParser (Token _ Feed : ts) = (FeedOperator, ts)
+
+exprParser :: [Token] -> (Expr, [Token])
+exprParser (Token _ (Identity value) : ts) = (Expr value, ts)
 
 staticTextParserWrapper :: [Token] -> ExprId -> ([Node View], ExprId)
 -- Do a syntax-error here, you cant end without a closing "

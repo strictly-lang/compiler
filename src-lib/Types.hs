@@ -20,8 +20,11 @@ data TokenKind
   | Hash
   | Quote
   | Dollar
+  | LParen
+  | RParen
   | LBrace
   | RBrace
+  | Comma
   | Underscore
   | Feed
   | LogicOperator String
@@ -32,8 +35,11 @@ instance Show TokenKind where
   show Hash = "#"
   show Quote = "\""
   show Dollar = "$"
+  show LParen = "("
+  show RParen = ")"
   show LBrace = "{"
   show RBrace = "}"
+  show Comma = ","
   show Underscore = "_"
   show Feed = "<-"
   show (LogicOperator operator) = operator
@@ -53,10 +59,19 @@ type Scanner a = [[Token]] -> IndentationLevel -> ExprId -> ([Node a], ExprId, [
 data Root = View [Node View] | Model
   deriving (Show)
 
+data LeftExpr = LeftVariable String | LeftTuple [LeftExpr]
+  deriving (Show)
+
+data Operator = FeedOperator
+  deriving (Show)
+
+newtype Attribute = Attribute (LeftExpr, Operator, Expr)
+  deriving (Show)
+
 newtype Expr = Expr String
   deriving (Show)
 
-data View = Host NodeName [Node View] [Option] | StaticText String | DynamicText String | Condition Expr [Node View] [Node View]
+data View = Host NodeName [Node View] [Option] | StaticText String | DynamicText String | Condition Expr [Node View] [Node View] | Each [Attribute] [Node View] [Node View]
   deriving (Show)
 
 type Compiler a = String -> [Node Root] -> Node a -> String

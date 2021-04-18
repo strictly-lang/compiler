@@ -1,4 +1,4 @@
-xdescribe("each loop handling", () => {
+describe("each loop handling", () => {
     let container;
     beforeEach(() => {
         container = document.createElement("div");

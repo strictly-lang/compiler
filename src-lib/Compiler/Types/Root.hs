@@ -12,7 +12,7 @@ mountedBool = "this._mounted"
 compileRoot :: Compiler Root
 compileRoot componentPath ast (Node exprId (View children)) =
   let scope = "this._el"
-      (viewContent, _, updateCallbacks, _) = compileView children (Context (scope, [("props", propertiesScope)])) "this.shadowRoot" FirstElement
+      (viewContent, _, updateCallbacks, _) = compileView children (Context (scope, [("props", propertiesScope)])) "this.shadowRoot" []
    in indent
         [ Ln "(() => {",
           Ind
