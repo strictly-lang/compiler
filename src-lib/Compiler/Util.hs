@@ -1,8 +1,8 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent) where
+module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, filter') where
 
 import Compiler.Types
 import Data.Char (toUpper)
-import Data.List (isPrefixOf)
+import Data.List (intercalate, isPrefixOf)
 
 type AbsolutePath = String
 
@@ -30,10 +30,9 @@ slashToCamelCase' [] = []
 slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
 
-publicVariableToInternal :: VariableStack -> String -> Maybe String
+publicVariableToInternal :: VariableStack -> [String] -> Maybe String
 publicVariableToInternal (stack@(publicStack, internalStack) : vs) search
-  | publicStack == search = Just internalStack
-  | (publicStack ++ ".") `isPrefixOf` search = Just (internalStack ++ "." ++ drop (length publicStack + 1) search)
+  | publicStack == take (length publicStack) search = Just (intercalate "." (internalStack : drop (length publicStack) search))
   | otherwise = publicVariableToInternal vs search
 
 indent :: [Indent] -> String
@@ -46,3 +45,12 @@ indent' indentationLevel ((Ln line) : lines)
   | line == "" = "\n" ++ indent' indentationLevel lines
   | otherwise = "\t" ++ indent' (indentationLevel - 1) [Ln line] ++ indent' indentationLevel lines
 indent' indentationLevel ((Ind indentedLines) : lines) = indent' (indentationLevel + 1) indentedLines ++ indent' indentationLevel lines
+
+filter' :: (a -> Bool) -> [a] -> ([a], [a])
+filter' _ [] = ([], [])
+filter' predicate (a : as)
+  | matched = (a : nextMatches, nextUnmatches)
+  | otherwise = (nextMatches, a : nextUnmatches)
+  where
+    matched = predicate a
+    (nextMatches, nextUnmatches) = filter' predicate as

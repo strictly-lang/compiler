@@ -26,6 +26,7 @@ data TokenKind
   | RBrace
   | Comma
   | Underscore
+  | Dot
   | Feed
   | LogicOperator String
   | Identity String
@@ -41,6 +42,7 @@ instance Show TokenKind where
   show RBrace = "}"
   show Comma = ","
   show Underscore = "_"
+  show Dot = "."
   show Feed = "<-"
   show (LogicOperator operator) = operator
   show (Identity value) = value
@@ -68,10 +70,10 @@ data Operator = FeedOperator
 newtype Attribute = Attribute (LeftExpr, Operator, Expr)
   deriving (Show)
 
-newtype Expr = Expr String
+newtype Expr = Expr [String]
   deriving (Show)
 
-data View = Host NodeName [Node View] [Option] | StaticText String | DynamicText String | Condition Expr [Node View] [Node View] | Each [Attribute] [Node View] [Node View]
+data View = Host NodeName [Node View] [Option] | StaticText String | DynamicText Expr | Condition Expr [Node View] [Node View] | Each [Attribute] [Node View] [Node View]
   deriving (Show)
 
 type Compiler a = String -> [Node Root] -> Node a -> String

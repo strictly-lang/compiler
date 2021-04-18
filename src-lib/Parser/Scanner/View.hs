@@ -12,7 +12,8 @@ viewScanner (((Token _ Hash) : (Token _ (Identity currentLineNameSpace)) : restL
   | currentLineNameSpace == "if" =
     let (positiveChildren, exprId', indentedLines') = parseLines viewScanners restIndentedLines (indentationLevel + 1) (exprId + 1)
         (negativeChildren, exprId'', indentedLines'') = elseScanner indentedLines' indentationLevel exprId'
-     in ( [Node exprId (Condition (Expr (conditionParser restLineTokens)) positiveChildren negativeChildren)],
+        (expr, _) = exprParser restLineTokens
+     in ( [Node exprId (Condition expr positiveChildren negativeChildren)],
           exprId'',
           indentedLines''
         )
@@ -33,9 +34,6 @@ viewScanner (((Token _ (Identity currentLineNameSpace)) : restLineTokens) : rest
       )
 
 viewScanners = [viewScanner]
-
-conditionParser :: [Token] -> String
-conditionParser = concatMap show
 
 attributeParser :: [Token] -> [Attribute]
 attributeParser [] = []
@@ -58,16 +56,19 @@ leftExprParser' ((Token _ Comma) : ts) =
       (ls, ts'') = leftExprParser' ts'
    in (l : ls, ts'')
 leftExprParser' ((Token _ RParen) : ts) = ([], ts)
-leftExprParser' ts = 
-  let (l, ts' ) = leftExprParser ts
+leftExprParser' ts =
+  let (l, ts') = leftExprParser ts
       (ls, ts'') = leftExprParser' ts'
-   in (l:ls, ts'')
+   in (l : ls, ts'')
 
 operatorParser :: [Token] -> (Operator, [Token])
 operatorParser (Token _ Feed : ts) = (FeedOperator, ts)
 
 exprParser :: [Token] -> (Expr, [Token])
-exprParser (Token _ (Identity value) : ts) = (Expr value, ts)
+exprParser (Token _ (Identity value) : (Token _ Dot) : ts) =
+  let (Expr value', ts') = exprParser ts
+   in (Expr (value : value'), ts')
+exprParser (Token _ (Identity value) : ts) = (Expr [value], ts)
 
 staticTextParserWrapper :: [Token] -> ExprId -> ([Node View], ExprId)
 -- Do a syntax-error here, you cant end without a closing "
@@ -84,12 +85,10 @@ staticTextParserWrapper cs exprId =
 
 data Text = Static String | Dynamic String
 
-dynamicTextParser :: [Token] -> (String, [Token])
--- Do a syntax-error here, you cant end without a closing }
-dynamicTextParser ((Token _ RBrace) : rest) = ("", rest)
-dynamicTextParser (Token _ (Identity c) : cs) =
-  let (cs', rest) = dynamicTextParser cs
-   in (c ++ cs', rest)
+dynamicTextParser :: [Token] -> (Expr, [Token])
+dynamicTextParser ts =
+  let (expr, Token _ RBrace : ts') = exprParser ts
+   in (expr, ts')
 
 staticTextParser :: [Token] -> (String, [Token])
 -- Do a syntax-error here, you cant end without a closing }

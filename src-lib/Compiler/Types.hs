@@ -4,7 +4,7 @@ type PublicVariableName = String
 
 type InternalVariableName = String
 
-type VariableStack = [(PublicVariableName, InternalVariableName)]
+type VariableStack = [([PublicVariableName], InternalVariableName)]
 
 type Scope = String
 

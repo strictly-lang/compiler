@@ -47,6 +47,9 @@ tokenize' position@(line, column) (',' : restCharacters) =
 tokenize' position@(line, column) ('_' : restCharacters) =
   let (nextToken, nextLines) = tokenize' (line, column + 1) restCharacters
    in (Token position Underscore : nextToken, nextLines)
+tokenize' position@(line, column) ('.' : restCharacters) =
+  let (nextToken, nextLines) = tokenize' (line, column + 1) restCharacters
+   in (Token position Dot : nextToken, nextLines)
 tokenize' position@(line, column) ('<' : '-' : restCharacters) =
   let (nextToken, nextLines) = tokenize' (line, column + 2) restCharacters
    in (Token position Feed : nextToken, nextLines)
@@ -59,7 +62,7 @@ tokenize' position@(line, column) (currentCharacter : restCharacters) =
 
 merge :: Token -> [Token] -> [Token]
 merge (Token position (Indentation amount)) ((Token _position (Indentation nextAmount)) : ts) = Token position (Indentation (amount + nextAmount)) : ts
-merge t@(Token position@(_, column) (Identity c)) ts@((Token (_, nextColumn) (Identity cs)) : ts')
-  | column + 1 == nextColumn = Token position (Identity (c ++ cs)) : ts'
-  | otherwise = t : ts ++ ts'
+merge t@(Token position@(_, column) (Identity cs)) ts@((Token (_, nextColumn) (Identity cs')) : ts')
+  | column + 1 == nextColumn = Token position (Identity (cs ++ cs')) : ts'
+  | otherwise = t : ts
 merge t ts = t : ts

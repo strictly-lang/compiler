@@ -2,7 +2,7 @@ module Compiler.Types.Root (compileRoot) where
 
 import Compiler.Types
 import Compiler.Types.View (compileView)
-import Compiler.Util (indent, slashToCamelCase, slashToDash)
+import Compiler.Util (indent, slashToCamelCase, slashToDash, filter')
 import Types
 
 propertiesScope = "this._properties"
@@ -12,7 +12,7 @@ mountedBool = "this._mounted"
 compileRoot :: Compiler Root
 compileRoot componentPath ast (Node exprId (View children)) =
   let scope = "this._el"
-      (viewContent, _, updateCallbacks, _) = compileView children (Context (scope, [("props", propertiesScope)])) "this.shadowRoot" []
+      (viewContent, _, updateCallbacks, _) = compileView children (Context (scope, [(["props"], propertiesScope)])) "this.shadowRoot" []
    in indent
         [ Ln "(() => {",
           Ind
@@ -64,15 +64,6 @@ walkDependencies (UpdateCallbacks ((internalName, updateCallback) : updateCallba
 
 internalNameToSetterName :: String -> String
 internalNameToSetterName internalName = head (drop (length (splitByDot propertiesScope)) (splitByDot internalName))
-
-filter' :: (a -> Bool) -> [a] -> ([a], [a])
-filter' _ [] = ([], [])
-filter' predicate (a : as)
-  | matched = (a : nextMatches, nextUnmatches)
-  | otherwise = (nextMatches, a : nextUnmatches)
-  where
-    matched = predicate a
-    (nextMatches, nextUnmatches) = filter' predicate as
 
 getSetter :: String -> [[Indent]] -> [Indent]
 getSetter name updateCallback =

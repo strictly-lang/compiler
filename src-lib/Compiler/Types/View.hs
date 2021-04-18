@@ -13,7 +13,7 @@ compileView [] context _ predecessors = ([], predecessors, UpdateCallbacks [], R
 compileView ((Node exprId (StaticText textValue) : ns)) context@(Context (scope, _)) parent predecessors =
   let elementVariable = scope ++ ".el" ++ show exprId
       removeCallback = scope ++ ".removeCallback" ++ show exprId
-      (successorContent, predecessors', updateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns context parent (Predecessor elementVariable:predecessors)
+      (successorContent, predecessors', updateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns context parent (Predecessor elementVariable : predecessors)
    in ( [ Ln (elementVariable ++ " =  document.createTextNode(\"" ++ textValue ++ "\");"),
           Ln (appendChild parent predecessors elementVariable),
           Ln (removeCallback ++ " = () =>" ++ elementVariable ++ ".remove();")
@@ -23,11 +23,11 @@ compileView ((Node exprId (StaticText textValue) : ns)) context@(Context (scope,
         updateCallbacks,
         RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallback)
       )
-compileView (Node exprId (DynamicText variable) : ns) context@(Context (scope, variableStack)) parent predecessors =
+compileView (Node exprId (DynamicText (Expr variable)) : ns) context@(Context (scope, variableStack)) parent predecessors =
   let elementVariable = scope ++ "._el" ++ show exprId
       updateCallback = scope ++ ".updateCallback" ++ show exprId
       removeCallback = scope ++ ".removeCallback" ++ show exprId
-      (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent (Predecessor elementVariable:predecessors)
+      (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent (Predecessor elementVariable : predecessors)
       internalVariableName = unsafeVariable (publicVariableToInternal variableStack variable)
    in ( [ Ln (elementVariable ++ " =  document.createTextNode(" ++ internalVariableName ++ ");"),
           Ln (appendChild parent predecessors elementVariable),
@@ -43,7 +43,7 @@ compileView (Node exprId (Host nodeName children option) : ns) context@(Context 
   let elementVariable = scope ++ ".el" ++ show exprId
       removeCallback = scope ++ ".removeCallback" ++ show exprId
       (childrenContent, _, UpdateCallbacks childrenUpdateCallbacks, _) = compileView children context elementVariable []
-      (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent (Predecessor elementVariable:predecessors)
+      (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent (Predecessor elementVariable : predecessors)
    in ( [ Ln (elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");"),
           Ln (appendChild parent predecessors elementVariable),
           Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove();")
@@ -66,17 +66,18 @@ compileView (Node exprId (Each [Attribute (LeftTuple [LeftVariable publicEntityV
       successor = predecessorOf ++ "(" ++ counter ++ " - 1)"
       entityPredecessor = predecessorOf ++ "(" ++ indexVariable ++ " - 1)"
       entityVariable = "entity" ++ show exprId
-      entityVariableStack = (publicIndexVariable, indexVariable) : (publicEntityVariable, entityValue) : variableStack
-      (entityChildrenContent, entitySuccessor, UpdateCallbacks entityChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView entityChildren (Context (entityScope, entityVariableStack)) parent (Predecessor entityPredecessor:predecessors)
+      entityVariableStack = ([publicIndexVariable], indexVariable) : ([publicEntityVariable], entityValue) : variableStack
+      (entityChildrenContent, entitySuccessor, UpdateCallbacks entityChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView entityChildren (Context (entityScope, entityVariableStack)) parent (Predecessor entityPredecessor : predecessors)
       (negativeChildrenContent, negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) = compileView negativeChildren context parent predecessors
       (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent [Predecessor successor]
+      updateCallbacks = []
    in ( [ Ln (entitiesScope ++ " = [];"),
           Ln (predecessorOf ++ " = (" ++ indexVariable ++ ") => {"),
           Ind
             [ Ln ("if (" ++ indexVariable ++ " < 0) {"),
-              Ind [
-                Ln ("return " ++ predecessorChain predecessors)
-              ],
+              Ind
+                [ Ln ("return " ++ predecessorChain predecessors)
+                ],
               Ln ("} else if (" ++ counter ++ " === 0) {"),
               Ind
                 [ Ln ("return " ++ predecessorChain negativeSuccessor)
@@ -119,7 +120,7 @@ compileView (Node exprId (Condition (Expr expr) positiveChildren negativeChildre
       removeCallback = scope ++ ".removeCallback" ++ show exprId
       createCallback = "createCondition" ++ show exprId
       updateCallback = scope ++ "updateCondition" ++ show exprId
-      (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent (Predecessor successor:predecessors)
+      (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent (Predecessor successor : predecessors)
    in ( [ Ln (createPositiveCallback ++ " = () => {"),
           Ind positiveChildrenContent,
           Ln "}",
@@ -192,9 +193,9 @@ type Child = String
 
 appendChild :: Parent -> [Predecessor] -> Child -> String
 appendChild parent [] child = parent ++ ".prepend(" ++ child ++ ");"
-appendChild _ ((Predecessor predecessor):ps) child = predecessor ++ ".after(" ++ child ++ ");"
+appendChild _ ((Predecessor predecessor) : ps) child = predecessor ++ ".after(" ++ child ++ ");"
 
 predecessorChain :: [Predecessor] -> String
-predecessorChain (Predecessor predecessor:ps) = predecessor
-predecessorChain (MaybePredecessor predecessor:ps) = predecessor ++ " || " ++ predecessorChain ps
+predecessorChain (Predecessor predecessor : ps) = predecessor
+predecessorChain (MaybePredecessor predecessor : ps) = predecessor ++ " || " ++ predecessorChain ps
 predecessorChain [] = "null"
