@@ -5,7 +5,7 @@ describe("each loop handling", () => {
         document.body.appendChild(container);
     });
     afterEach(() => {
-        // container.remove();
+        container.remove();
     });
 
     it("each handling with filled array", () => {
