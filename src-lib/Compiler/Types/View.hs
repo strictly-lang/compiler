@@ -59,11 +59,11 @@ compileView (Node exprId (Each [Attribute (LeftTuple [LeftVariable publicEntityV
       entitiesScope = scope ++ ".entities" ++ show exprId
       entityScope = entitiesScope ++ "[" ++ indexVariable ++ "]"
       entityValue = entityScope ++ ".value"
+      updateCallback = scope ++ ".updateCallback" ++ show exprId
       internalEntitiesVariable = unsafeVariable (publicVariableToInternal variableStack variable)
       createEntityCallback = "createEach" ++ show exprId
-      counter = scope ++ "." ++ indexVariable
       predecessorOf = scope ++ ".getPredecessorOf" ++ show exprId
-      successor = predecessorOf ++ "(" ++ counter ++ " - 1)"
+      successor = predecessorOf ++ "(" ++ entitiesScope ++ ".length - 1)"
       entityPredecessor = predecessorOf ++ "(" ++ indexVariable ++ " - 1)"
       entityVariable = "entity" ++ show exprId
       entityVariableStack = ([publicIndexVariable], indexVariable) : ([publicEntityVariable], entityValue) : variableStack
@@ -79,7 +79,7 @@ compileView (Node exprId (Each [Attribute (LeftTuple [LeftVariable publicEntityV
               Ind
                 [ Ln ("return " ++ predecessorChain predecessors)
                 ],
-              Ln ("} else if (" ++ counter ++ " === 0) {"),
+              Ln ("} else if (" ++ entityScope ++ ".length === 0) {"),
               Ind
                 [ Ln ("return " ++ predecessorChain negativeSuccessor)
                 ],
@@ -94,19 +94,47 @@ compileView (Node exprId (Each [Attribute (LeftTuple [LeftVariable publicEntityV
           Ind entityChildrenContent,
           Ln "}",
           Ln "",
-          Ln (counter ++ " = 0;"),
+          Ln ("let " ++ indexVariable ++ " = 0;"),
           Ln ("for (const " ++ entityVariable ++ " of " ++ internalEntitiesVariable ++ ") {"),
           Ind
             [ Ln (entitiesScope ++ ".push({value : " ++ entityVariable ++ "})"),
-              Ln (createEntityCallback ++ "(" ++ counter ++ ");"),
-              Ln (counter ++ "++;")
+              Ln (createEntityCallback ++ "(" ++ indexVariable ++ ");"),
+              Ln (indexVariable ++ "++;")
+            ],
+          Ln "}",
+          Ln (updateCallback ++ "= () => {"),
+          Ind
+            [ Ln ("let " ++ indexVariable ++ " = 0;"),
+              Ln ("for (const " ++ entityVariable ++ " of " ++ internalEntitiesVariable ++ ") {"),
+              Ind
+                [ Ln ("if (" ++ indexVariable ++ " < " ++ entitiesScope ++ ".length) {"),
+                  Ind
+                    ( Ln (entityValue ++ " = " ++ entityVariable) :
+                      concatMap snd entityUpdateCallback
+                    ),
+                  Ln "} else {",
+                  Ind
+                    [ Ln (entitiesScope ++ ".push({value : " ++ entityVariable ++ "})"),
+                      Ln (createEntityCallback ++ "(" ++ indexVariable ++ ")")
+                    ],
+                  Ln "}",
+                  Ln (indexVariable ++ "++;")
+                ],
+              Ln "}",
+              Ln ("let newCount = " ++ indexVariable ++ ";"),
+              Ln ("for (let " ++ indexVariable ++ " = " ++ entitiesScope ++ ".length - 1; " ++ indexVariable ++ " >= newCount; " ++ indexVariable ++ "--) {"),
+              Ind
+                ( positiveRemoveCallbacks
+                    ++ [Ln (entitiesScope ++ ".pop()")]
+                ),
+              Ln "}"
             ],
           Ln "}"
         ]
           ++ successorContent,
         predecessors',
         UpdateCallbacks
-          ( (internalEntitiesVariable, []) : restUpdateCallbacks'
+          ( (internalEntitiesVariable, [Ln (updateCallback ++ "()")]) : restUpdateCallbacks'
           ),
         RemoveCallbacks []
       )
