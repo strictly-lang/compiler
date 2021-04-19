@@ -1,8 +1,0 @@
-view
-	ul
-		#each (value,index) <- props.foo
-			li
-				"${value}-${index}"
-		#else
-			span
-				"Empty list"

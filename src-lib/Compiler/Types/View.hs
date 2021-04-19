@@ -148,7 +148,7 @@ compileView (Node exprId (Condition (Expr expr) positiveChildren negativeChildre
       createNegativeCallback = scope ++ ".createNegative" ++ show exprId
       removeCallback = scope ++ ".removeCallback" ++ show exprId
       createCallback = "createCondition" ++ show exprId
-      updateCallback = scope ++ "updateCondition" ++ show exprId
+      updateCallback = scope ++ ".updateCondition" ++ show exprId
       (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent (Predecessor successor : predecessors)
    in ( [ Ln (createPositiveCallback ++ " = () => {"),
           Ind positiveChildrenContent,
