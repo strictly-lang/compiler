@@ -1,4 +1,4 @@
-# Revision history for frameless-compiler
+# Revision history for strictly-compiler
 
 ## 0.1.0.0 -- YYYY-mm-dd
 

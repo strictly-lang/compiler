@@ -9,24 +9,24 @@ module.exports = function (config) {
         autoWatch: false,
         singleRun: true,
         files: [
-            "test/components/host/base/*.fl",
-            "test/components/host/siblings/*.fl",
-            "test/components/host/withtext/*.fl",
-            "test/components/host/nested/*.fl",
-            "test/components/text/**/*.fl",
-            "test/components/helper/**/*.fl",
+            "test/components/host/base/*.sly",
+            "test/components/host/siblings/*.sly",
+            "test/components/host/withtext/*.sly",
+            "test/components/host/nested/*.sly",
+            "test/components/text/**/*.sly",
+            "test/components/helper/**/*.sly",
             "test/**/*.js"
         ],
         preprocessors: {
-            "**/*.fl": ["frameless"]
+            "**/*.sly": ["strictly"]
         },
         plugins: [
             {
-                "preprocessor:frameless": ["factory", function () {
+                "preprocessor:strictly": ["factory", function () {
                     return async (_, file) => {
-                        file.path = file.originalPath.replace(/\.fl$/, '.js');
+                        file.path = file.originalPath.replace(/\.sly$/, '.js');
 
-                        const { stdout, stderror } = await exec(`cabal v2-run --verbose=silent frameless-compiler ${file.originalPath}`);
+                        const { stdout, stderror } = await exec(`cabal v2-run --verbose=silent strictly-compiler ${file.originalPath}`);
                         if (stderror) {
                             throw stderror;
                         }

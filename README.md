@@ -1,6 +1,6 @@
-# Frameless
+# strictly
 ## About
-Frameless is a declarative programming language for interactive web-uis.
+strictly is a declarative programming language for interactive web-uis.
 
 ## Goals
 * Correctness
@@ -18,7 +18,7 @@ Frameless is a declarative programming language for interactive web-uis.
 
 ## Tradeoffs
 * limited browser support
-    * frameless is based on webcomponents
+    * strictly is based on webcomponents
     * no walkarounds for outdated browser bugs
 * no JS interop
     * there is no plan to make Javascript interoparability possible
