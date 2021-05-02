@@ -6,12 +6,12 @@ strictly is a declarative programming language for interactive web-uis.
 * Correctness
     * through type typesafety and immutability
 * Safety
-    * the compiler will secure you from xss
+    * the compiler will protect you from xss
 * Performance
-    * no shadow dom diffing, dom-changes are optimized at compile time
+    * no shadow dom diffing, all change paths are optimized at compile time
     * small memory footprint, therefore less garbage-collection freezes
 * Size
-    * there is no framework or runtime involved, everything is inside encapsulated inside the web component
+    * there is no framework or runtime involved, everything is encapsulated inside the web component
 * small scope
     * no feature-creep 
     * this language is aimed to solve dom interactions and state handling, not more not less
