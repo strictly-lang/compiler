@@ -21,7 +21,7 @@ library
   exposed-modules:     Compiler.Main
   other-modules:       Types, Tokenizer.Main, Parser.Main, Parser.Util, Parser.Scanner.Root, Parser.Scanner.View, Compiler.Types, Compiler.Javascript, Compiler.Util, Compiler.Types.Root, Compiler.Types.View
   -- other-extensions:
-  build-depends:       base >=4.14 && <4.15
+  build-depends:       base
   hs-source-dirs:      src-lib
   default-language:    Haskell2010
 
@@ -29,7 +29,7 @@ executable strictly-compiler
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.14 && <4.15, strictly-compiler, directory
+  build-depends:       base, strictly-compiler, directory
   hs-source-dirs:      src-exe
   default-language:    Haskell2010
 
@@ -38,4 +38,4 @@ test-suite strictly-compiler-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             CompilerTest.hs
-  build-depends:       base >=4.14 && <4.15
+  build-depends:       base
