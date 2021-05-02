@@ -9,8 +9,8 @@
     "karma-jasmine": "^4.0.1"
   },
   "scripts": {
-    "test": "karma start karma.conf.js",
-    "test:watch": "karma start karma.conf.js --no-single-run --auto-watch"
+    "test": "cabal v2-build && karma start karma.conf.js",
+    "test:watch": "cabal v2-build && karma start karma.conf.js --no-single-run --auto-watch"
   },
   "repository": {
     "type": "git",
