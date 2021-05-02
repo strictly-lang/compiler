@@ -14,8 +14,9 @@ pathToComponent (p : ps) (a : as)
   | p == a = pathToComponent ps as
   | otherwise = Nothing
 
+-- FIX remove magic number
 removeFileExtension :: String -> String
-removeFileExtension p = take (length p - 3) p
+removeFileExtension p = take (length p - length ".sly") p
 
 slashToDash :: String -> String
 slashToDash [] = []
