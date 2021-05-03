@@ -9,7 +9,7 @@ describe("text element handling", () => {
     });
 
     it("basic text element creation", () => {
-        const element = document.createElement("test-components-text-base-index");
+        const element = document.createElement("test-components-text-base");
         container.appendChild(element);
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
@@ -17,7 +17,7 @@ describe("text element handling", () => {
     });
 
     it("dynamic text", () => {
-        const element = document.createElement("test-components-text-dynamic-index");
+        const element = document.createElement("test-components-text-dynamic");
         element.foo = "bar";
         container.appendChild(element);
 
@@ -31,7 +31,7 @@ describe("text element handling", () => {
     });
 
     it("dynamic text with number", () => {
-        const element = document.createElement("test-components-text-dynamic-index");
+        const element = document.createElement("test-components-text-dynamic");
         element.foo = 1;
         container.appendChild(element);
 
@@ -45,7 +45,7 @@ describe("text element handling", () => {
     });
 
     it("multi dynamic text", () => {
-        const element = document.createElement("test-components-text-multidynamic-index");
+        const element = document.createElement("test-components-text-multidynamic");
         element.foo = "foo";
         element.bar = "bar";
         container.appendChild(element);

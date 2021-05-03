@@ -9,7 +9,7 @@ describe("if condition handling", () => {
     });
 
     it("condition should render the correct result, true first", () => {
-        const element = document.createElement("test-components-helper-if-base-index");
+        const element = document.createElement("test-components-helper-if-base");
         element.foo = true;
         element.bar = "baz"
         container.appendChild(element);
@@ -52,7 +52,7 @@ describe("if condition handling", () => {
     });
 
     it("condition should render the correct result, false first", () => {
-        const element = document.createElement("test-components-helper-if-base-index");
+        const element = document.createElement("test-components-helper-if-base");
         element.foo = false;
         element.bar = "baz"
         container.appendChild(element);

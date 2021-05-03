@@ -9,11 +9,11 @@ module.exports = function (config) {
         autoWatch: false,
         singleRun: true,
         files: [
-            "test/components/host/base/*.sly",
-            "test/components/host/siblings/*.sly",
-            "test/components/host/withtext/*.sly",
-            "test/components/host/nested/*.sly",
-            "test/components/text/**/*.sly",
+            "test/components/host/base.sly",
+            "test/components/host/siblings.sly",
+            "test/components/host/withtext.sly",
+            "test/components/host/nested.sly",
+            "test/components/text/*.sly",
             "test/components/helper/**/*.sly",
             "test/**/*.js"
         ],

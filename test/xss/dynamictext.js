@@ -9,7 +9,7 @@ describe("host element handling", () => {
     });
 
     it("dynamic text should not interpret html, but just show it as a string", () => {
-        const element = document.createElement("test-components-text-dynamic-index");
+        const element = document.createElement("test-components-text-dynamic");
         element.foo = "<div />";
         container.appendChild(element);
 

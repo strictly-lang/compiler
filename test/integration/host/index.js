@@ -9,7 +9,7 @@ describe("host element handling", () => {
     });
 
     it("basic host element creation", () => {
-        const element = document.createElement("test-components-host-base-index");
+        const element = document.createElement("test-components-host-base");
         container.appendChild(element);
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
@@ -17,7 +17,7 @@ describe("host element handling", () => {
     });
 
     it("sibling element creation", () => {
-        const element = document.createElement("test-components-host-siblings-index");
+        const element = document.createElement("test-components-host-siblings");
         container.appendChild(element);
 
         expect(element.shadowRoot.childNodes.length).toBe(2);
@@ -26,7 +26,7 @@ describe("host element handling", () => {
     });
 
     it("nested element creation", () => {
-        const element = document.createElement("test-components-host-nested-index");
+        const element = document.createElement("test-components-host-nested");
         container.appendChild(element);
 
         expect(element.shadowRoot.childNodes.length).toBe(2);

@@ -9,7 +9,7 @@ describe("each loop handling", () => {
     });
 
     it("each handling with filled array", () => {
-        const element = document.createElement("test-components-helper-each-base-index");
+        const element = document.createElement("test-components-helper-each-base");
         element.foo = ["foo", "bar", "baz"];
         element.bar = "mep";
 
@@ -35,7 +35,7 @@ describe("each loop handling", () => {
     });
 
     it("each handling with growing array", () => {
-        const element = document.createElement("test-components-helper-each-base-index");
+        const element = document.createElement("test-components-helper-each-base");
         element.foo = ["foo"];
         element.bar = "mep";
 
@@ -60,7 +60,7 @@ describe("each loop handling", () => {
 
 
     it("each handling with shrinking array", () => {
-        const element = document.createElement("test-components-helper-each-base-index");
+        const element = document.createElement("test-components-helper-each-base");
         element.foo = ["foo", "bar", "baz"];
         element.bar = "mep";
 
