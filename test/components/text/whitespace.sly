@@ -1,0 +1,3 @@
+view
+	div
+		" foo  ${props.bar}  baz "

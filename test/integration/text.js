@@ -58,4 +58,19 @@ describe("text element handling", () => {
 
         expect(element.shadowRoot.childNodes[0].textContent).toBe("baz-bar-baz");
     });
+
+    xit("whitespace", () => {
+        const element = document.createElement("test-components-text-whitespace");
+        element.bar = "bar";
+        container.appendChild(element);
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].textContent).toBe(" foo  bar  baz ");
+
+        element.bar = "barbar";
+
+        expect(element.shadowRoot.childNodes[0].textContent).toBe(" foo  barbar  baz ");
+
+    })
 });
