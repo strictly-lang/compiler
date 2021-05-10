@@ -1,0 +1,15 @@
+model data id
+	fetch(GET "/api/${id}")
+
+view
+	#if props.load
+		#model data props.id
+			#match data
+				#case Pending
+					"Loading"
+				#case Result content
+					"${content}"
+				#case Error _
+					"could not load"
+	#else
+		"not to be loaded"

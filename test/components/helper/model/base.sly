@@ -1,6 +1,6 @@
 model main
 	""
-	action = action
+	action _ = action
 
 view
 	#model main

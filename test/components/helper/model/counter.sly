@@ -1,6 +1,6 @@
 model main
 	0
-	"increment" = main + 1
+	"increment" state= state + 1
 
 view
 	#model main
