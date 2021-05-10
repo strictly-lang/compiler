@@ -1,0 +1,10 @@
+model main
+	0
+	"increment" = main + 1
+
+view
+	#model main
+		div(
+			onclick=main("increment")
+		)
+			"${main}"

@@ -1,0 +1,10 @@
+model main
+	""
+	action = action
+
+view
+	#model main
+		input(
+			value=main
+			oninput=value -> main(value)
+		)

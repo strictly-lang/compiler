@@ -1,19 +1,14 @@
-models
-	props <- properties
-		{ page: 0 }
-	selection <- properties
-		[]
-		| { page } = []
-		| ("ADD_SELECTION", id) = selection ++ id
-		| ("REMOVE_SELECTION, id) = List.filter selection (!=, id)
+model selection _
+	false
+	"REMOVE_SELECTION" = false
+	"ADD_SELECTION" = false
 
 view
-	#each (entity) <- [page * 10 .. page * 10 + 10]
-		#let
-		@disabled List.contains selection (==, entity)
+	#each (entity, _) <- [page * 10 .. page * 10 + 10]
+		#model selection properties.page
 			div
-			@class:selected=disabled
-			@onclick=(disabled ? "REMOVE_SELECTION" : "ADD_SELECTION", entity) -> selection
+			@class:selected=selection
+			@onclick=(-> selection(selection ? "REMOVE_SELECTION" : "ADD_SELECTION", entity)
 				"${entity}"
 	#else
 		-
