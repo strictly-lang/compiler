@@ -2,7 +2,7 @@ model main () -> ""
 	action _ = action
 
 view
-	#model main
+	#model main <- main()
 		input(
 			value=main
 			oninput=value -> main(value)

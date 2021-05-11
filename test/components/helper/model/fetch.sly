@@ -1,8 +1,8 @@
-model data (id) -> fetch(GET "/api/${id}")
+model data (id) -> fetch("/api/${id}", GET)
 
 view
 	#if props.load
-		#model data props.id
+		#model data <- data(props.id)
 			#match data
 				#case Pending
 					"Loading"
