@@ -1,11 +1,12 @@
 model data (id) -> fetch("/api/${id}", GET)
+	action _ = action
 
 view
 	#if props.load
 		#model data <- data(props.id)
 			#match data
 				#case Pending
-					"Loading"
+					"Loading..."
 				#case Result content
 					"${content}"
 				#case Error _
