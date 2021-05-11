@@ -1,5 +1,4 @@
-model main
-	""
+model main () -> ""
 	action _ = action
 
 view

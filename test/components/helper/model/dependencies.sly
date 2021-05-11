@@ -1,14 +1,13 @@
-model selection _
-	false
-	"REMOVE_SELECTION" _ = false
-	"ADD_SELECTION" _= false
+model selection (_) -> false
+	RemoveSelection _ = false
+	AddSelection _ = false
 
 view
-	#each (entity, _) <- [page * 10 .. page * 10 + 10]
+	#each <entity, _> <- [page * 10 .. page * 10 + 10]
 		#model selection properties.page
 			div
 			@class:selected=selection
-			@onclick=(-> selection(selection ? "REMOVE_SELECTION" : "ADD_SELECTION", entity)
+			@onclick=(() -> selection(selection ? RemoveSelection : AddSelection)
 				"${entity}"
 	#else
 		-

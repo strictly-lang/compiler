@@ -1,10 +1,9 @@
-model main
-	0
+model main () -> 0
 	"increment" state= state + 1
 
 view
 	#model main
 		div(
-			onclick=main("increment")
+			onclick=() -> main("increment")
 		)
 			"${main}"

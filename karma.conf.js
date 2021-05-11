@@ -14,7 +14,8 @@ module.exports = function (config) {
             "test/components/host/withtext.sly",
             "test/components/host/nested.sly",
             "test/components/text/*.sly",
-            "test/components/helper/**/*.sly",
+            "test/components/helper/each/*.sly",
+            "test/components/helper/if/*.sly",
             "test/**/*.js"
         ],
         preprocessors: {

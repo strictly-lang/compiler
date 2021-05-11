@@ -1,5 +1,4 @@
-model data id
-	fetch(GET "/api/${id}")
+model data (id) -> fetch(GET "/api/${id}")
 
 view
 	#if props.load
