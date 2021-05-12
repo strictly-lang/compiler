@@ -1,5 +1,7 @@
-model data (id) -> fetch("/api/${id}", GET)
-	action _ = action
+model:data(
+	init = id -> fetch("/api/${id}", GET)
+	areducer = action _ _> action
+)
 
 view
 	#if props.load

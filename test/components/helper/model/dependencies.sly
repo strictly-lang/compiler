@@ -1,6 +1,8 @@
-model selection (_) -> false
-	RemoveSelection _ = false
-	AddSelection _ = false
+model:selection(
+	init = _ -> false
+	reducer = RemoveSelection _ = false
+	reducer = AddSelection _ = false
+)
 
 view
 	#each <entity, _> <- [page * 10 .. page * 10 + 10]

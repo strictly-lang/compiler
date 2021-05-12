@@ -1,9 +1,11 @@
-model main () -> 0
-	"increment" state= state + 1
+model:main(
+	init = _ -> 0
+	reducer = "increment" state -> state + 1
+)
 
 view
 	#model main <- main()
 		div(
-			onclick=() -> main("increment")
+			onclick = _ -> main("increment")
 		)
 			"${main}"
