@@ -1,11 +1,17 @@
-model:main(
+model:counter{
 	init = _ -> 0
-	reducer = "increment" state -> state + 1
-)
+	reducer = Increment state -> state + 1
+	reducer = Decrement state -> state - 1
+}
 
 view
-	#model main <- main()
-		div(
-			onclick = _ -> main("increment")
-		)
-			"${main}"
+	#model counter <- counter()
+		button{
+			onclick = _ -> counter(Decrement)
+		}
+			"Decrement"
+		button{
+			onclick = _ -> counter(Increment)
+		}
+			"Increment"
+		"${main}"

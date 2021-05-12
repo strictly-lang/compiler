@@ -1,15 +1,16 @@
-model:selection(
+model:selection{
 	init = _ -> false
 	reducer = RemoveSelection _ = false
-	reducer = AddSelection _ = false
-)
+	reducer = AddSelection _ = true
+}
 
 view
-	#each <entity, _> <- [page * 10 .. page * 10 + 10]
-		#model selection <- selection(properties.page)
-			div
-			@class:selected=selection
-			@onclick=(() -> selection(selection ? RemoveSelection : AddSelection)
+	#each [entity, _] <- [props.page * 10 .. props.page * 10 + 10]
+		#model selection <- selection(props.page)
+			div{
+				class?selected = selection
+				onclick = _ -> selection(selection ? RemoveSelection : AddSelection)
+			}
 				"${entity}"
 	#else
 		-

@@ -1,11 +1,11 @@
-model:main(
+model:main{
 	init = _ -> ""
 	reducer = action _ -> action
-)
+}
 
 view
-	#model(main <- main())
-		input(
+	#model main <- main()
+		input{
 			value = main
 			oninput = value -> main(value)
-		)
+		}
