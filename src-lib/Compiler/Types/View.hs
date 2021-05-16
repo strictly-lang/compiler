@@ -64,22 +64,6 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
         UpdateCallbacks (concatMap secondOfTriplet textContents ++ successorUpdateCallbacks),
         RemoveCallbacks (concatMap lastOfTriplet textContents ++ successorRemoveCallback)
       )
--- compileView ((DynamicText (variable)) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
---   let elementVariable = scope ++ "._el" ++ show exprId
---       updateCallback = scope ++ ".updateCallback" ++ show exprId
---       removeCallback = scope ++ ".removeCallback" ++ show exprId
---       (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns context parent (Predecessor elementVariable : predecessors)
---       internalVariableName = unsafeVariable (publicVariableToInternal variableStack variable)
---    in ( [ Ln (elementVariable ++ " =  document.createTextNode(" ++ internalVariableName ++ ");"),
---           Ln (appendChild parent predecessors elementVariable),
---           Ln (updateCallback ++ " = () => " ++ elementVariable ++ ".textContent = " ++ internalVariableName ++ ";"),
---           Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove()")
---         ]
---           ++ successorContent,
---         predecessors',
---         UpdateCallbacks ((internalVariableName, [Ln (updateCallback ++ "();")]) : successorUpdateCallbacks),
---         RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallbacks)
---       )
 compileView ((Host nodeName children option) : ns) exprId context@(Context (scope, _)) parent predecessors =
   let elementVariable = scope ++ ".el" ++ show exprId
       removeCallback = scope ++ ".removeCallback" ++ show exprId
