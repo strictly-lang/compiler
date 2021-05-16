@@ -29,7 +29,7 @@ mixedTextParser =
   do
     text <- char '\"' *> (dynamicTextParser <|> staticTextParser) `manyTill` char '"'
     _ <- eol
-    return (Text text)
+    return (MixedText text)
 
 staticTextParser :: Parser MixedText
 staticTextParser = do

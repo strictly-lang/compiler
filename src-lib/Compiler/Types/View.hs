@@ -4,17 +4,26 @@ import Compiler.Types
 import Compiler.Util (filter', indent, publicVariableToInternal)
 import Types
 
+import Data.List (intercalate)
 type Successor = String
 
 type ExprId = Int
 
 type Parent = String
 
+firstOfTriplet :: (a, b, c) -> a
+firstOfTriplet (a, _, _) = a
+
+secondOfTriplet :: (a, b, c) -> b
+secondOfTriplet (_, b, _) = b
+
+lastOfTriplet :: (a, b, c) -> c
+lastOfTriplet (_, _, c) = c
+
 compileView :: [ViewContent] -> ExprId -> Context -> Parent -> [Predecessor] -> ([Indent], ExprId, [Predecessor], UpdateCallbacks, RemoveCallbacks)
 compileView [] exprId context _ predecessors = ([], exprId, predecessors, UpdateCallbacks [], RemoveCallbacks [])
 compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableStack)) parent predecessors =
-  let
-      elementVariableFactory = \exprId' -> scope ++ ".el" ++ show exprId'
+  let elementVariableFactory = \exprId' -> scope ++ ".el" ++ show exprId'
       predecessorFactory = \exprId' -> if exprId' == exprId then predecessors else [Predecessor (elementVariableFactory (exprId' - 1))]
       textContents =
         [ case text of
@@ -27,36 +36,33 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
                       Ln (appendChild parent (predecessorFactory exprId') elementVariable),
                       Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove()")
                     ],
-                    UpdateCallbacks
                       [ ( dependency,
                           [Ln (elementVariable ++ ".textContent = " ++ fst rightHandJsValue ++ ";")]
                         )
                         | dependency <- snd rightHandJsValue
                       ],
-                    RemoveCallbacks [Ln (removeCallback ++ "();")]
+                    [Ln (removeCallback ++ "();")]
                   )
             StaticText content ->
               let elementVariable = elementVariableFactory exprId'
                   removeCallback = scope ++ ".removeCallback" ++ show exprId'
-               in ( [ Ln (elementVariable ++ " =  document.createTextNode(" ++ content ++ ");"),
+               in ( [ Ln (elementVariable ++ " =  document.createTextNode(\"" ++ content ++ "\");"),
                       Ln (appendChild parent (predecessorFactory exprId') elementVariable),
                       Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove()")
                     ],
-                    UpdateCallbacks [],
-                    RemoveCallbacks [Ln (removeCallback ++ "();")]
+                    [],
+                    [Ln (removeCallback ++ "();")]
                   )
-          | text <- texts,
-            exprId' <- [exprId ..]
+          | (text, exprId') <- zip texts [exprId ..]
         ]
-      
-      (successorContent, exprId', predecessors', updateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns (exprId * (count texts)) context parent (Predecessor elementVariable : predecessors)
-      mep =  (fst (head textContents)) 
-   in (
-        (map fst textContents) ++ successorContent,
+      successorExprId = exprId + length texts
+      gfhg = concatMap secondOfTriplet textContents
+      (successorContent, exprId', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns successorExprId context parent (predecessorFactory successorExprId ++ predecessors)
+   in ( concatMap firstOfTriplet textContents ++ successorContent,
         exprId',
         predecessors',
-        updateCallbacks,
-        RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallback)
+        UpdateCallbacks (concatMap secondOfTriplet textContents ++ successorUpdateCallbacks),
+        RemoveCallbacks (concatMap lastOfTriplet textContents ++ successorRemoveCallback)
       )
 -- compileView ((DynamicText (variable)) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
 --   let elementVariable = scope ++ "._el" ++ show exprId

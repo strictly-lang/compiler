@@ -31,7 +31,7 @@ data RightHandSide = Variable [String] | Tuple [RightHandSide] | FunctionCall St
 newtype Attribute = Attribute (LeftHandSide, Operator, RightHandSide)
   deriving (Show)
 
-data ViewContent = Host NodeName [ViewContent] [Option] | Text [MixedText] | Condition RightHandSide [ViewContent] [ViewContent] | Each [Attribute] [ViewContent] [ViewContent]
+data ViewContent = Host NodeName [ViewContent] [Option] | MixedText [MixedText] | Condition RightHandSide [ViewContent] [ViewContent] | Each [Attribute] [ViewContent] [ViewContent]
   deriving (Show)
 
 data MixedText = StaticText String | DynamicText RightHandSide
