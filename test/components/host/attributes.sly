@@ -2,5 +2,6 @@ view
 	div{
 		class="foo"
 		part=props.bar
+		title="combined ${props.foo} text"
 	}
 		"some text"

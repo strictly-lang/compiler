@@ -39,6 +39,7 @@ describe("host element handling", () => {
     it("attribute test", () => {
         const element = document.createElement("test-components-host-attributes");
         element.bar = "baz";
+        element.foo = "fooo"
 
         container.appendChild(element);
 
@@ -46,9 +47,14 @@ describe("host element handling", () => {
         expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
         expect(element.shadowRoot.childNodes[0].className).toBe("foo");
         expect(element.shadowRoot.childNodes[0].part.value).toBe("baz");
+        expect(element.shadowRoot.childNodes[0].title).toBe("combined fooo text");
 
         element.bar = "barbar"
 
         expect(element.shadowRoot.childNodes[0].part.value).toBe("barbar");
+        expect(element.shadowRoot.childNodes[0].title).toBe("combined fooo text");
+
+        element.foo = "foofoo"
+        expect(element.shadowRoot.childNodes[0].title).toBe("combined foofoo text");
     })
 });

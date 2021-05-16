@@ -254,12 +254,12 @@ rightHandSideToJs variableStack (Variable variableParts) =
 rightHandSideToJs variableStack (MixedTextValue []) = ("", [])
 rightHandSideToJs variableStack (MixedTextValue ((StaticText staticText) : restMixedTextValues))
   | null restMixedTextValues = ("\"" ++ staticText ++ "\"", [])
-  | otherwise = ("\"" ++ staticText ++ "\" ++ " ++ restValue, restDependencies)
+  | otherwise = ("\"" ++ staticText ++ "\" + " ++ restValue, restDependencies)
   where
     (restValue, restDependencies) = rightHandSideToJs variableStack (MixedTextValue restMixedTextValues)
 rightHandSideToJs variableStack (MixedTextValue ((DynamicText rightHandSide) : restMixedTextValues))
-  | null restMixedTextValues = (currentValue, currentDependencies)
-  | otherwise = (currentValue ++ restValue, currentDependencies ++ restDependencies)
+  | null restMixedTextValues = (currentValue ++ ".toString()", currentDependencies)
+  | otherwise = (currentValue ++ ".toString() + " ++ restValue, currentDependencies ++ restDependencies)
   where
     (currentValue, currentDependencies) = rightHandSideToJs variableStack rightHandSide
     (restValue, restDependencies) = rightHandSideToJs variableStack (MixedTextValue restMixedTextValues)
