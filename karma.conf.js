@@ -9,6 +9,7 @@ module.exports = function (config) {
         autoWatch: false,
         singleRun: true,
         files: [
+            "test/components/host/attributes.sly",
             "test/components/host/base.sly",
             "test/components/host/siblings.sly",
             "test/components/host/withtext.sly",

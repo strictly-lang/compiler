@@ -1,10 +1,10 @@
 module Parser.View.Base (viewParser, viewContentParser) where
 
-import Control.Applicative ((<|>))
-import Parser.Util.Base (indentParser, rightHandSideParser, mixedTextParser, expressionParser)
-import Text.Megaparsec (MonadParsec (lookAhead), many, manyTill, sepBy1, some)
-import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, newline, space1, string)
-import Text.Megaparsec.Char.Lexer (charLiteral, symbol)
+import Control.Applicative (optional, (<|>))
+import Parser.Util.Base (expressionParser, indentParser, mixedTextParser, rightHandSideParser)
+import Text.Megaparsec (MonadParsec (lookAhead), between, many, manyTill, sepBy1, some)
+import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, newline, space, space1, string)
+import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
 import Types
 
 viewParser :: Parser Root
@@ -20,9 +20,26 @@ viewContentParser indentationLevel = indentParser indentationLevel (hostParser i
 hostParser :: IndentationLevel -> Parser ViewContent
 hostParser indentationLevel = do
   hostElement <- some lowerChar
-  _ <- eol
+  options <- hostOptionsParser indentationLevel
   children <- many (viewContentParser (indentationLevel + 1))
-  return (Host hostElement children [])
+  return (Host hostElement options children)
+
+hostOptionsParser :: IndentationLevel -> Parser [Option]
+hostOptionsParser indentationLevel = do
+  hasOptions <- optional (between (char '{' *> eol) (indentParser indentationLevel (char '}')) (many (indentParser (indentationLevel + 1) (hostOptionParser <* eol))))
+  _ <- eol
+
+  case hasOptions of
+    Just options -> do
+      return options
+    Nothing -> return []
+
+hostOptionParser :: Parser Option
+hostOptionParser = do
+  attributeName <- some letterChar <* space
+  _ <- char '='
+  rightHandSide <- rightHandSideParser
+  return (attributeName, rightHandSide)
 
 helperParser :: IndentationLevel -> Parser ViewContent
 helperParser indentationLevel = do
@@ -55,8 +72,7 @@ eachParser indentationLevel = do
   children <- many (viewContentParser (indentationLevel + 1))
   elseChildren <- indentParser indentationLevel (elseParser 1)
 
-
   return (Each [option] children elseChildren)
 
 textParser :: Parser ViewContent
-textParser = do MixedText <$> mixedTextParser
+textParser = do MixedText <$> (mixedTextParser <* eol)

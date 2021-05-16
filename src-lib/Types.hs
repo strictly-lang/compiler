@@ -8,7 +8,7 @@ type Line = Int
 
 type Column = Int
 
-type Option = [String]
+type Option = (String, RightHandSide)
 
 type Position = (Line, Column)
 
@@ -25,13 +25,13 @@ data LeftHandSide = LeftVariable String | LeftTuple [LeftHandSide]
 data Operator = FeedOperator
   deriving (Show)
 
-data RightHandSide = Variable [String] | Tuple [RightHandSide] | FunctionCall String [RightHandSide]
+data RightHandSide = Variable [String] | Tuple [RightHandSide] | FunctionCall String [RightHandSide] | MixedTextValue [MixedText]
   deriving (Show)
 
 newtype Expression = Expression (LeftHandSide, Operator, RightHandSide)
   deriving (Show)
 
-data ViewContent = Host NodeName [ViewContent] [Option] | MixedText [MixedText] | Condition RightHandSide [ViewContent] [ViewContent] | Each [Expression] [ViewContent] [ViewContent]
+data ViewContent = Host NodeName [Option] [ViewContent]| MixedText [MixedText] | Condition RightHandSide [ViewContent] [ViewContent] | Each [Expression] [ViewContent] [ViewContent]
   deriving (Show)
 
 data MixedText = StaticText String | DynamicText RightHandSide

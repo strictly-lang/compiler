@@ -1,3 +1,6 @@
 view
-	div class="some-class"
+	div{
+		class="foo"
+		part=props.bar
+	}
 		"some text"
