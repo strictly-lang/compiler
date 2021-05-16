@@ -1,9 +1,10 @@
-module Compiler.Main (parse, getWasm, getWat, getJs, tokenize) where
+module Compiler.Main (parse, getWasm, getWat, getJs) where
 
+import Parser.Main (parseRoot)
 import Compiler.Javascript (getJs)
-import Parser.Main (parse)
-import Tokenizer.Main (tokenize)
 
+
+parse = parseRoot
 getWasm = putStrLn "getWasm"
 
 getWat = putStrLn "getWat"

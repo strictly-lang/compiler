@@ -1,10 +1,12 @@
-module Parser.Main (parse) where
+module Parser.Main (parseRoot) where
 
-import Parser.Scanner.Root (rootScanners)
-import Parser.Util (parseLines)
+import Control.Applicative ((<|>))
+import Parser.Model.Base (modelParser)
+import Parser.View.Base (viewParser)
+import Text.Megaparsec (eof, many, parse)
 import Types
 
-parse :: [[Token]] -> [Node Root]
-parse indentedLines =
-  let (rootNodes, _, restLines) = parseLines rootScanners indentedLines 0 0
-   in rootNodes
+parseRoot = parse parseRoot' ""
+
+parseRoot' :: Parser [Root]
+parseRoot' = many (viewParser <|> modelParser) <* eof
