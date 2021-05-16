@@ -28,6 +28,7 @@ readFramelessFile fileName = do
       case getJs cwd (normalizePath cwd fileName) parsedContent of
         (Just result) -> return (True, result)
         Nothing -> return  (False, "Compile Error" )
+    -- Right parsedContent -> return (True, show parsedContent)
 
 normalizePath :: String -> String -> String
 normalizePath cwd filePath@('/' : _) = filePath

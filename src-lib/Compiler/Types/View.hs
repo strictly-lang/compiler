@@ -80,7 +80,7 @@ compileView ((Host nodeName children option) : ns) exprId context@(Context (scop
         UpdateCallbacks (childrenUpdateCallbacks ++ successorUpdateCallbacks),
         RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallbacks)
       )
-compileView ((Each [Attribute (LeftTuple [LeftVariable publicEntityVariable, LeftVariable publicIndexVariable], FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
+compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, LeftVariable publicIndexVariable], FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
   let indexVariable = "index" ++ show exprId
       entitiesScope = scope ++ ".entities" ++ show exprId
       entityScope = entitiesScope ++ "[" ++ indexVariable ++ "]"
