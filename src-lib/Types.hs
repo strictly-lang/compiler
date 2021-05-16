@@ -1,5 +1,9 @@
 module Types where
 
+import Data.Functor.Identity (Identity)
+import Data.Void (Void)
+import Text.Megaparsec (Parsec)
+
 type Line = Int
 
 type Column = Int
@@ -10,70 +14,29 @@ type Position = (Line, Column)
 
 type NodeName = String
 
-data Token = Token Position TokenKind
-
-instance Show Token where
-  show (Token _ tokenKind) = show tokenKind
-
-data TokenKind
-  = Indentation Int
-  | Hash
-  | Quote
-  | Dollar
-  | LParen
-  | RParen
-  | LBrace
-  | RBrace
-  | Comma
-  | Underscore
-  | Dot
-  | Feed
-  | LogicOperator String
-  | Identity String
-
-instance Show TokenKind where
-  show (Indentation amount) = concat $ replicate amount "\t"
-  show Hash = "#"
-  show Quote = "\""
-  show Dollar = "$"
-  show LParen = "("
-  show RParen = ")"
-  show LBrace = "{"
-  show RBrace = "}"
-  show Comma = ","
-  show Underscore = "_"
-  show Dot = "."
-  show Feed = "<-"
-  show (LogicOperator operator) = operator
-  show (Identity value) = value
-
-newtype NodeTuple = NodeTuple (NodeName, Line, [Option], [Node NodeTuple])
-
-type ExprId = Int
-
-data Node a = Node ExprId a | SyntaxError String Position Position
-  deriving (Show)
-
 type IndentationLevel = Int
 
-type Scanner a = [[Token]] -> IndentationLevel -> ExprId -> ([Node a], ExprId, [[Token]])
-
-data Root = View [Node View] | Model
+data Root = View [ViewContent] | Model
   deriving (Show)
 
-data LeftExpr = LeftVariable String | LeftTuple [LeftExpr]
+data LeftHandSide = LeftVariable String | LeftTuple [LeftHandSide]
   deriving (Show)
 
 data Operator = FeedOperator
   deriving (Show)
 
-newtype Attribute = Attribute (LeftExpr, Operator, Expr)
+data RightHandSide = Variable [String] | Tuple [RightHandSide] | FunctionCall String [RightHandSide]
   deriving (Show)
 
-newtype Expr = Expr [String]
+newtype Expression = Expression (LeftHandSide, Operator, RightHandSide)
   deriving (Show)
 
-data View = Host NodeName [Node View] [Option] | StaticText String | DynamicText Expr | Condition Expr [Node View] [Node View] | Each [Attribute] [Node View] [Node View]
+data ViewContent = Host NodeName [ViewContent] [Option] | MixedText [MixedText] | Condition RightHandSide [ViewContent] [ViewContent] | Each [Expression] [ViewContent] [ViewContent]
   deriving (Show)
 
-type Compiler a = String -> [Node Root] -> Node a -> String
+data MixedText = StaticText String | DynamicText RightHandSide
+  deriving (Show)
+
+type Compiler a = String -> [Root] -> Root -> String
+
+type Parser = Parsec Void String

@@ -59,7 +59,7 @@ describe("text element handling", () => {
         expect(element.shadowRoot.childNodes[0].textContent).toBe("baz-bar-baz");
     });
 
-    xit("whitespace", () => {
+    it("whitespace", () => {
         const element = document.createElement("test-components-text-whitespace");
         element.bar = "bar";
         container.appendChild(element);
