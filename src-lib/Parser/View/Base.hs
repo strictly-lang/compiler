@@ -1,7 +1,7 @@
 module Parser.View.Base (viewParser, viewContentParser) where
 
 import Control.Applicative (optional, (<|>))
-import Parser.Util.Base (expressionParser, indentParser, mixedTextParser, rightHandSideParser)
+import Parser.Util.Base (expressionParser, indentParser, mixedTextParser, rightHandSideParser, optionsParser, optionParser)
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, manyTill, sepBy1, some)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, newline, space, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
@@ -20,19 +20,9 @@ viewContentParser indentationLevel = indentParser indentationLevel (hostParser i
 hostParser :: IndentationLevel -> Parser ViewContent
 hostParser indentationLevel = do
   hostElement <- some lowerChar
-  options <- hostOptionsParser indentationLevel
+  options <- optionsParser indentationLevel optionParser
   children <- many (viewContentParser (indentationLevel + 1))
   return (Host hostElement options children)
-
-hostOptionsParser :: IndentationLevel -> Parser [Option]
-hostOptionsParser indentationLevel = do
-  hasOptions <- optional (between (char '{' *> eol) (indentParser indentationLevel (char '}')) (many (indentParser (indentationLevel + 1) (hostOptionParser <* eol))))
-  _ <- eol
-
-  case hasOptions of
-    Just options -> do
-      return options
-    Nothing -> return []
 
 hostOptionParser :: Parser Option
 hostOptionParser = do

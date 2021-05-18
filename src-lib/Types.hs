@@ -12,26 +12,26 @@ type Option = (String, RightHandSide)
 
 type Position = (Line, Column)
 
-type NodeName = String
+type Name = String
 
 type IndentationLevel = Int
 
-data Root = View [ViewContent] | Model
+data Root = View [ViewContent] | Model Name [Option]
   deriving (Show)
 
-data LeftHandSide = LeftVariable String | LeftTuple [LeftHandSide]
+data LeftHandSide = LeftVariable (Maybe String) | LeftTuple [LeftHandSide]
   deriving (Show)
 
 data Operator = FeedOperator
   deriving (Show)
 
-data RightHandSide = Variable [String] | Tuple [RightHandSide] | FunctionCall String [RightHandSide] | MixedTextValue [MixedText]
+data RightHandSide = Variable [String] | Tuple [RightHandSide] | FunctionCall String [RightHandSide] | FunctionDefinition [LeftHandSide] RightHandSide | MixedTextValue [MixedText] | Number Integer
   deriving (Show)
 
 newtype Expression = Expression (LeftHandSide, Operator, RightHandSide)
   deriving (Show)
 
-data ViewContent = Host NodeName [Option] [ViewContent]| MixedText [MixedText] | Condition RightHandSide [ViewContent] [ViewContent] | Each [Expression] [ViewContent] [ViewContent]
+data ViewContent = Host Name [Option] [ViewContent] | MixedText [MixedText] | Condition RightHandSide [ViewContent] [ViewContent] | Each [Expression] [ViewContent] [ViewContent]
   deriving (Show)
 
 data MixedText = StaticText String | DynamicText RightHandSide

@@ -1,9 +1,9 @@
-module Parser.Util.Base (indentParser, expressionParser, rightHandSideParser, mixedTextParser) where
+module Parser.Util.Base (indentParser, expressionParser, rightHandSideParser, mixedTextParser, optionsParser, optionParser) where
 
-import Control.Applicative (Alternative (many), (<|>))
-import Text.Megaparsec (MonadParsec (eof, lookAhead), Pos, atEnd, between, manyTill, sepBy, sepBy1, some)
-import Text.Megaparsec.Char (char, eol, letterChar, space, string)
-import Text.Megaparsec.Char.Lexer (charLiteral, indentGuard)
+import Control.Applicative (Alternative (many), optional, (<|>))
+import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, sepBy1, some)
+import Text.Megaparsec.Char (char, digitChar, eol, letterChar, space, space1, string)
+import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
 
 -- indentParser :: Pos  -> Parser a -> Parser a
@@ -19,7 +19,7 @@ indentParser indentationLevel parser = do
 mixedTextParser :: Parser [MixedText]
 mixedTextParser =
   do char '\"'
-     *> (dynamicTextParser <|> staticTextParser) `manyTill` char '"'
+    *> (dynamicTextParser <|> staticTextParser) `manyTill` char '"'
 
 staticTextParser :: Parser MixedText
 staticTextParser = do
@@ -47,9 +47,16 @@ leftHandSideTupleParser = do
 
 leftHandSideVariableParser :: Parser LeftHandSide
 leftHandSideVariableParser = do
-  variable <- some letterChar
-  _ <- space
-  return (LeftVariable variable)
+  hasHole <- optional (char '_')
+  case hasHole of
+    Just _ -> do
+      _ <- space
+      return (LeftVariable Nothing)
+    Nothing ->
+      do
+        variable <- some letterChar
+        _ <- space
+        return (LeftVariable (Just variable))
 
 leftHandSideParser :: Parser LeftHandSide
 leftHandSideParser = (leftHandSideTupleParser <|> leftHandSideVariableParser) <* space
@@ -64,11 +71,40 @@ operatorParser = feedOperatorParser <* space
 
 rightHandSideVariableParser :: Parser RightHandSide
 rightHandSideVariableParser = do
-  variableName <- some letterChar `sepBy1` char '.'
+  variableName <- some letterChar `sepBy` char '.'
   return (Variable variableName)
 
 rightHandSideTextParser :: Parser RightHandSide
 rightHandSideTextParser = do MixedTextValue <$> mixedTextParser
 
 rightHandSideParser :: Parser RightHandSide
-rightHandSideParser = rightHandSideVariableParser <|> rightHandSideTextParser
+rightHandSideParser = rightHandSideNumberParser <|> rightHandSideTextParser <|> try rightHandSideVariableParser <|> rightHandSideFunctionParser
+
+rightHandSideNumberParser :: Parser RightHandSide
+rightHandSideNumberParser = do
+  value <- some digitChar
+  return (Number (read value))
+
+rightHandSideFunctionParser :: Parser RightHandSide
+rightHandSideFunctionParser = do
+  arguments <- try (leftHandSideParser `sepBy1` space1)
+  _ <- string "->"
+  _ <- space
+  FunctionDefinition arguments <$> rightHandSideParser
+
+optionsParser :: IndentationLevel -> Parser a -> Parser [a]
+optionsParser indentationLevel optionParser = do
+  hasOptions <- optional (between (char '{' *> eol) (indentParser indentationLevel (char '}')) (many (indentParser (indentationLevel + 1) (optionParser <* eol))))
+  _ <- eol
+  case hasOptions of
+    Just options -> do
+      return options
+    Nothing -> return []
+
+optionParser :: Parser Option
+optionParser = do
+  attributeName <- some letterChar <* space
+  _ <- char '='
+  _ <- space
+  rightHandSide <- rightHandSideParser
+  return (attributeName, rightHandSide)

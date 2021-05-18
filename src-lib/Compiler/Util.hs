@@ -33,7 +33,7 @@ slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
 
 publicVariableToInternal :: VariableStack -> [String] -> Maybe String
 publicVariableToInternal (stack@(publicStack, internalStack) : vs) search
-  | publicStack == take (length publicStack) search = Just (intercalate "." (internalStack : drop (length publicStack) search))
+  | publicStack == take (length publicStack) (map Just search) = Just (intercalate "." (internalStack : drop (length publicStack) search))
   | otherwise = publicVariableToInternal vs search
 
 indent :: [Indent] -> String
