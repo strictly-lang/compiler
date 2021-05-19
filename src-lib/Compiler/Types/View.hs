@@ -31,7 +31,7 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
               let elementVariable = elementVariableFactory exprId'
                   updateCallback = scope ++ ".updateCallback" ++ show exprId'
                   removeCallback = scope ++ ".removeCallback" ++ show exprId'
-                  rightHandJsValue = rightHandSideToJs variableStack rightHandValue
+                  rightHandJsValue = rightHandSideValueToJs variableStack rightHandValue
                in ( [ Ln (elementVariable ++ " =  document.createTextNode(" ++ fst rightHandJsValue ++ ");"),
                       Ln (appendChild parent (predecessorFactory exprId') elementVariable),
                       Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove()")
@@ -70,7 +70,7 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
       (childrenContent, exprId', _, UpdateCallbacks childrenUpdateCallbacks, _) = compileView children (exprId + 1) context elementVariable []
       (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent (Predecessor elementVariable : predecessors)
    in ( [Ln (elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");")]
-          ++ [Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", " ++ fst (rightHandSideToJs variableStack attributeRightHandSide) ++ ")") | (attributeKey, attributeRightHandSide) <- options]
+          ++ [Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", " ++ fst (rightHandSideValueToJs variableStack attributeRightHandSide) ++ ")") | (attributeKey, attributeRightHandSide) <- options]
           ++ [ Ln (appendChild parent predecessors elementVariable),
                Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove();")
              ]
@@ -79,8 +79,8 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
         exprId'',
         predecessors',
         UpdateCallbacks ([(dependency, [
-          Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", " ++ fst (rightHandSideToJs variableStack attributeRightHandSide) ++ ")")
-        ]) | (attributeKey, attributeRightHandSide) <- options, dependency <- snd (rightHandSideToJs variableStack attributeRightHandSide)] ++ childrenUpdateCallbacks ++ successorUpdateCallbacks),
+          Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", " ++ fst (rightHandSideValueToJs variableStack attributeRightHandSide) ++ ")")
+        ]) | (attributeKey, attributeRightHandSide) <- options, dependency <- snd (rightHandSideValueToJs variableStack attributeRightHandSide)] ++ childrenUpdateCallbacks ++ successorUpdateCallbacks),
         RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallbacks)
       )
 compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, LeftVariable publicIndexVariable], FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
@@ -89,7 +89,7 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
       entityScope = entitiesScope ++ "[" ++ indexVariable ++ "]"
       entityValue = entityScope ++ ".value"
       updateCallback = scope ++ ".updateCallback" ++ show exprId
-      (internalEntitiesVariable, sourceValueDependencies) = rightHandSideToJs variableStack sourceValue
+      (internalEntitiesVariable, sourceValueDependencies) = rightHandSideValueToJs variableStack sourceValue
       createEntityCallback = "createEach" ++ show exprId
       predecessorOf = scope ++ ".getPredecessorOf" ++ show exprId
       successor = predecessorOf ++ "(" ++ entitiesScope ++ ".length - 1)"
@@ -173,7 +173,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
       (positiveChildrenContent, exprId', positiveSuccessor, UpdateCallbacks positiveChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView positiveChildren (exprId + 1) context parent predecessors
       (negativeChildrenContent, exprId'', negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) = compileView negativeChildren (exprId' + 1) context parent predecessors
       successor = "(" ++ conditionVariable ++ " ? " ++ predecessorChain positiveSuccessor ++ " : " ++ predecessorChain negativeSuccessor ++ ")"
-      (internalConditionValue, conditionValueDependencies) = rightHandSideToJs variableStack conditionValue
+      (internalConditionValue, conditionValueDependencies) = rightHandSideValueToJs variableStack conditionValue
       createPositiveCallback = scope ++ ".createPositive" ++ show exprId
       createNegativeCallback = scope ++ ".createNegative" ++ show exprId
       removeCallback = scope ++ ".removeCallback" ++ show exprId
@@ -247,23 +247,22 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
         RemoveCallbacks successorRemoveCallbacks -- TODO add self removage
       )
 
-rightHandSideToJs :: VariableStack -> RightHandSide -> (String, [String])
-rightHandSideToJs variableStack (Variable variableParts) =
+rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> (String, [String])
+rightHandSideValueToJs variableStack (Variable variableParts) =
   let variableName = unsafeVariable (publicVariableToInternal variableStack variableParts)
    in (variableName, [variableName])
-rightHandSideToJs variableStack (MixedTextValue []) = ("", [])
-rightHandSideToJs variableStack (MixedTextValue ((StaticText staticText) : restMixedTextValues))
+rightHandSideValueToJs variableStack (MixedTextValue []) = ("", [])
+rightHandSideValueToJs variableStack (MixedTextValue ((StaticText staticText) : restMixedTextValues))
   | null restMixedTextValues = ("\"" ++ staticText ++ "\"", [])
   | otherwise = ("\"" ++ staticText ++ "\" + " ++ restValue, restDependencies)
   where
-    (restValue, restDependencies) = rightHandSideToJs variableStack (MixedTextValue restMixedTextValues)
-rightHandSideToJs variableStack (MixedTextValue ((DynamicText rightHandSide) : restMixedTextValues))
+    (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
+rightHandSideValueToJs variableStack (MixedTextValue ((DynamicText rightHandSide) : restMixedTextValues))
   | null restMixedTextValues = (currentValue ++ ".toString()", currentDependencies)
   | otherwise = (currentValue ++ ".toString() + " ++ restValue, currentDependencies ++ restDependencies)
   where
-    (currentValue, currentDependencies) = rightHandSideToJs variableStack rightHandSide
-    (restValue, restDependencies) = rightHandSideToJs variableStack (MixedTextValue restMixedTextValues)
-
+    (currentValue, currentDependencies) = rightHandSideValueToJs variableStack rightHandSide
+    (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
 -- TODO: a compileerror should be thrown instead
 unsafeVariable :: Maybe String -> String
 unsafeVariable (Just variable) = variable

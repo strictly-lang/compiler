@@ -1,8 +1,8 @@
-module Parser.Util.Base (indentParser, expressionParser, rightHandSideParser, mixedTextParser, optionsParser, optionParser) where
+module Parser.Util.Base (indentParser, expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc) where
 
 import Control.Applicative (Alternative (many), optional, (<|>))
 import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, sepBy1, some)
-import Text.Megaparsec.Char (char, digitChar, eol, letterChar, space, space1, string)
+import Text.Megaparsec.Char (char, digitChar, eol, letterChar, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
 
@@ -28,12 +28,12 @@ staticTextParser = do
 
 dynamicTextParser :: Parser MixedText
 dynamicTextParser = do
-  value <- string "${" *> rightHandSideParser <* char '}'
+  value <- string "${" *> rightHandSideValueParser <* char '}'
 
   return (DynamicText value)
 
-expressionParser :: Parser Expression
-expressionParser = do
+expressionParser :: Parser a -> Parser (Expression a)
+expressionParser rightHandSideParser = do
   leftHandSide <- leftHandSideParser
   operator <- operatorParser
   rightHandSide <- rightHandSideParser
@@ -42,7 +42,7 @@ expressionParser = do
 
 leftHandSideTupleParser :: Parser LeftHandSide
 leftHandSideTupleParser = do
-  tuples <- between (char '(') (char ')') (sepBy leftHandSideParser (char ',' <* space))
+  tuples <- between (char '(') (char ')') (sepBy leftHandSideParser (char ',' <* sc))
   return (LeftTuple tuples)
 
 leftHandSideVariableParser :: Parser LeftHandSide
@@ -50,16 +50,15 @@ leftHandSideVariableParser = do
   hasHole <- optional (char '_')
   case hasHole of
     Just _ -> do
-      _ <- space
+      _ <- sc
       return (LeftVariable Nothing)
     Nothing ->
       do
-        variable <- some letterChar
-        _ <- space
+        variable <- some letterChar <* sc
         return (LeftVariable (Just variable))
 
 leftHandSideParser :: Parser LeftHandSide
-leftHandSideParser = (leftHandSideTupleParser <|> leftHandSideVariableParser) <* space
+leftHandSideParser = (leftHandSideTupleParser <|> leftHandSideVariableParser) <* sc
 
 feedOperatorParser :: Parser Operator
 feedOperatorParser = do
@@ -67,44 +66,73 @@ feedOperatorParser = do
   return FeedOperator
 
 operatorParser :: Parser Operator
-operatorParser = feedOperatorParser <* space
+operatorParser = feedOperatorParser <* sc
 
-rightHandSideVariableParser :: Parser RightHandSide
-rightHandSideVariableParser = do
+rightHandSideOperatorParser :: Parser RightHandSideOperator
+rightHandSideOperatorParser = do
+  operator <- (rightHandSideOperatorPlusParser <|> rightHandSideOperatorMinusParser <|> rightHandSideOperatorMultiplyParser <|> rightHandSideOperatorDivisionParser) <* sc
+  return Plus
+
+rightHandSideOperatorPlusParser :: Parser RightHandSideOperator
+rightHandSideOperatorPlusParser = do
+  _ <- char '+'
+  return Plus
+
+rightHandSideOperatorMinusParser :: Parser RightHandSideOperator
+rightHandSideOperatorMinusParser = do
+  _ <- char '-'
+  return Minus
+
+rightHandSideOperatorMultiplyParser :: Parser RightHandSideOperator
+rightHandSideOperatorMultiplyParser = do
+  _ <- char '*'
+  return Multiply
+
+rightHandSideOperatorDivisionParser :: Parser RightHandSideOperator
+rightHandSideOperatorDivisionParser = do
+  _ <- char '/'
+  return Division
+
+rightHandSideValueVariableParser :: Parser RightHandSideValue
+rightHandSideValueVariableParser = do
   variableName <- some letterChar `sepBy` char '.'
   return (Variable variableName)
 
-rightHandSideTextParser :: Parser RightHandSide
-rightHandSideTextParser = do MixedTextValue <$> mixedTextParser
+rightHandSideValueTextParser :: Parser RightHandSideValue
+rightHandSideValueTextParser = do MixedTextValue <$> mixedTextParser
 
-rightHandSideParser :: Parser RightHandSide
-rightHandSideParser = rightHandSideNumberParser <|> rightHandSideTextParser <|> try rightHandSideVariableParser <|> rightHandSideFunctionParser
+rightHandSideValueParser :: Parser RightHandSideValue
+rightHandSideValueParser = do
+  rightHandSideValue <- (rightHandSideValueNumberParser <|> rightHandSideValueTextParser <|> rightHandSideValueVariableParser) <* sc
+  optionalOperator <- optional rightHandSideOperatorParser
 
-rightHandSideNumberParser :: Parser RightHandSide
-rightHandSideNumberParser = do
+  case optionalOperator of
+    Just operator -> do
+      RightHandSideOperation operator rightHandSideValue <$> rightHandSideValueParser
+    Nothing -> return rightHandSideValue
+
+rightHandSideValueNumberParser :: Parser RightHandSideValue
+rightHandSideValueNumberParser = do
   value <- some digitChar
   return (Number (read value))
 
-rightHandSideFunctionParser :: Parser RightHandSide
+rightHandSideFunctionParser :: Parser FunctionDefinition
 rightHandSideFunctionParser = do
-  arguments <- try (leftHandSideParser `sepBy1` space1)
-  _ <- string "->"
-  _ <- space
-  FunctionDefinition arguments <$> rightHandSideParser
+  arguments <- leftHandSideParser `manyTill` string "->"
+  _ <- sc
+  rightHandSideValue <- rightHandSideValueParser
+  return (FunctionDefinition (arguments, rightHandSideValue))
 
 optionsParser :: IndentationLevel -> Parser a -> Parser [a]
-optionsParser indentationLevel optionParser = do
-  hasOptions <- optional (between (char '{' *> eol) (indentParser indentationLevel (char '}')) (many (indentParser (indentationLevel + 1) (optionParser <* eol))))
+optionsParser indentationLevel optionValueParser = do
+  hasOptions <- optional (between (char '{' *> eol) (indentParser indentationLevel (char '}')) (many (indentParser (indentationLevel + 1) (optionValueParser <* eol))))
   _ <- eol
   case hasOptions of
     Just options -> do
       return options
     Nothing -> return []
 
-optionParser :: Parser Option
-optionParser = do
-  attributeName <- some letterChar <* space
-  _ <- char '='
-  _ <- space
-  rightHandSide <- rightHandSideParser
-  return (attributeName, rightHandSide)
+sc :: Parser ()
+sc = do
+  _ <- many (char ' ')
+  return ()

@@ -8,7 +8,7 @@ type Line = Int
 
 type Column = Int
 
-type Option = (String, RightHandSide)
+type Option a = (String, a)
 
 type Position = (Line, Column)
 
@@ -16,7 +16,7 @@ type Name = String
 
 type IndentationLevel = Int
 
-data Root = View [ViewContent] | Model Name [Option]
+data Root = View [ViewContent] | Model Name [Option String]
   deriving (Show)
 
 data LeftHandSide = LeftVariable (Maybe String) | LeftTuple [LeftHandSide]
@@ -25,16 +25,21 @@ data LeftHandSide = LeftVariable (Maybe String) | LeftTuple [LeftHandSide]
 data Operator = FeedOperator
   deriving (Show)
 
-data RightHandSide = Variable [String] | Tuple [RightHandSide] | FunctionCall String [RightHandSide] | FunctionDefinition [LeftHandSide] RightHandSide | MixedTextValue [MixedText] | Number Integer
+data RightHandSideOperator = Plus | Minus | Multiply | Division
   deriving (Show)
 
-newtype Expression = Expression (LeftHandSide, Operator, RightHandSide)
+data RightHandSideValue = Variable [String] | Tuple [RightHandSideValue] | FunctionCall String [RightHandSideValue] | MixedTextValue [MixedText] | Number Integer | RightHandSideOperation RightHandSideOperator RightHandSideValue RightHandSideValue
   deriving (Show)
 
-data ViewContent = Host Name [Option] [ViewContent] | MixedText [MixedText] | Condition RightHandSide [ViewContent] [ViewContent] | Each [Expression] [ViewContent] [ViewContent]
+newtype FunctionDefinition = FunctionDefinition ([LeftHandSide], RightHandSideValue)
+
+newtype Expression a = Expression (LeftHandSide, Operator, a)
   deriving (Show)
 
-data MixedText = StaticText String | DynamicText RightHandSide
+data ViewContent = Host Name [Option RightHandSideValue] [ViewContent] | MixedText [MixedText] | Condition RightHandSideValue [ViewContent] [ViewContent] | Each [Expression RightHandSideValue] [ViewContent] [ViewContent]
+  deriving (Show)
+
+data MixedText = StaticText String | DynamicText RightHandSideValue
   deriving (Show)
 
 type Compiler a = String -> [Root] -> Root -> String

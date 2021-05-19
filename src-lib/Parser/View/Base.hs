@@ -1,9 +1,9 @@
 module Parser.View.Base (viewParser, viewContentParser) where
 
 import Control.Applicative (optional, (<|>))
-import Parser.Util.Base (expressionParser, indentParser, mixedTextParser, rightHandSideParser, optionsParser, optionParser)
+import Parser.Util.Base (expressionParser, indentParser, mixedTextParser, optionsParser, rightHandSideValueParser, sc)
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, manyTill, sepBy1, some)
-import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, newline, space, space1, string)
+import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, newline, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
 import Types
 
@@ -20,15 +20,15 @@ viewContentParser indentationLevel = indentParser indentationLevel (hostParser i
 hostParser :: IndentationLevel -> Parser ViewContent
 hostParser indentationLevel = do
   hostElement <- some lowerChar
-  options <- optionsParser indentationLevel optionParser
+  options <- optionsParser indentationLevel hostOptionParser
   children <- many (viewContentParser (indentationLevel + 1))
   return (Host hostElement options children)
 
-hostOptionParser :: Parser Option
+hostOptionParser :: Parser (Option RightHandSideValue)
 hostOptionParser = do
-  attributeName <- some letterChar <* space
+  attributeName <- some letterChar <* sc
   _ <- char '='
-  rightHandSide <- rightHandSideParser
+  rightHandSide <- rightHandSideValueParser
   return (attributeName, rightHandSide)
 
 helperParser :: IndentationLevel -> Parser ViewContent
@@ -38,9 +38,8 @@ helperParser indentationLevel = do
 
 ifParser :: IndentationLevel -> Parser ViewContent
 ifParser indentationLevel = do
-  _ <- string "if"
-  _ <- space1
-  rightHandSide <- rightHandSideParser
+  _ <- string "if" <* sc
+  rightHandSide <- rightHandSideValueParser
   _ <- eol
   children <- many (viewContentParser (indentationLevel + 1))
   elseChildren <- indentParser indentationLevel (elseParser 1)
@@ -57,7 +56,7 @@ eachParser :: IndentationLevel -> Parser ViewContent
 eachParser indentationLevel = do
   _ <- string "each"
   _ <- space1
-  option <- expressionParser
+  option <- expressionParser rightHandSideValueParser
   _ <- eol
   children <- many (viewContentParser (indentationLevel + 1))
   elseChildren <- indentParser indentationLevel (elseParser 1)
