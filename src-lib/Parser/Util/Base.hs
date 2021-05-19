@@ -13,12 +13,13 @@ import Types
 
 indentParser :: IndentationLevel -> Parser a -> Parser a
 indentParser indentationLevel parser = do
+  _ <- many eol -- Empty lines should not break indentation-handling
   _ <- string (replicate indentationLevel '\t')
   parser
 
 indentParserRepeat :: IndentationLevel -> Parser a -> Parser [a]
 indentParserRepeat indentationLevel parser = do
-  many (optional eol *> indentParser indentationLevel parser)
+  many (indentParser indentationLevel parser)
 
 mixedTextParser :: Parser [MixedText]
 mixedTextParser =
