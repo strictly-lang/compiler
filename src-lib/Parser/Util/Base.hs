@@ -102,9 +102,10 @@ rightHandSideValueVariableParser :: Parser RightHandSideValue
 rightHandSideValueVariableParser = do
   variableName <- Variable <$> some letterChar `sepBy` char '.'
   hasFunctionCall <- optional (char '(')
+
   case hasFunctionCall of
     Just _ -> do
-      arguments <- manyTill (rightHandSideValueParser <* char ',' <* sc) (char ')')
+      arguments <- manyTill (rightHandSideValueParser <* sc) (char ')')
       return (FunctionCall variableName arguments)
     Nothing -> return variableName
 
@@ -126,12 +127,10 @@ rightHandSideValueNumberParser = do
   value <- some digitChar
   return (Number (read value))
 
-rightHandSideFunctionParser :: Parser FunctionDefinition
+rightHandSideFunctionParser :: Parser RightHandSide
 rightHandSideFunctionParser = do
-  arguments <- leftHandSideParser `manyTill` string "->"
-  _ <- sc
-  rightHandSideValue <- rightHandSideValueParser
-  return (FunctionDefinition (arguments, rightHandSideValue))
+  arguments <- (leftHandSideParser `manyTill` string "->") <* sc
+  FunctionDefinition arguments <$> rightHandSideValueParser
 
 optionsParser :: IndentationLevel -> Parser a -> Parser [a]
 optionsParser indentationLevel optionValueParser = do

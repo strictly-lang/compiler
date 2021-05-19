@@ -1,7 +1,7 @@
 module Parser.View.Base (viewParser, viewContentParser) where
 
 import Control.Applicative (optional, (<|>))
-import Parser.Util.Base (expressionParser, indentParserRepeat, indentParser, mixedTextParser, optionsParser, rightHandSideValueParser, sc)
+import Parser.Util.Base (expressionParser, indentParser, indentParserRepeat, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc)
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, manyTill, sepBy1, some)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, newline, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
@@ -9,9 +9,9 @@ import Types
 
 viewParser :: Parser Root
 viewParser = do
-   _ <- string "view"
-   _ <- newline
-   View <$> viewContentParser 1
+  _ <- string "view"
+  _ <- newline
+  View <$> viewContentParser 1
 
 viewContentParser :: IndentationLevel -> Parser [ViewContent]
 viewContentParser indentationLevel = indentParserRepeat indentationLevel (hostParser indentationLevel <|> helperParser indentationLevel <|> textParser)
@@ -23,12 +23,18 @@ hostParser indentationLevel = do
   children <- viewContentParser (indentationLevel + 1)
   return (Host hostElement options children)
 
-hostOptionParser :: Parser (Option RightHandSideValue)
+hostOptionParser :: Parser (Option RightHandSide)
 hostOptionParser = do
-  attributeName <- some letterChar <* sc
-  _ <- char '='
-  rightHandSide <- rightHandSideValueParser
-  return (attributeName, rightHandSide)
+  isEvent <- optional (string "on")
+  attributeName <- some letterChar 
+  _ <- sc *> char '=' <* sc
+  case isEvent of
+    Just _ -> do
+      functionDefinition <- rightHandSideFunctionParser
+      return (attributeName, functionDefinition)
+    Nothing -> do
+      rightHandSide <- rightHandSideValueParser
+      return (attributeName, RightHandSideValue rightHandSide)
 
 helperParser :: IndentationLevel -> Parser ViewContent
 helperParser indentationLevel = do

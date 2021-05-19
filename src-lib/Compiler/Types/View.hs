@@ -70,7 +70,11 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
       (childrenContent, exprId', _, UpdateCallbacks childrenUpdateCallbacks, _) = compileView children (exprId + 1) context elementVariable []
       (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent (Predecessor elementVariable : predecessors)
    in ( [Ln (elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");")]
-          ++ [Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", " ++ fst (rightHandSideValueToJs variableStack attributeRightHandSide) ++ ")") | (attributeKey, attributeRightHandSide) <- options]
+          ++ [ case attributeRightHandSide of
+                 FunctionDefinition leftHandSides rightHandSideValue -> Ln ""
+                 RightHandSideValue rightHandSideValue -> Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", " ++ fst (rightHandSideValueToJs variableStack rightHandSideValue) ++ ")")
+               | (attributeKey, attributeRightHandSide) <- options
+             ]
           ++ [ Ln (appendChild parent predecessors elementVariable),
                Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove();")
              ]
@@ -78,9 +82,17 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
           ++ successorContent,
         exprId'',
         predecessors',
-        UpdateCallbacks ([(dependency, [
-          Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", " ++ fst (rightHandSideValueToJs variableStack attributeRightHandSide) ++ ")")
-        ]) | (attributeKey, attributeRightHandSide) <- options, dependency <- snd (rightHandSideValueToJs variableStack attributeRightHandSide)] ++ childrenUpdateCallbacks ++ successorUpdateCallbacks),
+        UpdateCallbacks
+          ( [ ( dependency,
+                [ Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", " ++ fst (rightHandSideValueToJs variableStack attributeRightHandSide) ++ ")")
+                ]
+              )
+              | (attributeKey, RightHandSideValue attributeRightHandSide) <- options,
+                dependency <- snd (rightHandSideValueToJs variableStack attributeRightHandSide)
+            ]
+              ++ childrenUpdateCallbacks
+              ++ successorUpdateCallbacks
+          ),
         RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallbacks)
       )
 compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, LeftVariable publicIndexVariable], FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
@@ -263,6 +275,7 @@ rightHandSideValueToJs variableStack (MixedTextValue ((DynamicText rightHandSide
   where
     (currentValue, currentDependencies) = rightHandSideValueToJs variableStack rightHandSide
     (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
+
 -- TODO: a compileerror should be thrown instead
 unsafeVariable :: Maybe String -> String
 unsafeVariable (Just variable) = variable
