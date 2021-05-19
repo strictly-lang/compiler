@@ -33,7 +33,7 @@ hostOptionParser = do
 helperParser :: IndentationLevel -> Parser ViewContent
 helperParser indentationLevel = do
   _ <- char '#'
-  eachParser indentationLevel <|> ifParser indentationLevel
+  eachParser indentationLevel <|> ifParser indentationLevel <|> modelParser indentationLevel
 
 ifParser :: IndentationLevel -> Parser ViewContent
 ifParser indentationLevel = do
@@ -62,3 +62,11 @@ eachParser indentationLevel = do
 
 textParser :: Parser ViewContent
 textParser = do MixedText <$> (mixedTextParser <* eol)
+
+modelParser :: IndentationLevel -> Parser ViewContent
+modelParser indentationLevel = do
+  _ <- string "model" <* space1
+  option <- expressionParser rightHandSideValueParser
+  _ <- eol
+  children <- viewContentParser (indentationLevel + 1)
+  return (ViewModel option children)

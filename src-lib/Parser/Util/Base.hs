@@ -100,8 +100,13 @@ rightHandSideOperatorDivisionParser = do
 
 rightHandSideValueVariableParser :: Parser RightHandSideValue
 rightHandSideValueVariableParser = do
-  variableName <- some letterChar `sepBy` char '.'
-  return (Variable variableName)
+  variableName <- Variable <$> some letterChar `sepBy` char '.'
+  hasFunctionCall <- optional (char '(')
+  case hasFunctionCall of
+    Just _ -> do
+      arguments <- manyTill (rightHandSideValueParser <* char ',' <* sc) (char ')')
+      return (FunctionCall variableName arguments)
+    Nothing -> return variableName
 
 rightHandSideValueTextParser :: Parser RightHandSideValue
 rightHandSideValueTextParser = do MixedTextValue <$> mixedTextParser

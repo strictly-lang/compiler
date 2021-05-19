@@ -28,7 +28,7 @@ data Operator = FeedOperator
 data RightHandSideOperator = Plus | Minus | Multiply | Division
   deriving (Show)
 
-data RightHandSideValue = Variable [String] | Tuple [RightHandSideValue] | FunctionCall String [RightHandSideValue] | MixedTextValue [MixedText] | Number Integer | RightHandSideOperation RightHandSideOperator RightHandSideValue RightHandSideValue
+data RightHandSideValue = Variable [String] | Tuple [RightHandSideValue] | FunctionCall RightHandSideValue [RightHandSideValue] | MixedTextValue [MixedText] | Number Integer | RightHandSideOperation RightHandSideOperator RightHandSideValue RightHandSideValue
   deriving (Show)
 
 newtype FunctionDefinition = FunctionDefinition ([LeftHandSide], RightHandSideValue)
@@ -36,7 +36,7 @@ newtype FunctionDefinition = FunctionDefinition ([LeftHandSide], RightHandSideVa
 newtype Expression a = Expression (LeftHandSide, Operator, a)
   deriving (Show)
 
-data ViewContent = Host Name [Option RightHandSideValue] [ViewContent] | MixedText [MixedText] | Condition RightHandSideValue [ViewContent] [ViewContent] | Each [Expression RightHandSideValue] [ViewContent] [ViewContent]
+data ViewContent = Host Name [Option RightHandSideValue] [ViewContent] | MixedText [MixedText] | Condition RightHandSideValue [ViewContent] [ViewContent] | Each [Expression RightHandSideValue] [ViewContent] [ViewContent] | ViewModel (Expression RightHandSideValue) [ViewContent]
   deriving (Show)
 
 data MixedText = StaticText String | DynamicText RightHandSideValue
