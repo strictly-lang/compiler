@@ -1,4 +1,4 @@
-module Parser.Util.Base (indentParser, expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc) where
+module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser) where
 
 import Control.Applicative (Alternative (many), optional, (<|>))
 import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, sepBy1, some)
@@ -15,6 +15,10 @@ indentParser :: IndentationLevel -> Parser a -> Parser a
 indentParser indentationLevel parser = do
   _ <- string (replicate indentationLevel '\t')
   parser
+
+indentParserRepeat :: IndentationLevel -> Parser a -> Parser [a]
+indentParserRepeat indentationLevel parser = do
+  many (optional eol *> indentParser indentationLevel parser)
 
 mixedTextParser :: Parser [MixedText]
 mixedTextParser =
@@ -125,7 +129,7 @@ rightHandSideFunctionParser = do
 
 optionsParser :: IndentationLevel -> Parser a -> Parser [a]
 optionsParser indentationLevel optionValueParser = do
-  hasOptions <- optional (between (char '{' *> eol) (indentParser indentationLevel (char '}')) (many (indentParser (indentationLevel + 1) (optionValueParser <* eol))))
+  hasOptions <- optional (between (char '{' *> eol) (indentParser indentationLevel (char '}')) (indentParserRepeat (indentationLevel + 1) (optionValueParser <* eol)))
   _ <- eol
   case hasOptions of
     Just options -> do
