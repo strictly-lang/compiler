@@ -1,8 +1,8 @@
-module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser) where
+module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser) where
 
 import Control.Applicative (Alternative (many), optional, (<|>))
-import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, sepBy1, some)
-import Text.Megaparsec.Char (char, digitChar, eol, letterChar, space1, string)
+import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, some)
+import Text.Megaparsec.Char (char, digitChar, eol, letterChar, lowerChar, string, upperChar)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
 
@@ -20,6 +20,18 @@ indentParser indentationLevel parser = do
 indentParserRepeat :: IndentationLevel -> Parser a -> Parser [a]
 indentParserRepeat indentationLevel parser = do
   many (indentParser indentationLevel parser)
+
+identityParser :: Parser String
+identityParser = do
+  firstChar <- lowerChar
+  rest <- many letterChar
+  return (firstChar : rest)
+
+typeParser :: Parser String
+typeParser = do
+  firstChar <- upperChar
+  rest <- many letterChar
+  return (firstChar : rest)
 
 mixedTextParser :: Parser [MixedText]
 mixedTextParser =
@@ -57,13 +69,15 @@ leftHandSideVariableParser = do
     Just _ -> do
       _ <- sc
       return (LeftVariable Nothing)
-    Nothing ->
-      do
-        variable <- some letterChar <* sc
-        return (LeftVariable (Just variable))
+    Nothing -> do
+      variable <- identityParser <* sc
+      return (LeftVariable (Just variable))
+
+leftHandSideTypeParser :: Parser LeftHandSide
+leftHandSideTypeParser = LeftType <$> typeParser
 
 leftHandSideParser :: Parser LeftHandSide
-leftHandSideParser = (leftHandSideTupleParser <|> leftHandSideVariableParser) <* sc
+leftHandSideParser = (leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser) <* sc
 
 feedOperatorParser :: Parser Operator
 feedOperatorParser = do
@@ -100,21 +114,25 @@ rightHandSideOperatorDivisionParser = do
 
 rightHandSideValueVariableParser :: Parser RightHandSideValue
 rightHandSideValueVariableParser = do
-  variableName <- Variable <$> some letterChar `sepBy` char '.'
+  variableName <- Variable <$> identityParser `sepBy` char '.'
   hasFunctionCall <- optional (char '(')
 
   case hasFunctionCall of
     Just _ -> do
-      arguments <- manyTill (rightHandSideValueParser <* sc) (char ')')
+      -- When syntax-error inside arguments, endless loop occures
+      arguments <- manyTill rightHandSideValueParser (char ')')
       return (FunctionCall variableName arguments)
     Nothing -> return variableName
 
 rightHandSideValueTextParser :: Parser RightHandSideValue
 rightHandSideValueTextParser = do MixedTextValue <$> mixedTextParser
 
+rightHandSideValueTypeParser :: Parser RightHandSideValue
+rightHandSideValueTypeParser = do RightHandSideType <$> typeParser
+
 rightHandSideValueParser :: Parser RightHandSideValue
 rightHandSideValueParser = do
-  rightHandSideValue <- (rightHandSideValueNumberParser <|> rightHandSideValueTextParser <|> rightHandSideValueVariableParser) <* sc
+  rightHandSideValue <- (rightHandSideValueTypeParser <|> rightHandSideValueNumberParser <|> rightHandSideValueTextParser <|> rightHandSideValueVariableParser) <* sc
   optionalOperator <- optional rightHandSideOperatorParser
 
   case optionalOperator of

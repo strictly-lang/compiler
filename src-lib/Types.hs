@@ -19,7 +19,7 @@ type IndentationLevel = Int
 data Root = View [ViewContent] | Model Name [Option String]
   deriving (Show)
 
-data LeftHandSide = LeftVariable (Maybe String) | LeftTuple [LeftHandSide]
+data LeftHandSide = LeftVariable (Maybe String) | LeftTuple [LeftHandSide] | LeftType String
   deriving (Show)
 
 data Operator = FeedOperator
@@ -28,7 +28,7 @@ data Operator = FeedOperator
 data RightHandSideOperator = Plus | Minus | Multiply | Division
   deriving (Show)
 
-data RightHandSideValue = Variable [String] | Tuple [RightHandSideValue] | FunctionCall RightHandSideValue [RightHandSideValue] | MixedTextValue [MixedText] | Number Integer | RightHandSideOperation RightHandSideOperator RightHandSideValue RightHandSideValue
+data RightHandSideValue = Variable [String] | Tuple [RightHandSideValue] | FunctionCall RightHandSideValue [RightHandSideValue] | MixedTextValue [MixedText] | Number Integer | RightHandSideOperation RightHandSideOperator RightHandSideValue RightHandSideValue | RightHandSideType String
   deriving (Show)
 
 data RightHandSide = RightHandSideValue RightHandSideValue |  FunctionDefinition [LeftHandSide] RightHandSideValue

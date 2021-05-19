@@ -1,9 +1,9 @@
 module Parser.View.Base (viewParser, viewContentParser) where
 
 import Control.Applicative (optional, (<|>))
-import Parser.Util.Base (expressionParser, indentParser, indentParserRepeat, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc)
+import Parser.Util.Base (expressionParser, indentParser, indentParserRepeat, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, identityParser)
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, manyTill, sepBy1, some)
-import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, newline, space1, string)
+import Text.Megaparsec.Char (char, eol, lowerChar, newline, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
 import Types
 
@@ -26,7 +26,7 @@ hostParser indentationLevel = do
 hostOptionParser :: Parser (Option RightHandSide)
 hostOptionParser = do
   isEvent <- optional (string "on")
-  attributeName <- some letterChar 
+  attributeName <- identityParser
   _ <- sc *> char '=' <* sc
   case isEvent of
     Just _ -> do
