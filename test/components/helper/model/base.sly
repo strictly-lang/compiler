@@ -1,5 +1,5 @@
 model:main{
-	init = _ -> ""
+	init = -> ""
 	reducer = _ action -> action
 }
 

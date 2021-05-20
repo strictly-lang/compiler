@@ -62,22 +62,21 @@ leftHandSideTupleParser = do
   tuples <- between (char '(') (char ')') (sepBy leftHandSideParser (char ',' <* sc))
   return (LeftTuple tuples)
 
+leftHandSideHoleParser :: Parser LeftHandSide
+leftHandSideHoleParser = do
+  _ <- char '_'
+  return LeftHole
+
 leftHandSideVariableParser :: Parser LeftHandSide
 leftHandSideVariableParser = do
-  hasHole <- optional (char '_')
-  case hasHole of
-    Just _ -> do
-      _ <- sc
-      return (LeftVariable Nothing)
-    Nothing -> do
-      variable <- identityParser <* sc
-      return (LeftVariable (Just variable))
+  variable <- identityParser <* sc
+  return (LeftVariable variable)
 
 leftHandSideTypeParser :: Parser LeftHandSide
 leftHandSideTypeParser = LeftType <$> typeParser
 
 leftHandSideParser :: Parser LeftHandSide
-leftHandSideParser = (leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser) <* sc
+leftHandSideParser = (leftHandSideHoleParser <|> leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser) <* sc
 
 feedOperatorParser :: Parser Operator
 feedOperatorParser = do

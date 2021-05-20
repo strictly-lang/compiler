@@ -19,7 +19,7 @@ type IndentationLevel = Int
 data Root = View [ViewContent] | Model Name [Option String]
   deriving (Show)
 
-data LeftHandSide = LeftVariable (Maybe String) | LeftTuple [LeftHandSide] | LeftType String
+data LeftHandSide = LeftVariable String | LeftTuple [LeftHandSide] | LeftType String | LeftHole
   deriving (Show)
 
 data Operator = FeedOperator

@@ -1,6 +1,6 @@
 module Compiler.Types where
 
-type PublicVariableName = Maybe String
+type PublicVariableName = String
 
 type InternalVariableName = String
 

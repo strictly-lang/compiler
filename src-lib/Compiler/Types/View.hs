@@ -95,6 +95,14 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
           ),
         RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallbacks)
       )
+compileView ((ViewModel (Expression (targetValue, FeedOperator, sourceValue)) entityChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
+  let foo = ""
+   in ( [],
+        exprId,
+        predecessors,
+        UpdateCallbacks [],
+        RemoveCallbacks []
+      )
 compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, LeftVariable publicIndexVariable], FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
   let indexVariable = "index" ++ show exprId
       entitiesScope = scope ++ ".entities" ++ show exprId

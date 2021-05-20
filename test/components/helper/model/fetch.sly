@@ -1,5 +1,5 @@
 model:data{
-	init = id -> fetch("/api/${id}", Get)
+	init = id -> fetch(GET "/api/${id}")
 	reducer = _ action -> action
 }
 

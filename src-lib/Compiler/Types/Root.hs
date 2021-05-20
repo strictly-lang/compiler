@@ -12,7 +12,7 @@ mountedBool = "this._mounted"
 compileRoot :: Compiler Root
 compileRoot componentPath ast ((View children)) =
   let scope = "this._el"
-      (viewContent, _, _, updateCallbacks, _) = compileView children 0 (Context (scope, [([Just "props"], propertiesScope)])) "this.shadowRoot" []
+      (viewContent, _, _, updateCallbacks, _) = compileView children 0 (Context (scope, (["props"], propertiesScope) : getModelScopeVariableStack ast)) "this.shadowRoot" []
    in indent
         [ Ln "(() => {",
           Ind
@@ -52,6 +52,11 @@ splitBy delimiter = foldr f [[]]
     f c l@(x : xs)
       | c == delimiter = [] : l
       | otherwise = (c : x) : xs
+
+getModelScopeVariableStack :: [Root] -> [([PublicVariableName], InternalVariableName)]
+getModelScopeVariableStack [] = []
+getModelScopeVariableStack ((Model name _) : restRoot) = ([name], "this." ++ name) : getModelScopeVariableStack restRoot
+getModelScopeVariableStack (currentRoot : restRoot) = getModelScopeVariableStack restRoot
 
 splitByDot = splitBy '.'
 
