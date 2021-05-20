@@ -17,6 +17,7 @@ module.exports = function (config) {
             "test/components/text/*.sly",
             "test/components/helper/each/*.sly",
             "test/components/helper/if/*.sly",
+            "test/components/helper/model/counter.sly",
             "test/**/*.js"
         ],
         preprocessors: {

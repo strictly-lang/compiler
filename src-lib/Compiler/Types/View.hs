@@ -95,13 +95,20 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
           ),
         RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallbacks)
       )
-compileView ((ViewModel (Expression (targetValue, FeedOperator, sourceValue)) entityChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
-  let foo = ""
-   in ( [],
-        exprId,
-        predecessors,
-        UpdateCallbacks [],
-        RemoveCallbacks []
+compileView ((ViewModel (Expression (LeftTuple [LeftVariable publicStateVariable, LeftVariable publicDispatchVariable], FeedOperator, sourceValue)) children) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
+  let (modelValue, modelDependencies) = rightHandSideValueToJs variableStack sourceValue
+      modelScope = scope ++ ".model" ++ show exprId
+      modeledVariableStack = ([publicStateVariable], modelScope ++ ".state") : ([publicDispatchVariable], modelScope ++ ".dispatch") : variableStack
+      (childrenContent, exprId', predecessors', UpdateCallbacks childrenUpdateCallbacks, removeCallbacks) = compileView children (exprId + 1) (Context (scope, modeledVariableStack)) parent predecessors
+      (successorContent, exprId''', predecessors'', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent predecessors'
+   in ( [ Ln (modelScope ++ " = " ++ modelValue)
+        ]
+          ++ childrenContent
+          ++ successorContent,
+        exprId',
+        predecessors'',
+        UpdateCallbacks childrenUpdateCallbacks,
+        removeCallbacks
       )
 compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, LeftVariable publicIndexVariable], FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
   let indexVariable = "index" ++ show exprId
@@ -268,6 +275,10 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
       )
 
 rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> (String, [String])
+rightHandSideValueToJs variableStack (FunctionCall functionReference argumentPublicNames) =
+  let (functionValue, functionDependencies) = rightHandSideValueToJs variableStack functionReference
+      function = functionValue ++ "(" ++ ")"
+   in (function, functionDependencies)
 rightHandSideValueToJs variableStack (Variable variableParts) =
   let variableName = unsafeVariable (publicVariableToInternal variableStack variableParts)
    in (variableName, [variableName])

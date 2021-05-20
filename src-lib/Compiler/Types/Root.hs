@@ -1,6 +1,7 @@
 module Compiler.Types.Root (compileRoot) where
 
 import Compiler.Types
+import Compiler.Types.Model (compileModel)
 import Compiler.Types.View (compileView)
 import Compiler.Util (filter', indent, slashToCamelCase, slashToDash)
 import Types
@@ -25,18 +26,21 @@ compileRoot componentPath ast ((View children)) =
                         Ln (propertiesScope ++ " = {};")
                       ],
                     Ln "}",
-                    Ln "",
-                    Ln "connectedCallback() {",
-                    Ind
-                      ( [ Ln (mountedBool ++ " = true;"),
-                          Ln (scope ++ " = {};"),
-                          Ln "this.attachShadow({mode: 'open'});"
-                        ]
-                          ++ viewContent
-                      ),
-                    Ln "}",
                     Ln ""
                   ]
+                    ++ getModelFactories ast
+                    ++ [ Ln "",
+                         Ln "connectedCallback() {",
+                         Ind
+                           ( [ Ln (mountedBool ++ " = true;"),
+                               Ln (scope ++ " = {};"),
+                               Ln "this.attachShadow({mode: 'open'});"
+                             ]
+                               ++ viewContent
+                           ),
+                         Ln "}",
+                         Ln ""
+                       ]
                     ++ walkDependencies updateCallbacks
                 ),
               Ln "}",
@@ -45,6 +49,11 @@ compileRoot componentPath ast ((View children)) =
           Ln "})()"
         ]
 compileRoot _ _ _ = ""
+
+getModelFactories :: [Root] -> [Indent]
+getModelFactories [] = []
+getModelFactories (model@(Model _ _) : rest) = compileModel model ++ getModelFactories rest
+getModelFactories (_ : rest) = getModelFactories rest
 
 splitBy :: (Foldable t, Eq a) => a -> t a -> [[a]]
 splitBy delimiter = foldr f [[]]
