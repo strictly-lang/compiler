@@ -1,4 +1,4 @@
-describe("host element handling", () => {
+describe("model element handling", () => {
     let container;
     beforeEach(() => {
         container = document.createElement("div");

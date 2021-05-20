@@ -1,4 +1,4 @@
-module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser) where
+module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions) where
 
 import Control.Applicative (Alternative (many), optional, (<|>))
 import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, some)
@@ -162,3 +162,12 @@ sc :: Parser ()
 sc = do
   _ <- many (char ' ')
   return ()
+
+mergeOptions :: [Option a] -> [Option [a]]
+mergeOptions [] = []
+mergeOptions [(optionName, optionValue)] = [(optionName, [optionValue])]
+mergeOptions ((firstOptionName, firstOptionValue) : secondOption@(secondOptionName, secondOptionValue) : restOptions)
+  | firstOptionName == secondOptionName =
+    let (_, secondOptionMerge) : restOptions' = mergeOptions (secondOption : restOptions)
+     in (firstOptionName, firstOptionValue : secondOptionMerge) : restOptions'
+  | otherwise = (firstOptionName, [firstOptionValue]) : mergeOptions (secondOption : restOptions)

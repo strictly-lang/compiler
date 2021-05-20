@@ -1,8 +1,9 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, filter') where
+module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, filter', rightHandSideValueToJs, functionDefinitionToJs) where
 
 import Compiler.Types
 import Data.Char (toUpper)
 import Data.List (intercalate, isPrefixOf)
+import Types
 
 type AbsolutePath = String
 
@@ -55,3 +56,31 @@ filter' predicate (a : as)
   where
     matched = predicate a
     (nextMatches, nextUnmatches) = filter' predicate as
+
+-- TODO: a compileerror should be thrown instead
+unsafeVariable :: Maybe String -> String
+unsafeVariable (Just variable) = variable
+
+functionDefinitionToJs :: VariableStack -> [RightHandSide] -> String
+functionDefinitionToJs variableStack ([FunctionDefinition arguments _]) = "function() {}" 
+
+rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> (String, [String])
+rightHandSideValueToJs variableStack (FunctionCall functionReference argumentPublicNames) =
+  let (functionValue, functionDependencies) = rightHandSideValueToJs variableStack functionReference
+      function = functionValue ++ "(" ++ ")"
+   in (function, functionDependencies)
+rightHandSideValueToJs variableStack (Variable variableParts) =
+  let variableName = unsafeVariable (publicVariableToInternal variableStack variableParts)
+   in (variableName, [variableName])
+rightHandSideValueToJs variableStack (MixedTextValue []) = ("", [])
+rightHandSideValueToJs variableStack (MixedTextValue ((StaticText staticText) : restMixedTextValues))
+  | null restMixedTextValues = ("\"" ++ staticText ++ "\"", [])
+  | otherwise = ("\"" ++ staticText ++ "\" + " ++ restValue, restDependencies)
+  where
+    (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
+rightHandSideValueToJs variableStack (MixedTextValue ((DynamicText rightHandSide) : restMixedTextValues))
+  | null restMixedTextValues = (currentValue ++ ".toString()", currentDependencies)
+  | otherwise = (currentValue ++ ".toString() + " ++ restValue, currentDependencies ++ restDependencies)
+  where
+    (currentValue, currentDependencies) = rightHandSideValueToJs variableStack rightHandSide
+    (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)

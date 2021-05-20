@@ -1,7 +1,7 @@
 module Parser.View.Base (viewParser, viewContentParser) where
 
 import Control.Applicative (optional, (<|>))
-import Parser.Util.Base (expressionParser, indentParser, indentParserRepeat, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, identityParser)
+import Parser.Util.Base (expressionParser, identityParser, indentParser, indentParserRepeat, mergeOptions, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc)
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, manyTill, sepBy1, some)
 import Text.Megaparsec.Char (char, eol, lowerChar, newline, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
@@ -21,7 +21,7 @@ hostParser indentationLevel = do
   hostElement <- some lowerChar
   options <- optionsParser indentationLevel hostOptionParser
   children <- viewContentParser (indentationLevel + 1)
-  return (Host hostElement options children)
+  return (Host hostElement (mergeOptions options) children)
 
 hostOptionParser :: Parser (Option RightHandSide)
 hostOptionParser = do
@@ -29,9 +29,9 @@ hostOptionParser = do
   attributeName <- identityParser
   _ <- sc *> char '=' <* sc
   case isEvent of
-    Just _ -> do
+    Just eventPrefix -> do
       functionDefinition <- rightHandSideFunctionParser
-      return (attributeName, functionDefinition)
+      return (eventPrefix ++ attributeName, functionDefinition)
     Nothing -> do
       rightHandSide <- rightHandSideValueParser
       return (attributeName, RightHandSideValue rightHandSide)
