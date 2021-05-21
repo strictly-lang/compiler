@@ -88,8 +88,7 @@ operatorParser = feedOperatorParser <* sc
 
 rightHandSideOperatorParser :: Parser RightHandSideOperator
 rightHandSideOperatorParser = do
-  operator <- (rightHandSideOperatorPlusParser <|> rightHandSideOperatorMinusParser <|> rightHandSideOperatorMultiplyParser <|> rightHandSideOperatorDivisionParser) <* sc
-  return Plus
+  (rightHandSideOperatorPlusParser <|> rightHandSideOperatorMinusParser <|> rightHandSideOperatorMultiplyParser <|> rightHandSideOperatorDivisionParser) <* sc
 
 rightHandSideOperatorPlusParser :: Parser RightHandSideOperator
 rightHandSideOperatorPlusParser = do

@@ -81,7 +81,7 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
    in ( [Ln (elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");"), Br]
           ++ concat
             [ if "on" `isPrefixOf` attributeKey
-                then [Ln (elementVariable ++ "." ++ attributeKey ++ " = ")] ++ functionDefinitionToJs variableStack attributeRightHandSide ++ [Br]
+                then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ functionDefinitionToJs variableStack attributeRightHandSide ++ [Ln ");", Br]
                 else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : concatMap fst (getAttributeValue attributeRightHandSide) ++ [Ln ");", Br]
               | (attributeKey, attributeRightHandSide) <- options
             ]
@@ -114,7 +114,14 @@ compileView ((ViewModel (Expression (LeftTuple [LeftVariable publicStateVariable
       modeledVariableStack = ([publicStateVariable], modelState) : ([publicDispatchVariable], dispatcher) : variableStack
       (childrenContent, exprId', predecessors', UpdateCallbacks childrenUpdateCallbacks, removeCallbacks) = compileView children (exprId + 1) (Context (scope, modeledVariableStack)) parent predecessors
       (modelUpdateCallback, restUpdateCallbacks) = filter' ((== modelState) . fst) childrenUpdateCallbacks
-      (modelValue, modelDependencies) = rightHandSideValueFunctionCallToJs (map snd modelUpdateCallback) variableStack sourceValue
+      modelUpdateCallbackJs =
+        [ Ln "() => {",
+          Br,
+          Ind (intercalate [Br] (map snd modelUpdateCallback)),
+          Br,
+          Ln "}"
+        ]
+      (modelValue, modelDependencies) = rightHandSideValueFunctionCallToJs [modelUpdateCallbackJs] variableStack sourceValue
       (successorContent, exprId''', predecessors'', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent predecessors'
    in ( [Ln (modelScope ++ " = ")] ++ modelValue ++ [Br]
           ++ childrenContent
@@ -208,7 +215,8 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
                             [ Ln ("if (" ++ indexVariable ++ " < " ++ entitiesScope ++ ".length) {"),
                               Br,
                               Ind
-                                ( Ln (entityValue ++ " = " ++ entityVariable ++ ";") : Br : 
+                                ( Ln (entityValue ++ " = " ++ entityVariable ++ ";") :
+                                  Br :
                                   concatMap
                                     ( \singleEntityUpdateCallback ->
                                         snd singleEntityUpdateCallback ++ [Br]
@@ -303,7 +311,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
           Br,
           Ind
             ( [ Ln (removeCallback ++ "();"),
-            Br,
+                Br,
                 Ln (conditionVariable ++ " = ")
               ]
                 ++ internalConditionValue

@@ -70,14 +70,22 @@ functionDefinitionToJs variableStack allFunctions@((FunctionDefinition arguments
   ]
 
 functionDefinitionToJs' :: VariableStack -> [RightHandSide] -> [Indent]
+functionDefinitionToJs' variableStack [] = []
 functionDefinitionToJs' variableStack ((FunctionDefinition arguments rightHandSideValue) : restFunctionDefinition)
   | null patterns = Ln "return " : fst (rightHandSideValueToJs variableStack'' rightHandSideValue) ++ [Br]
   | otherwise =
     [ Ln "if( "
     ]
       ++ intersperse (Ln " && ") patterns
-      ++ [Ln ") {", Br]
-      ++ intersperse Br (fst (rightHandSideValueToJs variableStack'' rightHandSideValue))
+      ++ [ Ln ") {",
+           Br,
+           Ind
+             ( Ln "return " :
+               fst (rightHandSideValueToJs variableStack'' rightHandSideValue)
+             ),
+           Br,
+           Ln "}"
+         ]
       ++ [Br]
       ++ functionDefinitionToJs' variableStack restFunctionDefinition
   where
@@ -102,6 +110,19 @@ rightHandSideValueToJs variableStack (MixedTextValue ((DynamicText rightHandSide
     (currentValue, currentDependencies) = rightHandSideValueToJs variableStack rightHandSide
     (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
 rightHandSideValueToJs variableStack (RightHandSideType typeName) = ([Ln ("{ _type: \"" ++ typeName ++ "\"}")], [])
+rightHandSideValueToJs variableStack (Number number) = ([Ln (show number)], [])
+rightHandSideValueToJs variableStack (RightHandSideOperation rightHandSideOperator firstRightHandSideValue secondRightHandSideValue) =
+  let (firstRightHandSideJs, firstDependencies) = rightHandSideValueToJs variableStack firstRightHandSideValue
+      (secondRightHandSideJs, secondDpendencies) = rightHandSideValueToJs variableStack secondRightHandSideValue
+   in ( firstRightHandSideJs ++ [rightHandSideOperatorToJs rightHandSideOperator] ++ secondRightHandSideJs,
+        firstDependencies ++ secondDpendencies
+      )
+
+rightHandSideOperatorToJs :: RightHandSideOperator -> Indent
+rightHandSideOperatorToJs Plus = Ln " + "
+rightHandSideOperatorToJs Minus = Ln " - "
+rightHandSideOperatorToJs Multiply = Ln " * "
+rightHandSideOperatorToJs Division = Ln " / "
 
 type Curry = [Indent]
 
@@ -109,8 +130,7 @@ rightHandSideValueFunctionCallToJs :: [Curry] -> VariableStack -> RightHandSideV
 rightHandSideValueFunctionCallToJs curry variableStack (FunctionCall functionReference argumentPublicNames) =
   let (functionValue, functionDependencies) = rightHandSideValueToJs variableStack functionReference
       arguments = map (rightHandSideValueToJs variableStack) argumentPublicNames
-      mep = concatMap fst arguments
-      function = functionValue ++ [Ln "("] ++ intersperse (Ln ",") (concatMap fst arguments) ++ [Ln ")"]
+      function = functionValue ++ [Ln "("] ++ intercalate [Ln ","] (curry ++ map fst arguments)++ [Ln ")"]
    in (function, functionDependencies ++ concatMap snd arguments)
 
 leftHandSidesToJs :: VariableStack -> [LeftHandSide] -> [InternalVariableName] -> ([Indent], VariableStack)
@@ -123,3 +143,4 @@ leftHandSidesToJs variableStack (currentLeftHandSide : restLeftHandSides) (curre
 leftHandSideToJs :: VariableStack -> LeftHandSide -> InternalVariableName -> ([Indent], VariableStack)
 leftHandSideToJs variableStack (LeftVariable variableName) internalvariableName = ([], [([variableName], internalvariableName)])
 leftHandSideToJs variableStack LeftHole internalvariableName = ([], [])
+leftHandSideToJs variableStack (LeftType typeName) internalVariableName = ([Ln (internalVariableName ++ "._type == \"" ++ typeName ++ "\"")], [])
