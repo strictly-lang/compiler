@@ -1,12 +1,12 @@
 model:data{
-	init = id -> fetch("/api/${id}", Get)
-	reducer = action _ -> action
+	init* = id -> fetch(GET "/api/${id}")
+	reducer = _ action -> action
 }
 
 view
 	#if props.load
-		#model data <- data(props.id)
-			#match data
+		#model (dataState, _) <- data(props.id)
+			#match dataState
 				#case Pending
 					"Loading..."
 				#case Result content

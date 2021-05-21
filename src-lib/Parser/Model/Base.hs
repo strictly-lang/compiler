@@ -1,9 +1,20 @@
 module Parser.Model.Base (modelParser) where
 
-import Text.Megaparsec.Char (string)
+import Parser.Util.Base (optionsParser, rightHandSideFunctionParser, sc, identityParser, mergeOptions)
+import Text.Megaparsec.Char (char, string)
 import Types
 
 modelParser :: Parser Root
 modelParser = do
   _ <- string "model"
-  return Model
+  _ <- string ":"
+  name <- identityParser
+  options <- optionsParser 0 (modelOptionParser rightHandSideFunctionParser)
+  return (Model name (mergeOptions options))
+
+modelOptionParser :: Parser a -> Parser (Option a)
+modelOptionParser rightHandSideParser = do
+  attributeName <- identityParser <* sc
+  _ <- char '=' <* sc
+  rightHandSide <- rightHandSideParser
+  return (attributeName, rightHandSide)

@@ -1,15 +1,15 @@
 model:selection{
 	init = _ -> false
-	reducer = RemoveSelection _ = false
-	reducer = AddSelection _ = true
+	reducer = _ RemoveSelection -> false
+	reducer = _ AddSelection    -> true
 }
 
 view
-	#each [entity, _] <- [props.page * 10 .. props.page * 10 + 10]
-		#model selection <- selection(props.page)
+	#each (entity, _) <- [props.page * 10 .. props.page * 10 + 10]
+		#model (selectionState, selectionDispatch) <- selection(props.page)
 			div{
-				class?selected = selection
-				onclick = _ -> selection(selection ? RemoveSelection : AddSelection)
+				class?selected = selectionState
+				onclick = _ -> selectionDispatch(selectionState ? RemoveSelection : AddSelection)
 			}
 				"${entity}"
 	#else

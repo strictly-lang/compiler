@@ -14,20 +14,18 @@ instance Exception NoString
 main = do
   args <- getArgs
   compiledContent <- mapM readFramelessFile args
-  mapM_ (putStrLn . snd) compiledContent
+  mapM_ putStrLn compiledContent
 
-  return (all fst compiledContent)
-
-readFramelessFile :: FilePath -> IO (Bool, String)
+readFramelessFile :: FilePath -> IO String
 readFramelessFile fileName = do
   cwd <- System.Directory.getCurrentDirectory
   fileContent <- readFile fileName
   case parse fileContent of
-    Left parseError -> return (False, errorBundlePretty parseError)
+    Left parseError -> error (errorBundlePretty parseError)
     Right parsedContent -> 
       case getJs cwd (normalizePath cwd fileName) parsedContent of
-        (Just result) -> return (True, result)
-        Nothing -> return  (False, "Compile Error" )
+        (Just result) -> return result
+        Nothing -> error "Compile Error"
     -- Right parsedContent -> return (True, show parsedContent)
 
 normalizePath :: String -> String -> String
