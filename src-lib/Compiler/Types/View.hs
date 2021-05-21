@@ -109,8 +109,9 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
       )
 compileView ((ViewModel (Expression (LeftTuple [LeftVariable publicStateVariable, LeftVariable publicDispatchVariable], FeedOperator, sourceValue)) children) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
   let modelScope = scope ++ ".model" ++ show exprId
-      modelState = modelScope ++ ".state"
-      modeledVariableStack = ([publicStateVariable], modelState) : ([publicDispatchVariable], modelScope ++ ".dispatch") : variableStack
+      modelState = modelScope ++ "[0]"
+      dispatcher = modelScope ++ "[1]"
+      modeledVariableStack = ([publicStateVariable], modelState) : ([publicDispatchVariable], dispatcher) : variableStack
       (childrenContent, exprId', predecessors', UpdateCallbacks childrenUpdateCallbacks, removeCallbacks) = compileView children (exprId + 1) (Context (scope, modeledVariableStack)) parent predecessors
       (modelUpdateCallback, restUpdateCallbacks) = filter' ((== modelState) . fst) childrenUpdateCallbacks
       (modelValue, modelDependencies) = rightHandSideValueFunctionCallToJs (map snd modelUpdateCallback) variableStack sourceValue

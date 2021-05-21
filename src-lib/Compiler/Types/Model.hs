@@ -8,22 +8,22 @@ compileModel (Model name options) =
   [ Ln (name ++ "(updateCallback) {"),
   Br,
     Ind
-      [ Ln "const reducer = () => {};",
+      [ Ln "const reducer = (state, action) => state + 1;",
       Br,
-        Ln "const result = {",
+        Ln "const result = [",
         Br,
         Ind
-          [ Ln "state: 0,",
+          [ Ln "0,",
           Br,
-            Ln "dispatch: (action) => {",
+            Ln "(action) => {",
             Br,
             Ind
-              [ Ln "const reducerResult = reducer(result.state, action)",
+              [ Ln "const reducerResult = reducer(result[0], action)",
               Br,
-                Ln "if (Object.is(reducerResult, result.state)) {",
+                Ln "if (Object.is(reducerResult, result[0])) {",
                   Br,
                 Ind [
-                  Ln "result.state = reducerResult",
+                  Ln "result[0] = reducerResult",
                   Br,
                   Ln "updateCallback();",
                   Br
@@ -34,7 +34,7 @@ compileModel (Model name options) =
             Ln "}",
             Br
           ],
-        Ln "};",
+        Ln "];",
         Br,
         Br,
         Ln "return result",
