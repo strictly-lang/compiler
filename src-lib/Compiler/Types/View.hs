@@ -81,7 +81,7 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
    in ( [Ln (elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");"), Br]
           ++ concat
             [ if "on" `isPrefixOf` attributeKey
-                then [Ln (elementVariable ++ "." ++ attributeKey ++ " = " ++ functionDefinitionToJs variableStack attributeRightHandSide), Br]
+                then [Ln (elementVariable ++ "." ++ attributeKey ++ " = ")] ++ functionDefinitionToJs variableStack attributeRightHandSide ++ [Br]
                 else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : concatMap fst (getAttributeValue attributeRightHandSide) ++ [Ln ");", Br]
               | (attributeKey, attributeRightHandSide) <- options
             ]
