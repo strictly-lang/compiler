@@ -1,4 +1,4 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, filter', rightHandSideValueToJs, functionDefinitionToJs) where
+module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, filter', rightHandSideValueToJs, functionDefinitionToJs, rightHandSideValueFunctionCallToJs) where
 
 import Compiler.Types
 import Data.Char (toUpper)
@@ -42,11 +42,11 @@ indent = indent' 0
 
 indent' :: Int -> [Indent] -> String
 indent' _ [] = []
-indent' 0 ((Ln line) : lines) = line ++ "\n" ++ indent' 0 lines
-indent' indentationLevel ((Ln line) : lines)
-  | line == "" = "\n" ++ indent' indentationLevel lines
-  | otherwise = "\t" ++ indent' (indentationLevel - 1) [Ln line] ++ indent' indentationLevel lines
-indent' indentationLevel ((Ind indentedLines) : lines) = indent' (indentationLevel + 1) indentedLines ++ indent' indentationLevel lines
+indent' indentationLevel (Br : restLines) 
+  | null restLines = "\n"
+  | otherwise  = "\n" ++ replicate indentationLevel '\t' ++ indent' indentationLevel restLines
+indent' indentationLevel ((Ln line) : restLines) = line ++ indent' indentationLevel restLines
+indent' indentationLevel ((Ind indentedLines) : lines) = '\t' : indent' (indentationLevel + 1) indentedLines ++ replicate indentationLevel '\t'  ++ indent' indentationLevel lines
 
 filter' :: (a -> Bool) -> [a] -> ([a], [a])
 filter' _ [] = ([], [])
@@ -62,25 +62,30 @@ unsafeVariable :: Maybe String -> String
 unsafeVariable (Just variable) = variable
 
 functionDefinitionToJs :: VariableStack -> [RightHandSide] -> String
-functionDefinitionToJs variableStack ([FunctionDefinition arguments _]) = "function() {}" 
+functionDefinitionToJs variableStack ([FunctionDefinition arguments _]) = "() => {}"
 
-rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> (String, [String])
-rightHandSideValueToJs variableStack (FunctionCall functionReference argumentPublicNames) =
-  let (functionValue, functionDependencies) = rightHandSideValueToJs variableStack functionReference
-      function = functionValue ++ "(" ++ ")"
-   in (function, functionDependencies)
+rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> ([Indent], [String])
+rightHandSideValueToJs variableStack functionCall@(FunctionCall functionReference argumentPublicNames) = rightHandSideValueFunctionCallToJs [] variableStack functionCall
 rightHandSideValueToJs variableStack (Variable variableParts) =
   let variableName = unsafeVariable (publicVariableToInternal variableStack variableParts)
-   in (variableName, [variableName])
-rightHandSideValueToJs variableStack (MixedTextValue []) = ("", [])
+   in ([Ln variableName], [variableName])
+rightHandSideValueToJs variableStack (MixedTextValue []) = ([Ln ""], [])
 rightHandSideValueToJs variableStack (MixedTextValue ((StaticText staticText) : restMixedTextValues))
-  | null restMixedTextValues = ("\"" ++ staticText ++ "\"", [])
-  | otherwise = ("\"" ++ staticText ++ "\" + " ++ restValue, restDependencies)
+  | null restMixedTextValues = ([Ln ("\"" ++ staticText ++ "\"")], [])
+  | otherwise = (Ln ("\"" ++ staticText ++ "\" + ") : restValue, restDependencies)
   where
     (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
 rightHandSideValueToJs variableStack (MixedTextValue ((DynamicText rightHandSide) : restMixedTextValues))
-  | null restMixedTextValues = (currentValue ++ ".toString()", currentDependencies)
-  | otherwise = (currentValue ++ ".toString() + " ++ restValue, currentDependencies ++ restDependencies)
+  | null restMixedTextValues = (currentValue ++ [Ln ".toString()"], currentDependencies)
+  | otherwise = (currentValue ++ [Ln ".toString() + "] ++ restValue, currentDependencies ++ restDependencies)
   where
     (currentValue, currentDependencies) = rightHandSideValueToJs variableStack rightHandSide
     (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
+
+type Curry = [Indent]
+
+rightHandSideValueFunctionCallToJs :: [Curry] -> VariableStack -> RightHandSideValue -> ([Indent], [String])
+rightHandSideValueFunctionCallToJs curry variableStack (FunctionCall functionReference argumentPublicNames) =
+  let (functionValue, functionDependencies) = rightHandSideValueToJs variableStack functionReference
+      function = functionValue ++ [Ln ("(" ++ ")")]
+   in (function, functionDependencies)

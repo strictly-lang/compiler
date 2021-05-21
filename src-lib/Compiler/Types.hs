@@ -16,5 +16,5 @@ newtype RemoveCallbacks = RemoveCallbacks [Indent]
 
 data Predecessor = Predecessor String | MaybePredecessor String
 
-data Indent = Ln String | Ind [Indent]
-    deriving (Show)
+data Indent = Ln String | Br | Ind [Indent]
+  deriving (Show)

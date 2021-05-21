@@ -5,14 +5,41 @@ import Types
 
 compileModel :: Root -> [Indent]
 compileModel (Model name options) =
-  [ Ln (name ++ " () {"),
+  [ Ln (name ++ "(updateCallback) {"),
+  Br,
     Ind
-      [ Ln "return {",
+      [ Ln "const reducer = () => {};",
+      Br,
+        Ln "const result = {",
+        Br,
         Ind
           [ Ln "state: 0,",
-            Ln "dispatch: function() {}"
+          Br,
+            Ln "dispatch: (action) => {",
+            Br,
+            Ind
+              [ Ln "const reducerResult = reducer(result.state, action)",
+              Br,
+                Ln "if (Object.is(reducerResult, result.state)) {",
+                  Br,
+                Ind [
+                  Ln "result.state = reducerResult",
+                  Br,
+                  Ln "updateCallback();",
+                  Br
+                ],
+                Ln "}",
+                Br
+              ],
+            Ln "}",
+            Br
           ],
-        Ln "}"
+        Ln "};",
+        Br,
+        Br,
+        Ln "return result",
+        Br
       ],
-    Ln "}"
+    Ln "}",
+    Br
   ]

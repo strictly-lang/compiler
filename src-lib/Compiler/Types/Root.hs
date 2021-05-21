@@ -4,6 +4,7 @@ import Compiler.Types
 import Compiler.Types.Model (compileModel)
 import Compiler.Types.View (compileView)
 import Compiler.Util (filter', indent, slashToCamelCase, slashToDash)
+import Data.List (isPrefixOf)
 import Types
 
 propertiesScope = "this._properties"
@@ -16,35 +17,50 @@ compileRoot componentPath ast ((View children)) =
       (viewContent, _, _, updateCallbacks, _) = compileView children 0 (Context (scope, (["props"], propertiesScope) : getModelScopeVariableStack ast)) "this.shadowRoot" []
    in indent
         [ Ln "(() => {",
+          Br,
           Ind
             [ Ln ("class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {"),
+              Br,
               Ind
                 ( [ Ln "constructor() {",
+                    Br,
                     Ind
                       [ Ln "super();",
+                        Br,
                         Ln (mountedBool ++ " = false;"),
-                        Ln (propertiesScope ++ " = {};")
+                        Br,
+                        Ln (propertiesScope ++ " = {};"),
+                        Br
                       ],
                     Ln "}",
-                    Ln ""
+                    Br,
+                    Br
                   ]
                     ++ getModelFactories ast
-                    ++ [ Ln "",
+                    ++ [ Br,
                          Ln "connectedCallback() {",
+                         Br,
                          Ind
                            ( [ Ln (mountedBool ++ " = true;"),
+                               Br,
                                Ln (scope ++ " = {};"),
-                               Ln "this.attachShadow({mode: 'open'});"
+                               Br,
+                               Ln "this.attachShadow({mode: 'open'});",
+                               Br
                              ]
                                ++ viewContent
                            ),
                          Ln "}",
-                         Ln ""
+                         Br,
+                         Br
                        ]
                     ++ walkDependencies updateCallbacks
                 ),
               Ln "}",
-              Ln ("customElements.define(\"" ++ slashToDash componentPath ++ "\"," ++ slashToCamelCase componentPath ++ ");")
+              Br,
+              Br,
+              Ln ("customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");"),
+              Br
             ],
           Ln "})()"
         ]
@@ -71,10 +87,14 @@ splitByDot = splitBy '.'
 
 walkDependencies :: UpdateCallbacks -> [Indent]
 walkDependencies (UpdateCallbacks []) = []
-walkDependencies (UpdateCallbacks ((internalName, updateCallback) : updateCallbacks)) =
-  let setterName = internalNameToSetterName internalName
-      (matchedUpdateCallbacks, unmatchedUpdateCallbacks) = filter' ((setterName ==) . internalNameToSetterName . fst) updateCallbacks
-   in getSetter setterName (updateCallback : map snd matchedUpdateCallbacks) ++ walkDependencies (UpdateCallbacks unmatchedUpdateCallbacks)
+walkDependencies (UpdateCallbacks ((internalName, updateCallback) : updateCallbacks))
+  | isProps =
+    let setterName = internalNameToSetterName internalName
+        (matchedUpdateCallbacks, unmatchedUpdateCallbacks) = filter' ((setterName ==) . internalNameToSetterName . fst) updateCallbacks
+     in getSetter setterName (updateCallback : map snd matchedUpdateCallbacks) ++ walkDependencies (UpdateCallbacks unmatchedUpdateCallbacks)
+  | otherwise = error ("There is an observer missing for " ++ internalName)
+  where
+    isProps = (propertiesScope ++ ".") `isPrefixOf` internalName
 
 internalNameToSetterName :: String -> String
 internalNameToSetterName internalName = head (drop (length (splitByDot propertiesScope)) (splitByDot internalName))
@@ -82,12 +102,18 @@ internalNameToSetterName internalName = head (drop (length (splitByDot propertie
 getSetter :: String -> [[Indent]] -> [Indent]
 getSetter name updateCallback =
   [ Ln ("set " ++ name ++ "(value) {"),
+    Br,
     Ind
       [ Ln (propertiesScope ++ "." ++ name ++ " = value;"),
+        Br,
         Ln ("if (" ++ mountedBool ++ ") {"),
+        Br,
         Ind (concat updateCallback),
-        Ln "}"
+        Br,
+        Ln "}",
+        Br
       ],
     Ln "}",
-    Ln ""
+    Br,
+    Br
   ]
