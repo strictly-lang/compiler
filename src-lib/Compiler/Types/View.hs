@@ -138,7 +138,8 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
       entityValue = entityScope ++ ".value"
       updateCallback = scope ++ ".updateCallback" ++ show exprId
       (internalEntitiesVariable, sourceValueDependencies) = rightHandSideValueToJs variableStack sourceValue
-      createEntityCallback = "createEach" ++ show exprId
+      createEntityCallback = scope ++ ".createEach" ++ show exprId
+      createElseCallback = scope ++ ".createElse" ++ show exprId
       predecessorOf = scope ++ ".getPredecessorOf" ++ show exprId
       successor = predecessorOf ++ "(" ++ entitiesScope ++ ".length - 1)"
       entityPredecessor = predecessorOf ++ "(" ++ indexVariable ++ " - 1)"
@@ -147,26 +148,26 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
       (entityChildrenContent, exprId', entitySuccessor, UpdateCallbacks entityChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView entityChildren (exprId + 1) (Context (entityScope, entityVariableStack)) parent (Predecessor entityPredecessor : predecessors)
       (negativeChildrenContent, exprId'', negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) = compileView negativeChildren (exprId' + 1) context parent predecessors
       (successorContent, exprId''', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId'' + 1) context parent [Predecessor successor]
-      (_, updateCallbacks) = filter' ((== indexVariable) . fst) entityChildrenUpdateCallbacks
-      (entityUpdateCallback, restUpdateCallbacks') = filter' ((== entityValue) . fst) updateCallbacks
+      (_, updateCallbacks) = filter' ((== indexVariable) . fst) entityChildrenUpdateCallbacks -- index-variable-value of a single entity is unchangable, therefore needs to tracking
+      (entityUpdateCallback, restEntityUpdateCallbacks) = filter' ((== entityValue) . fst) updateCallbacks
    in ( [ Ln (entitiesScope ++ " = [];"),
           Br,
           Ln (predecessorOf ++ " = (" ++ indexVariable ++ ") => {"),
           Br,
           Ind
-            [ Ln ("if (" ++ indexVariable ++ " < 0) {"),
-              Br,
-              Ind
-                [ Ln ("return " ++ predecessorChain predecessors),
-                  Br
-                ],
-              Ln ("} else if (" ++ entityScope ++ ".length === 0) {"),
+            [ Ln ("if (" ++ entitiesScope ++ ".length === 0) {"),
               Br,
               Ind
                 [ Ln ("return " ++ predecessorChain negativeSuccessor),
                   Br
                 ],
               Br,
+              Ln ("} else if (" ++ indexVariable ++ " < 0) {"),
+              Br,
+              Ind
+                [ Ln ("return " ++ predecessorChain predecessors),
+                  Br
+                ],
               Ln "} else {",
               Br,
               Ind
@@ -178,9 +179,15 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
             ],
           Ln "}",
           Br,
-          Ln ("const " ++ createEntityCallback ++ " = (" ++ indexVariable ++ ") => {"),
+          Ln (createEntityCallback ++ " = (" ++ indexVariable ++ ") => {"),
           Br,
           Ind entityChildrenContent,
+          Br,
+          Ln "}",
+          Br,
+          Ln (createElseCallback ++ " = () => {"),
+          Br,
+          Ind negativeChildrenContent,
           Br,
           Ln "}",
           Br,
@@ -201,10 +208,20 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
                  ],
                Ln "}",
                Br,
+               Ln ("if (" ++ indexVariable ++ " === 0) {"),
+               Br,
+               Ind
+                 [ Ln (createElseCallback ++ "();")
+                 ],
+               Br,
+               Ln "}",
+               Br,
                Ln (updateCallback ++ "= () => {"),
                Br,
                Ind
                  ( [ Ln ("let " ++ indexVariable ++ " = 0;"),
+                     Br,
+                     Ln ("const previousLength = " ++ entitiesScope ++ ".length"),
                      Br,
                      Ln ("for (const " ++ entityVariable ++ " of ")
                    ]
@@ -212,18 +229,21 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
                      ++ [ Ln ") {",
                           Br,
                           Ind
-                            [ Ln ("if (" ++ indexVariable ++ " < " ++ entitiesScope ++ ".length) {"),
+                            [ Ln ("if (" ++ indexVariable ++ " === 0 && previousLength === 0) {"),
+                              Br,
+                              Ind negativeRemoveCallbacks,
+                              Br,
+                              Ln "}",
+                              Br,
+                              Ln ("if (" ++ indexVariable ++ " < " ++ entitiesScope ++ ".length) {"),
                               Br,
                               Ind
                                 ( Ln (entityValue ++ " = " ++ entityVariable ++ ";") :
                                   Br :
                                   concatMap
-                                    ( \singleEntityUpdateCallback ->
-                                        snd singleEntityUpdateCallback ++ [Br]
-                                    )
+                                    snd
                                     entityUpdateCallback
                                 ),
-                              Br,
                               Ln "} else {",
                               Br,
                               Ind
@@ -248,6 +268,14 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
                                 ++ [Ln (entitiesScope ++ ".pop();"), Br]
                             ),
                           Ln "}",
+                          Br,
+                          Ln "if (newCount === 0 && previousLength !== 0) {",
+                          Br,
+                          Ind
+                            [ Ln (createElseCallback ++ "();")
+                            ],
+                          Br,
+                          Ln "}",
                           Br
                         ]
                  ),
@@ -258,7 +286,23 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
         exprId''',
         predecessors',
         UpdateCallbacks
-          ( [(dependency, [Ln (updateCallback ++ "();"), Br]) | dependency <- sourceValueDependencies] ++ restUpdateCallbacks'
+          ( [(dependency, [Ln (updateCallback ++ "();"), Br]) | dependency <- sourceValueDependencies]
+              ++ [ ( dependency,
+                     [Ln ("let " ++ indexVariable ++ " = 0;"), Br, Ln ("for (const " ++ entityVariable ++ " of ")] ++ internalEntitiesVariable
+                       ++ [Ln ") {", Br, Ind (restEntityUpdateCallback ++ [Ln (indexVariable ++ "++;"), Br]), Ln "}", Br]
+                   )
+                   | (dependency, restEntityUpdateCallback) <- restEntityUpdateCallbacks
+                 ]
+              ++ [ ( dependency,
+                     [ Ln ("if( " ++ entitiesScope ++ ".length === 0 ) {"),
+                       Br,
+                       Ind negativepdateCallback,
+                       Ln "}",
+                       Br
+                     ]
+                   )
+                   | (dependency, negativepdateCallback) <- negativeChildrenUpdateCallbacks
+                 ]
           ),
         RemoveCallbacks []
       )

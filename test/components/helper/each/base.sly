@@ -5,5 +5,5 @@ view
 			"${index}-${value}-${props.bar}"
 	#else
 		span
-			"Empty list"
+			"Empty list ${props.bar}"
 	footer
