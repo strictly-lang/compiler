@@ -5,7 +5,7 @@ module.exports = function (config) {
     config.set({
         basePath: ".",
         frameworks: ["jasmine"],
-        browsers: ["ChromeHeadless"],
+        browsers: ["ChromeHeadless", "FirefoxHeadless"],
         autoWatch: false,
         singleRun: true,
         files: [
@@ -40,6 +40,7 @@ module.exports = function (config) {
             },
             "karma-jasmine",
             "karma-chrome-launcher",
+            "karma-firefox-launcher"
         ]
     });
 };
