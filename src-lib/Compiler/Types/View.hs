@@ -30,15 +30,12 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
             DynamicText rightHandValue ->
               let elementVariable = elementVariableFactory exprId'
                   updateCallback = scope ++ ".updateCallback" ++ show exprId'
-                  removeCallback = scope ++ ".removeCallback" ++ show exprId'
                   rightHandJsValue = rightHandSideValueToJs variableStack rightHandValue
                in ( Ln (elementVariable ++ " =  document.createTextNode(") :
                     fst rightHandJsValue
                       ++ [ Ln ");",
                            Br,
                            Ln (appendChild parent (predecessorFactory exprId') elementVariable),
-                           Br,
-                           Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove()"),
                            Br
                          ],
                     [ ( dependency,
@@ -46,20 +43,17 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
                       )
                       | dependency <- snd rightHandJsValue
                     ],
-                    [Ln (removeCallback ++ "();"), Br]
+                    [Ln (elementVariable ++ ".remove();"), Br]
                   )
             StaticText content ->
               let elementVariable = elementVariableFactory exprId'
-                  removeCallback = scope ++ ".removeCallback" ++ show exprId'
                in ( [ Ln (elementVariable ++ " =  document.createTextNode(\"" ++ content ++ "\");"),
                       Br,
                       Ln (appendChild parent (predecessorFactory exprId') elementVariable),
-                      Br,
-                      Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove();"),
                       Br
                     ],
                     [],
-                    [Ln (removeCallback ++ "();"), Br]
+                    [Ln (elementVariable ++ ".remove();"), Br]
                   )
           | (text, exprId') <- zip texts [exprId ..]
         ]
@@ -74,7 +68,6 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
       )
 compileView ((Host nodeName options children) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
   let elementVariable = scope ++ ".el" ++ show exprId
-      removeCallback = scope ++ ".removeCallback" ++ show exprId
       (childrenContent, exprId', _, UpdateCallbacks childrenUpdateCallbacks, _) = compileView children (exprId + 1) context elementVariable []
       (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent (Predecessor elementVariable : predecessors)
       getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
@@ -86,8 +79,6 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
               | (attributeKey, attributeRightHandSide) <- options
             ]
           ++ [ Ln (appendChild parent predecessors elementVariable),
-               Br,
-               Ln (removeCallback ++ " = () => " ++ elementVariable ++ ".remove();"),
                Br
              ]
           ++ childrenContent
@@ -105,7 +96,7 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
               ++ childrenUpdateCallbacks
               ++ successorUpdateCallbacks
           ),
-        RemoveCallbacks (Ln (removeCallback ++ "();") : successorRemoveCallbacks)
+        RemoveCallbacks (Ln (elementVariable ++ ".remove();") : successorRemoveCallbacks)
       )
 compileView ((ViewModel (Expression (LeftTuple [LeftVariable publicStateVariable, LeftVariable publicDispatchVariable], FeedOperator, sourceValue)) children) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
   let modelScope = scope ++ ".model" ++ show exprId
@@ -387,9 +378,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
         exprId''',
         predecessors',
         UpdateCallbacks
-          ( -- [ (internalVariableName, [Ln (updateCallback ++ "();")])
-            -- ]
-            [(dependency, [Ln (updateCallback ++ "()")]) | dependency <- conditionValueDependencies]
+          ( [(dependency, [Ln (updateCallback ++ "()")]) | dependency <- conditionValueDependencies]
               -- TODO move to inline code section, instead of in callback section
               ++ [ ( internalVariableName,
                      [ Ln ("if (" ++ conditionVariable ++ ") {"),
