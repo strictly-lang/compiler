@@ -145,7 +145,7 @@ rightHandSideValueNumberParser = do
 
 rightHandSideFunctionParser :: Parser RightHandSide
 rightHandSideFunctionParser = do
-  arguments <- try (leftHandSideParser `sepBy` (char ',' <* sc) <* string "->")
+  arguments <- try (leftHandSideParser `sepBy` (char ',' <* sc) <* string "->" <* sc)
   FunctionDefinition arguments <$> rightHandSideValueParser
 
 rightHandSideParser :: Parser RightHandSide
