@@ -1,0 +1,6 @@
+view
+	input{
+		type="text"
+		value =  props.value
+		oninput = props.oninput
+	}
