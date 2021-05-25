@@ -143,4 +143,4 @@ leftHandSidesToJs variableStack (currentLeftHandSide : restLeftHandSides) (curre
 leftHandSideToJs :: VariableStack -> LeftHandSide -> InternalVariableName -> ([Indent], VariableStack)
 leftHandSideToJs variableStack (LeftVariable variableName) internalvariableName = ([], [([variableName], internalvariableName)])
 leftHandSideToJs variableStack LeftHole internalvariableName = ([], [])
-leftHandSideToJs variableStack (LeftType typeName) internalVariableName = ([Ln (internalVariableName ++ "._type == \"" ++ typeName ++ "\"")], [])
+leftHandSideToJs variableStack (LeftType typeName) internalVariableName = ([Ln (internalVariableName ++ "._type === \"" ++ typeName ++ "\"")], [])
