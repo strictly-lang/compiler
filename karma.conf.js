@@ -19,6 +19,7 @@ module.exports = function (config) {
             "test/components/helper/each/*.sly",
             "test/components/helper/if/*.sly",
             "test/components/helper/model/counter.sly",
+            "test/components/helper/match/*.sly",
             "test/**/*.js"
         ],
         preprocessors: {

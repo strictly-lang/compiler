@@ -411,6 +411,15 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
           ),
         RemoveCallbacks successorRemoveCallbacks -- TODO add self removage
       )
+compileView ((Match rightHandValue caes : ns)) exprId context@(Context (scope, variableStack)) parent predecessors =
+  let successorExprId = exprId
+      (successorContent, exprId', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns successorExprId context parent (predecessors)
+   in ( successorContent,
+        exprId',
+        predecessors',
+        UpdateCallbacks (successorUpdateCallbacks),
+        RemoveCallbacks (successorRemoveCallback)
+      )
 
 type Child = String
 

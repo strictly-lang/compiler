@@ -1,7 +1,7 @@
 module Parser.View.Base (viewParser, viewContentParser) where
 
 import Control.Applicative (optional, (<|>))
-import Parser.Util.Base (expressionParser, identityParser, indentParser, indentParserRepeat, mergeOptions, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideParser, rightHandSideValueParser, sc)
+import Parser.Util.Base (expressionParser, identityParser, indentParser, indentParserRepeat, leftHandSideParser, mergeOptions, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideParser, rightHandSideValueParser, sc)
 import Text.Megaparsec (between, many, manyTill, sepBy1, some)
 import Text.Megaparsec.Char (char, eol, lowerChar, newline, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
@@ -33,7 +33,7 @@ hostOptionParser = do
 helperParser :: IndentationLevel -> Parser ViewContent
 helperParser indentationLevel = do
   _ <- char '#'
-  eachParser indentationLevel <|> ifParser indentationLevel <|> modelParser indentationLevel
+  eachParser indentationLevel <|> ifParser indentationLevel <|> modelParser indentationLevel <|> matchParser indentationLevel
 
 ifParser :: IndentationLevel -> Parser ViewContent
 ifParser indentationLevel = do
@@ -70,3 +70,20 @@ modelParser indentationLevel = do
   _ <- eol
   children <- viewContentParser (indentationLevel + 1)
   return (ViewModel option children)
+
+matchParser :: IndentationLevel -> Parser ViewContent
+matchParser indentationLevel = do
+  _ <- string "match" <* space1
+  value <- rightHandSideValueParser
+  _ <- eol
+  children <- indentParserRepeat (indentationLevel + 1) (caseParser (indentationLevel + 1))
+  return (Match value children)
+
+caseParser :: IndentationLevel -> Parser Case
+caseParser indentationLevel = do
+  _ <- string "#case" <* space1
+  match <- leftHandSideParser
+
+  children <- viewContentParser (indentationLevel + 1)
+
+  return (Case match [])
