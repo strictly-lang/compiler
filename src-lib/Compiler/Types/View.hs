@@ -31,7 +31,7 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
               let elementVariable = elementVariableFactory exprId'
                   updateCallback = scope ++ ".updateCallback" ++ show exprId'
                   rightHandJsValue = rightHandSideValueToJs variableStack rightHandValue
-               in ( Ln (elementVariable ++ " =  document.createTextNode(") :
+               in ( Ln (elementVariable ++ " = document.createTextNode(") :
                     fst rightHandJsValue
                       ++ [ Ln ");",
                            Br,
@@ -47,7 +47,7 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
                   )
             StaticText content ->
               let elementVariable = elementVariableFactory exprId'
-               in ( [ Ln (elementVariable ++ " =  document.createTextNode(\"" ++ content ++ "\");"),
+               in ( [ Ln (elementVariable ++ " = document.createTextNode(\"" ++ content ++ "\");"),
                       Br,
                       Ln (appendChild parent (predecessorFactory exprId') elementVariable),
                       Br
@@ -71,7 +71,7 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
       (childrenContent, exprId', _, UpdateCallbacks childrenUpdateCallbacks, _) = compileView children (exprId + 1) context elementVariable []
       (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent (Predecessor elementVariable : predecessors)
       getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
-   in ( [Ln (elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");"), Br]
+   in ( [Ln (elementVariable ++ " = document.createElement(\"" ++ nodeName ++ "\");"), Br]
           ++ concat
             [ if "on" `isPrefixOf` attributeKey
                 then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ functionToJs variableStack attributeRightHandSide ++ [Ln ");", Br]
@@ -331,11 +331,15 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
                      Ind
                        [ Ln (createPositiveCallback ++ "();")
                        ],
+                     Br,
                      Ln "} else {",
+                     Br,
                      Ind
                        [ Ln (createNegativeCallback ++ "();")
                        ],
-                     Ln "}"
+                     Br,
+                     Ln "}",
+                     Br
                    ]
             ),
           Ln "};",
@@ -368,6 +372,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
               Ln "} else {",
               Br,
               Ind negativeRemoveCallbacks,
+              Br,
               Ln "}",
               Br
             ],
@@ -378,12 +383,13 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
         exprId''',
         predecessors',
         UpdateCallbacks
-          ( [(dependency, [Ln (updateCallback ++ "()")]) | dependency <- conditionValueDependencies]
+          ( [(dependency, [Ln (updateCallback ++ "();")]) | dependency <- conditionValueDependencies]
               -- TODO move to inline code section, instead of in callback section
               ++ [ ( internalVariableName,
                      [ Ln ("if (" ++ conditionVariable ++ ") {"),
                        Br,
                        Ind updateCallback,
+                       Br,
                        Ln "}",
                        Br
                      ]
@@ -394,6 +400,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
                      [ Ln ("if (!" ++ conditionVariable ++ ") {"),
                        Br,
                        Ind updateCallback,
+                       Br,
                        Ln "}",
                        Br
                      ]
