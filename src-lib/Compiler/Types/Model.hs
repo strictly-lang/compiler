@@ -1,7 +1,7 @@
 module Compiler.Types.Model (compileModel) where
 
 import Compiler.Types
-import Compiler.Util (functionDefinitionToJs)
+import Compiler.Util (functionToJs)
 import Data.List (intersperse)
 import Types
 
@@ -11,7 +11,7 @@ compileModel (Model name options) =
     Br,
     Ind
       ( ( concat
-            [Ln ("const __" ++ optionName ++ " = ") : functionDefinitionToJs [] optionValue ++ [Br] | (optionName, optionValue) <- options]
+            [Ln ("const __" ++ optionName ++ " = ") : functionToJs [] optionValue ++ [Br] | (optionName, optionValue) <- options]
         )
           ++ [ Br,
                Ln "const result = [",

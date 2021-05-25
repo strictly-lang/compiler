@@ -1,4 +1,4 @@
-module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions) where
+module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions, rightHandSideParser) where
 
 import Control.Applicative (Alternative (many), optional, (<|>))
 import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, some)
@@ -145,8 +145,12 @@ rightHandSideValueNumberParser = do
 
 rightHandSideFunctionParser :: Parser RightHandSide
 rightHandSideFunctionParser = do
-  arguments <- (leftHandSideParser `manyTill` string "->") <* sc
+  arguments <- try (leftHandSideParser `manyTill` lookAhead (string "->")) <* sc
+  _ <- string "->" <* sc;
   FunctionDefinition arguments <$> rightHandSideValueParser
+
+rightHandSideParser :: Parser RightHandSide
+rightHandSideParser = rightHandSideFunctionParser <|> (RightHandSideValue <$> rightHandSideValueParser)
 
 optionsParser :: IndentationLevel -> Parser a -> Parser [a]
 optionsParser indentationLevel optionValueParser = do

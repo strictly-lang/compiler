@@ -1,7 +1,7 @@
 module Compiler.Types.View (compileView) where
 
 import Compiler.Types
-import Compiler.Util (filter', functionDefinitionToJs, indent, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
+import Compiler.Util (filter', functionToJs, indent, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
 import Data.List (intercalate, isPrefixOf)
 import Types
 
@@ -74,7 +74,7 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
    in ( [Ln (elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");"), Br]
           ++ concat
             [ if "on" `isPrefixOf` attributeKey
-                then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ functionDefinitionToJs variableStack attributeRightHandSide ++ [Ln ");", Br]
+                then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ functionToJs variableStack attributeRightHandSide ++ [Ln ");", Br]
                 else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : concatMap fst (getAttributeValue attributeRightHandSide) ++ [Ln ");", Br]
               | (attributeKey, attributeRightHandSide) <- options
             ]

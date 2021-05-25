@@ -8,7 +8,7 @@ describe("host element handling", () => {
         container.remove();
     });
 
-    it("basic host element creation", () => {
+    it("basic creation", () => {
         const element = document.createElement("test-components-host-base");
         container.appendChild(element);
 
@@ -56,5 +56,65 @@ describe("host element handling", () => {
 
         element.foo = "foofoo"
         expect(element.shadowRoot.childNodes[0].title).toBe("combined foofoo text");
-    })
+    });
+
+    xit("input text change", () => {
+        const element = document.createElement("test-components-host-events");
+        element.value = "foo";
+        element.oninput = (evt) => {
+            element.value = evt.currentTarget.value;
+        };
+
+        container.appendChild(element);
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
+        expect(element.shadowRoot.childNodes[0].value).toBe("foo");
+
+        element.shadowRoot.childNodes[0].value = "fooa"
+        element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].value).toBe("fooa");
+    });
+
+    xit("input text non-change", () => {
+        const element = document.createElement("test-components-host-events");
+        element.value = "foo";
+        element.oninput = (evt) => {
+            // Doing nothing with the event
+        };
+
+        container.appendChild(element);
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
+        expect(element.shadowRoot.childNodes[0].value).toBe("foo");
+
+        element.shadowRoot.childNodes[0].value = "fooa"
+        element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].value).toBe("foo");
+    });
+
+    xit("input text different-change", () => {
+        const element = document.createElement("test-components-host-events");
+        element.value = "foo";
+        element.oninput = (evt) => {
+            element.value = "foob"
+        };
+
+        container.appendChild(element);
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
+        expect(element.shadowRoot.childNodes[0].value).toBe("foo");
+
+        element.shadowRoot.childNodes[0].value = "fooa"
+        element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].value).toBe("foob");
+    });
 });
