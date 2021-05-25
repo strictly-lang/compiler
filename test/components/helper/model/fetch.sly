@@ -1,6 +1,6 @@
 model:data{
-	init* = id -> fetch(GET "/api/${id}")
-	reducer = _ action -> action
+	init* = id -> http.getJson("/api/${id}")
+	reducer = _, action -> action
 }
 
 view

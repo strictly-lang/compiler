@@ -1,7 +1,7 @@
 model:selection{
 	init = _ -> false
-	reducer = _ RemoveSelection -> false
-	reducer = _ AddSelection    -> true
+	reducer = _, RemoveSelection -> false
+	reducer = _, AddSelection    -> true
 }
 
 view
