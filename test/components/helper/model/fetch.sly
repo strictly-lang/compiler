@@ -11,9 +11,9 @@ view
 			#match dataState
 				#case Pending
 					"Loading..."
-				#case Result content
+				#case Result( content )
 					"${content}"
-				#case Error _
+				#case Error( _ )
 					"could not load"
 	#else
 		"not to be loaded"

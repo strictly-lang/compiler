@@ -1,7 +1,7 @@
 model:data{
 	init = -> First
-	reducer = First, action -> Second (Third action) action
-	reducer = Second (Third nestedValue) outerValue, action -> Fourth (nestedValue + outerValue+ action)
+	reducer = First, action -> Second( Third( action ), action )
+	reducer = Second( Third( nestedValue ), outerValue ), action -> Fourth( nestedValue + outerValue + action)
 }
 
 view
@@ -12,10 +12,10 @@ view
 				button{
 					onclick = _ -> dataDispatch(1)
 				}
-			#case Second value
-				"second: ${value}"
+			#case Second( Third( nestedValue ), siblingValue)
+				"second nestedValue: ${nestedValue} siblingValue: ${siblingValue}"
 				button{
 					onclick = _ -> dataDispatch(2)
 				}
-			#case Fourth value
+			#case Fourth(value)
 				"third: ${value}"

@@ -1,7 +1,7 @@
 model:data{
 	init = -> First
-	reducer = First, action -> Second Third action
-	reducer = Second Third outerValue, action -> Fourth (outerValue+ action)
+	reducer = First, action -> Second(Third, action)
+	reducer = Second(Third, outerValue), action -> Fourth(outerValue + action)
 }
 
 view
@@ -12,10 +12,10 @@ view
 				button{
 					onclick = _ -> dataDispatch(1)
 				}
-			#case Second value
+			#case Second(Third, value)
 				"second: ${value}"
 				button{
 					onclick = _ -> dataDispatch(2)
 				}
-			#case Fourth value
+			#case Fourth(value)
 				"third: ${value}"
