@@ -1,0 +1,21 @@
+model:data{
+	init = -> First
+	reducer = First, action -> Second action
+	reducer = Second value, action -> Third (value + action)
+}
+
+view
+	#model (dataState, dataDispatch) <- data()
+		#match dataState
+			#case First
+				"first"
+				button{
+					onclick = _ -> dataDispatch(1)
+				}
+			#case Second value
+				"second: ${value}"
+				button{
+					onclick = _ -> dataDispatch(2)
+				}
+			#case Third value
+				"third: ${value}"

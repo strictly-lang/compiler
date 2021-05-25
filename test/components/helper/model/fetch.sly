@@ -1,5 +1,7 @@
+import strictly.http
+
 model:data{
-	init* = id -> http.getJson("/api/${id}")
+	init* = id -> http.getText("/api/${id}")
 	reducer = _, action -> action
 }
 
