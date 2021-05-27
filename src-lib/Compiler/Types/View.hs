@@ -2,7 +2,7 @@ module Compiler.Types.View (compileView) where
 
 import Compiler.Types
 import Compiler.Util (filter', functionToJs, indent, leftHandSideToJs, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
-import Data.List (intercalate, intersperse, isPrefixOf)
+import Data.List (intercalate, intersect, intersperse, isPrefixOf)
 import Types
 
 type Successor = String
@@ -438,17 +438,40 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
                      Ln (currentCaseVariable ++ " = "),
                      Br,
                      Ind (getCaseCondition 0 (map fst patterns)),
+                     Br,
+                     Ln "if (previousValue !== undefined) {",
+                     Br,
+                     Ind
+                       ( intercalate
+                           [Br]
+                           [ [ if index == 0
+                                 then Ln ""
+                                 else Ln " else ",
+                               Ln ("if (previousCase === " ++ show index ++ ") {"),
+                               Br,
+                               Ind removeCallbacks,
+                               Br,
+                               Ln "}"
+                             ]
+                             | ((_, (_, _, _, _, RemoveCallbacks removeCallbacks)), index) <- zip patterns [0 ..]
+                           ]
+                       ),
+                     Br,
+                     Ln "}",
                      Br
                    ]
                 ++ intercalate
                   [Br]
-                  [ [ Ln ("if (" ++ currentCaseVariable ++ " === " ++ show index ++ ") {"),
+                  [ [ if index == 0
+                        then Ln ""
+                        else Ln " else ",
+                      Ln ("if (" ++ currentCaseVariable ++ " === " ++ show index ++ ") {"),
                       Br,
-                      Ind [],
+                      Ind caseContent,
                       Br,
                       Ln "}"
                     ]
-                    | ((_, compileResult), index) <- zip patterns [0 ..]
+                    | ((_, (caseContent, _, _, _, _)), index) <- zip patterns [0 ..]
                   ]
             ),
           Br,
@@ -460,7 +483,12 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
           ++ successorContent,
         exprId',
         predecessors',
-        UpdateCallbacks (successorUpdateCallbacks),
+        UpdateCallbacks
+          ( [ (dependency, [Ln (updateCallback ++ "()")])
+              | dependency <- dependencies
+            ]
+              ++ successorUpdateCallbacks
+          ),
         RemoveCallbacks (successorRemoveCallback)
       )
 

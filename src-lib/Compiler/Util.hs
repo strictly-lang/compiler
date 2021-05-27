@@ -116,7 +116,20 @@ rightHandSideValueToJs variableStack (MixedTextValue ((DynamicText rightHandSide
   where
     (currentValue, currentDependencies) = rightHandSideValueToJs variableStack rightHandSide
     (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
-rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideValues) = ([Ln ("{ _type: \"" ++ typeName ++ "\"}")], [])
+rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideValues) =
+  let rightHandSidesJs = map (rightHandSideValueToJs variableStack) rightHandSideValues
+   in ( [ Ln ("{ _type: \"" ++ typeName ++ "\",")
+        ]
+          ++ ( intercalate
+                 [Ln ","]
+                 [ Ln (show index ++ ": ") : rightHandSideJs
+                   | ((rightHandSideJs, _), index) <-
+                       zip rightHandSidesJs [0 ..]
+                 ]
+                 ++ [Ln "}"]
+             ),
+        concatMap snd rightHandSidesJs
+      )
 rightHandSideValueToJs variableStack (Number number) = ([Ln (show number)], [])
 rightHandSideValueToJs variableStack (RightHandSideOperation rightHandSideOperator firstRightHandSideValue secondRightHandSideValue) =
   let (firstRightHandSideJs, firstDependencies) = rightHandSideValueToJs variableStack firstRightHandSideValue

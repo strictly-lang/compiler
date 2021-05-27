@@ -15,12 +15,12 @@ describe("match case handling", () => {
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].textContent).toBe("first");
-        expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
 
         element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));
 
         expect(element.shadowRoot.childNodes[0].textContent).toBe("second: 1");
-        expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
     });
 
     it("with siblings case", () => {
@@ -30,17 +30,17 @@ describe("match case handling", () => {
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].textContent).toBe("first");
-        expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
 
         element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));
 
         expect(element.shadowRoot.childNodes[0].textContent).toBe("second: 1");
-        expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
 
         element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));
 
         expect(element.shadowRoot.childNodes[0].textContent).toBe("third: 3");
-        expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
     });
 
     it("with nested case", () => {
@@ -50,16 +50,16 @@ describe("match case handling", () => {
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].textContent).toBe("first");
-        expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
 
         element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));
 
         expect(element.shadowRoot.childNodes[0].textContent).toBe("second nestedValue: 3 siblingValue: 1");
-        expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
 
         element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));
 
         expect(element.shadowRoot.childNodes[0].textContent).toBe("third: 6");
-        expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
     });
 });
