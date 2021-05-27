@@ -86,4 +86,4 @@ caseParser indentationLevel = do
 
   children <- viewContentParser (indentationLevel + 1)
 
-  return (Case match [])
+  return (Case match children)

@@ -1,8 +1,8 @@
 module Compiler.Types.View (compileView) where
 
 import Compiler.Types
-import Compiler.Util (filter', functionToJs, indent, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
-import Data.List (intercalate, isPrefixOf)
+import Compiler.Util (filter', functionToJs, indent, leftHandSideToJs, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
+import Data.List (intercalate, intersperse, isPrefixOf)
 import Types
 
 type Successor = String
@@ -20,7 +20,9 @@ secondOfTriplet (_, b, _) = b
 lastOfTriplet :: (a, b, c) -> c
 lastOfTriplet (_, _, c) = c
 
-compileView :: [ViewContent] -> ExprId -> Context -> Parent -> [Predecessor] -> ([Indent], ExprId, [Predecessor], UpdateCallbacks, RemoveCallbacks)
+type CompileResult = ([Indent], ExprId, [Predecessor], UpdateCallbacks, RemoveCallbacks)
+
+compileView :: [ViewContent] -> ExprId -> Context -> Parent -> [Predecessor] -> CompileResult
 compileView [] exprId context _ predecessors = ([], exprId, predecessors, UpdateCallbacks [], RemoveCallbacks [])
 compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableStack)) parent predecessors =
   let elementVariableFactory = \exprId' -> scope ++ ".el" ++ show exprId'
@@ -411,15 +413,71 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
           ),
         RemoveCallbacks successorRemoveCallbacks -- TODO add self removage
       )
-compileView ((Match rightHandValue caes : ns)) exprId context@(Context (scope, variableStack)) parent predecessors =
-  let successorExprId = exprId
-      (successorContent, exprId', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns successorExprId context parent (predecessors)
-   in ( successorContent,
+compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, variableStack)) parent predecessors =
+  let currentValueVariable = scope ++ ".currentValue" ++ show exprId
+      currentCaseVariable = scope ++ ".currentCase" ++ show exprId
+      updateCallback = scope ++ ".updateCallback" ++ show exprId
+      (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
+      (patterns, exprId') = getMatchPatterns cases currentValueVariable (exprId + 1) context parent predecessors
+      (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns exprId' context parent (predecessors)
+   in ( [ Ln (currentValueVariable ++ " = undefined;"),
+          Br,
+          Ln (currentCaseVariable ++ " = undefined;"),
+          Br,
+          Ln (updateCallback ++ " = () => {"),
+          Br,
+          Ind
+            ( [ Ln ("const previousValue = " ++ currentValueVariable ++ ";"),
+                Br,
+                Ln ("const previousCase = " ++ currentCaseVariable ++ ";"),
+                Br,
+                Ln (currentValueVariable ++ " = ")
+              ]
+                ++ rightHandValueJs
+                ++ [ Br,
+                     Ln (currentCaseVariable ++ " = "),
+                     Br,
+                     Ind (getCaseCondition 0 (map fst patterns)),
+                     Br
+                   ]
+                ++ intercalate
+                  [Br]
+                  [ [ Ln ("if (" ++ currentCaseVariable ++ " === " ++ show index ++ ") {"),
+                      Br,
+                      Ind [],
+                      Br,
+                      Ln "}"
+                    ]
+                    | ((_, compileResult), index) <- zip patterns [0 ..]
+                  ]
+            ),
+          Br,
+          Ln "}",
+          Br,
+          Ln (updateCallback ++ "();"),
+          Br
+        ]
+          ++ successorContent,
         exprId',
         predecessors',
         UpdateCallbacks (successorUpdateCallbacks),
         RemoveCallbacks (successorRemoveCallback)
       )
+
+type Index = Int
+
+getMatchPatterns :: [Case] -> InternalVariableName -> ExprId -> Context -> Parent -> [Predecessor] -> ([([Indent], CompileResult)], ExprId)
+getMatchPatterns [] internalVariableName exprId context parent predecessors = ([], exprId)
+getMatchPatterns ((Case leftHandSide children) : cases) internalVariableName exprId context@(Context (scope, variableStack)) parent predecessors =
+  let (conditions, variableStack') = leftHandSideToJs variableStack internalVariableName leftHandSide
+      caseChildren@(_, exprId', _, _, _) = compileView children (exprId + 1) (Context (scope, variableStack' ++ variableStack)) parent predecessors
+      (nextPatterns, exprId'') = getMatchPatterns cases internalVariableName exprId' context parent predecessors
+   in ((conditions, caseChildren) : nextPatterns, exprId'')
+
+getCaseCondition :: Int -> [[Indent]] -> [Indent]
+getCaseCondition index [] = [Ln "(() => {throw new Error(\"No matching pattern found\")})();"]
+getCaseCondition index ([] : restConditions) = [Ln (show index ++ ";")]
+getCaseCondition index (currentConditions : restConditions) = intersperse (Ln " && ") currentConditions ++ [Ln (" ? " ++ show index ++ " : "), Br] ++ getCaseCondition (index + 1) restConditions
 
 type Child = String
 
