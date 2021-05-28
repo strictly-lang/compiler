@@ -12,11 +12,11 @@ view
 					button{
 						onclick = _ -> dataDispatch(1)
 					}
-					"first"
+						"first"
 				#case Second( Third( nestedValue ), siblingValue)
 					button{
 						onclick = _ -> dataDispatch(2)
 					}
-					"second nestedValue: ${nestedValue} siblingValue: ${siblingValue}"
+						"second nestedValue: ${nestedValue} siblingValue: ${siblingValue}"
 				#case Fourth(value)
 					"third: ${value}"

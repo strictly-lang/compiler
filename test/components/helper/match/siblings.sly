@@ -12,11 +12,11 @@ view
 					button{
 						onclick = _ -> dataDispatch(1)
 					}
-					"first"
+						"first"
 				#case Second(Third, value)
 					button{
 						onclick = _ -> dataDispatch(2)
 					}
-					"second: ${value}"
+						"second: ${value}"
 				#case Fourth(value)
 					"third: ${value}"

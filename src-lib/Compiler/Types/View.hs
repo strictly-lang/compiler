@@ -419,7 +419,7 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
       updateCallback = scope ++ ".updateCallback" ++ show exprId
       (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
       (patterns, exprId') = getMatchPatterns cases currentValueVariable (exprId + 1) context parent predecessors
-      (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns exprId' context parent (predecessors)
+      (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns exprId' context parent (getCaseSuccessor currentCaseVariable 0 (map snd patterns))
    in ( [ Ln (currentValueVariable ++ " = undefined;"),
           Br,
           Ln (currentCaseVariable ++ " = undefined;"),
@@ -502,6 +502,12 @@ getMatchPatterns ((Case leftHandSide children) : cases) internalVariableName exp
       (nextPatterns, exprId'') = getMatchPatterns cases internalVariableName exprId' context parent predecessors
    in ((conditions, caseChildren) : nextPatterns, exprId'')
 
+getCaseSuccessor :: String -> Index -> [CompileResult] -> [Predecessor]
+getCaseSuccessor currentCaseVariable index [] = [Predecessor "(() => {throw new Error(\"Could not find pattern\")})"]
+getCaseSuccessor currentCaseVariable index ((_, _, Predecessor currentPredecessors : np, _, _) : restCaseResult) =
+  let ((Predecessor nextPredecessors) : nP) = getCaseSuccessor currentCaseVariable (index + 1) restCaseResult
+   in [Predecessor ("(" ++ currentCaseVariable ++ " === " ++ show index ++ " ? " ++ currentPredecessors ++ " : " ++ nextPredecessors ++ ")")]
+
 getCaseCondition :: Int -> [[Indent]] -> [Indent]
 getCaseCondition index [] = [Ln "(() => {throw new Error(\"No matching pattern found\")})();"]
 getCaseCondition index ([] : restConditions) = [Ln (show index ++ ";")]
@@ -515,5 +521,4 @@ appendChild _ ((Predecessor predecessor) : ps) child = predecessor ++ ".after(" 
 
 predecessorChain :: [Predecessor] -> String
 predecessorChain (Predecessor predecessor : ps) = predecessor
-predecessorChain (MaybePredecessor predecessor : ps) = predecessor ++ " || " ++ predecessorChain ps
 predecessorChain [] = "null"

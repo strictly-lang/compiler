@@ -5,7 +5,7 @@ describe("match case handling", () => {
         document.body.appendChild(container);
     });
     afterEach(() => {
-        container.remove();
+        // container.remove();
     });
 
     it("with basic case", () => {
@@ -34,11 +34,13 @@ describe("match case handling", () => {
 
         element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));
 
+        expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].textContent).toBe("second: 1");
         expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
 
         element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));
 
+        expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].textContent).toBe("third: 3");
         expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
     });
@@ -62,4 +64,55 @@ describe("match case handling", () => {
         expect(element.shadowRoot.childNodes[0].textContent).toBe("third: 6");
         expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
     });
+
+    it("with updating", () => {
+        const element = document.createElement("test-components-helper-match-update");
+
+        element.foo = "bar"
+
+        container.appendChild(element);
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
+        expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe("BUTTON");
+        expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("first bar");
+        expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+
+        element.bar = "baz";
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
+        expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe("BUTTON");
+        expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("first baz");
+        expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+
+        element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
+        expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe("BUTTON");
+        expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("second: 2 baz");
+        expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+
+        element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
+        expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe("BUTTON");
+        expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("second: 8 baz");
+        expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+
+        element.bar = "mep";
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+        expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
+        expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe("BUTTON");
+        expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("second: 8 mep");
+        expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+    })
 });
