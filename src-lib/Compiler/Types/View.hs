@@ -555,7 +555,7 @@ type Index = Int
 getMatchPatterns :: [Case] -> InternalVariableName -> ExprId -> Context -> Parent -> [Predecessor] -> ([([Indent], CompileResult)], ExprId)
 getMatchPatterns [] internalVariableName exprId context parent predecessors = ([], exprId)
 getMatchPatterns ((Case leftHandSide children) : cases) internalVariableName exprId context@(Context (scope, variableStack)) parent predecessors =
-  let (conditions, variableStack') = leftHandSideToJs variableStack internalVariableName leftHandSide
+  let (conditions, variableStack') = leftHandSideToJs variableStack leftHandSide internalVariableName
       caseChildren@(_, exprId', _, _, _) = compileView children (exprId + 1) (Context (scope, variableStack' ++ variableStack)) parent predecessors
       (nextPatterns, exprId'') = getMatchPatterns cases internalVariableName exprId' context parent predecessors
    in ((conditions, caseChildren) : nextPatterns, exprId'')

@@ -156,13 +156,13 @@ rightHandSideValueFunctionCallToJs curry variableStack (FunctionCall functionRef
 leftHandSidesToJs :: VariableStack -> [InternalVariableName] -> [LeftHandSide] -> ([Indent], VariableStack)
 leftHandSidesToJs variableStack _ [] = ([], variableStack)
 leftHandSidesToJs variableStack (currentInternalVariableName : restInternalVariableNames) (currentLeftHandSide : restLeftHandSides) =
-  let (currentIndents, variableStack') = leftHandSideToJs variableStack currentInternalVariableName currentLeftHandSide
+  let (currentIndents, variableStack') = leftHandSideToJs variableStack currentLeftHandSide currentInternalVariableName
       (restIndentations, variableStack'') = leftHandSidesToJs (variableStack' ++ variableStack) restInternalVariableNames restLeftHandSides
    in (currentIndents ++ restIndentations, variableStack'' ++ variableStack')
 
-leftHandSideToJs :: VariableStack -> InternalVariableName -> LeftHandSide -> ([Indent], VariableStack)
-leftHandSideToJs variableStack internalvariableName (LeftVariable variableName) = ([], [([variableName], internalvariableName)])
-leftHandSideToJs variableStack internalvariableName LeftHole = ([], [])
-leftHandSideToJs variableStack internalVariableName (LeftType typeName leftHandSides) =
-  let nestedDataTypes = [leftHandSideToJs variableStack (internalVariableName ++ "._dt" ++ show index) leftHandSide | (leftHandSide, index) <- zip leftHandSides [0 ..]]
+leftHandSideToJs :: VariableStack -> LeftHandSide -> InternalVariableName -> ([Indent], VariableStack)
+leftHandSideToJs variableStack (LeftVariable variableName) internalVariableName = ([], [([variableName], internalVariableName)])
+leftHandSideToJs variableStack LeftHole internalVariableName = ([], [])
+leftHandSideToJs variableStack (LeftType typeName leftHandSides) internalVariableName =
+  let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ "._dt" ++ show index) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
    in (Ln (internalVariableName ++ "._type == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)
