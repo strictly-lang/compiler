@@ -14,7 +14,6 @@ newtype UpdateCallbacks = UpdateCallbacks [(InternalVariableName, [Indent])]
 
 newtype RemoveCallbacks = RemoveCallbacks [Indent]
 
-data Predecessor = Predecessor String | MaybePredecessor String
+newtype Predecessor = Predecessor String
 
 data Indent = Ln String | Br | Ind [Indent]
-  deriving (Show)

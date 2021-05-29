@@ -1,4 +1,4 @@
-module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions, rightHandSideParser) where
+module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions, rightHandSideParser, leftHandSideParser) where
 
 import Control.Applicative (Alternative (many), optional, (<|>))
 import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, some)
@@ -73,7 +73,15 @@ leftHandSideVariableParser = do
   return (LeftVariable variable)
 
 leftHandSideTypeParser :: Parser LeftHandSide
-leftHandSideTypeParser = LeftType <$> typeParser
+leftHandSideTypeParser = do
+  typeName <- typeParser
+  hasOptions <- optional (lookAhead (char '('))
+  case hasOptions of
+    Just _ -> do
+      values <- between (char '(' <* sc) (char ')') (sepBy leftHandSideParser (char ',' <* sc))
+      return (LeftType typeName values)
+    Nothing -> do
+      return (LeftType typeName [])
 
 leftHandSideParser :: Parser LeftHandSide
 leftHandSideParser = (leftHandSideHoleParser <|> leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser) <* sc
@@ -126,7 +134,15 @@ rightHandSideValueTextParser :: Parser RightHandSideValue
 rightHandSideValueTextParser = do MixedTextValue <$> mixedTextParser
 
 rightHandSideValueTypeParser :: Parser RightHandSideValue
-rightHandSideValueTypeParser = do RightHandSideType <$> typeParser
+rightHandSideValueTypeParser = do
+  typeName <- typeParser
+  hasOptions <- optional (lookAhead (char '('))
+  case hasOptions of
+    Just _ -> do
+      values <- between (char '(' <* sc) (char ')') (sepBy rightHandSideValueParser (char ',' <* sc))
+      return (RightHandSideType typeName values)
+    Nothing -> do
+      return (RightHandSideType typeName [])
 
 rightHandSideValueParser :: Parser RightHandSideValue
 rightHandSideValueParser = do
@@ -145,8 +161,7 @@ rightHandSideValueNumberParser = do
 
 rightHandSideFunctionParser :: Parser RightHandSide
 rightHandSideFunctionParser = do
-  arguments <- try (leftHandSideParser `manyTill` lookAhead (string "->")) <* sc
-  _ <- string "->" <* sc;
+  arguments <- try (leftHandSideParser `sepBy` (char ',' <* sc) <* string "->" <* sc)
   FunctionDefinition arguments <$> rightHandSideValueParser
 
 rightHandSideParser :: Parser RightHandSide

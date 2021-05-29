@@ -1,8 +1,8 @@
 module Compiler.Types.View (compileView) where
 
 import Compiler.Types
-import Compiler.Util (filter', functionToJs, indent, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
-import Data.List (intercalate, isPrefixOf)
+import Compiler.Util (filter', functionToJs, indent, leftHandSideToJs, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
+import Data.List (intercalate, intersect, intersperse, isPrefixOf)
 import Types
 
 type Successor = String
@@ -20,7 +20,9 @@ secondOfTriplet (_, b, _) = b
 lastOfTriplet :: (a, b, c) -> c
 lastOfTriplet (_, _, c) = c
 
-compileView :: [ViewContent] -> ExprId -> Context -> Parent -> [Predecessor] -> ([Indent], ExprId, [Predecessor], UpdateCallbacks, RemoveCallbacks)
+type CompileResult = ([Indent], ExprId, [Predecessor], UpdateCallbacks, RemoveCallbacks)
+
+compileView :: [ViewContent] -> ExprId -> Context -> Parent -> [Predecessor] -> CompileResult
 compileView [] exprId context _ predecessors = ([], exprId, predecessors, UpdateCallbacks [], RemoveCallbacks [])
 compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableStack)) parent predecessors =
   let elementVariableFactory = \exprId' -> scope ++ ".el" ++ show exprId'
@@ -31,7 +33,7 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
               let elementVariable = elementVariableFactory exprId'
                   updateCallback = scope ++ ".updateCallback" ++ show exprId'
                   rightHandJsValue = rightHandSideValueToJs variableStack rightHandValue
-               in ( Ln (elementVariable ++ " =  document.createTextNode(") :
+               in ( Ln (elementVariable ++ " = document.createTextNode(") :
                     fst rightHandJsValue
                       ++ [ Ln ");",
                            Br,
@@ -47,7 +49,7 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
                   )
             StaticText content ->
               let elementVariable = elementVariableFactory exprId'
-               in ( [ Ln (elementVariable ++ " =  document.createTextNode(\"" ++ content ++ "\");"),
+               in ( [ Ln (elementVariable ++ " = document.createTextNode(\"" ++ content ++ "\");"),
                       Br,
                       Ln (appendChild parent (predecessorFactory exprId') elementVariable),
                       Br
@@ -71,7 +73,7 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
       (childrenContent, exprId', _, UpdateCallbacks childrenUpdateCallbacks, _) = compileView children (exprId + 1) context elementVariable []
       (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent (Predecessor elementVariable : predecessors)
       getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
-   in ( [Ln (elementVariable ++ " =  document.createElement(\"" ++ nodeName ++ "\");"), Br]
+   in ( [Ln (elementVariable ++ " = document.createElement(\"" ++ nodeName ++ "\");"), Br]
           ++ concat
             [ if "on" `isPrefixOf` attributeKey
                 then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ functionToJs variableStack attributeRightHandSide ++ [Ln ");", Br]
@@ -331,11 +333,15 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
                      Ind
                        [ Ln (createPositiveCallback ++ "();")
                        ],
+                     Br,
                      Ln "} else {",
+                     Br,
                      Ind
                        [ Ln (createNegativeCallback ++ "();")
                        ],
-                     Ln "}"
+                     Br,
+                     Ln "}",
+                     Br
                    ]
             ),
           Ln "};",
@@ -368,6 +374,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
               Ln "} else {",
               Br,
               Ind negativeRemoveCallbacks,
+              Br,
               Ln "}",
               Br
             ],
@@ -378,12 +385,13 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
         exprId''',
         predecessors',
         UpdateCallbacks
-          ( [(dependency, [Ln (updateCallback ++ "()")]) | dependency <- conditionValueDependencies]
+          ( [(dependency, [Ln (updateCallback ++ "();")]) | dependency <- conditionValueDependencies]
               -- TODO move to inline code section, instead of in callback section
               ++ [ ( internalVariableName,
                      [ Ln ("if (" ++ conditionVariable ++ ") {"),
                        Br,
                        Ind updateCallback,
+                       Br,
                        Ln "}",
                        Br
                      ]
@@ -394,6 +402,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
                      [ Ln ("if (!" ++ conditionVariable ++ ") {"),
                        Br,
                        Ind updateCallback,
+                       Br,
                        Ln "}",
                        Br
                      ]
@@ -404,6 +413,163 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
           ),
         RemoveCallbacks successorRemoveCallbacks -- TODO add self removage
       )
+compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, variableStack)) parent predecessors =
+  let currentValueVariable = scope ++ ".currentValue" ++ show exprId
+      currentCaseVariable = scope ++ ".currentCase" ++ show exprId
+      updateCallback = scope ++ ".updateCallback" ++ show exprId
+      (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
+      (patterns, exprId') = getMatchPatterns cases currentValueVariable (exprId + 1) context parent predecessors
+      updateCases = map (filter' (isPrefixOf (currentValueVariable ++ ".") . fst) . (\(_, (_, _, _, UpdateCallbacks updateCallbacks, _)) -> updateCallbacks)) patterns
+      activeUpdates =
+        zipWith
+          ( curry
+              ( \((activeUpdates, _), index) ->
+                  map
+                    ( \(_, updateCode) ->
+                        [ Ln
+                            ("if (" ++ currentCaseVariable ++ " == " ++ show index ++ ") {"),
+                          Br,
+                          Ind updateCode,
+                          Br,
+                          Ln "}",
+                          Br
+                        ]
+                    )
+                    activeUpdates
+              )
+          )
+          updateCases
+          [0 ..]
+
+      restUpdates =
+        zipWith
+          ( curry
+              ( \((_, restUpdates), index) ->
+                  map
+                    ( \(internalVariableName, updateCode) ->
+                        ( internalVariableName,
+                          [ Ln
+                              ("if (" ++ currentCaseVariable ++ " == " ++ show index ++ ") {"),
+                            Br,
+                            Ind updateCode,
+                            Br,
+                            Ln "}",
+                            Br
+                          ]
+                        )
+                    )
+                    restUpdates
+              )
+          )
+          updateCases
+          [0 ..]
+      (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns exprId' context parent (getCaseSuccessor currentCaseVariable 0 (map snd patterns))
+   in ( [ Ln (currentValueVariable ++ " = undefined;"),
+          Br,
+          Ln (currentCaseVariable ++ " = undefined;"),
+          Br,
+          Ln (updateCallback ++ " = () => {"),
+          Br,
+          Ind
+            ( [ Ln ("const previousValue = " ++ currentValueVariable ++ ";"),
+                Br,
+                Ln ("const previousCase = " ++ currentCaseVariable ++ ";"),
+                Br,
+                Ln (currentValueVariable ++ " = ")
+              ]
+                ++ rightHandValueJs
+                ++ [ Br,
+                     Ln (currentCaseVariable ++ " = "),
+                     Br,
+                     Ind (getCaseCondition 0 (map fst patterns)),
+                     Br,
+                     Ln ("if (previousCase === " ++ currentCaseVariable ++ ") {"),
+                     Br,
+                     Ind
+                       (concat (concat activeUpdates)),
+                     Br,
+                     Ln "} else {",
+                     Br,
+                     Ind
+                       ( [ Ln "if (previousCase !== undefined) {",
+                           Br,
+                           Ind
+                             ( intercalate
+                                 [Br]
+                                 [ [ if index == 0
+                                       then Ln ""
+                                       else Ln " else ",
+                                     Ln ("if (previousCase === " ++ show index ++ ") {"),
+                                     Br,
+                                     Ind removeCallbacks,
+                                     Br,
+                                     Ln "}"
+                                   ]
+                                   | ((_, (_, _, _, _, RemoveCallbacks removeCallbacks)), index) <- zip patterns [0 ..]
+                                 ]
+                             ),
+                           Br,
+                           Ln "}",
+                           Br
+                         ]
+                           ++ intercalate
+                             [Br]
+                             [ [ if index == 0
+                                   then Ln ""
+                                   else Ln " else ",
+                                 Ln ("if (" ++ currentCaseVariable ++ " === " ++ show index ++ ") {"),
+                                 Br,
+                                 Ind caseContent,
+                                 Br,
+                                 Ln "}"
+                               ]
+                               | ((_, (caseContent, _, _, _, _)), index) <- zip patterns [0 ..]
+                             ]
+                       ),
+                     Br,
+                     Ln "}",
+                     Br
+                   ]
+            ),
+          Br,
+          Ln "}",
+          Br,
+          Ln (updateCallback ++ "();"),
+          Br
+        ]
+          ++ successorContent,
+        exprId',
+        predecessors',
+        UpdateCallbacks
+          ( [ (dependency, [Ln (updateCallback ++ "()")])
+              | dependency <- dependencies
+            ]
+              ++ concat restUpdates
+              ++ successorUpdateCallbacks
+          ),
+        RemoveCallbacks successorRemoveCallback
+      )
+
+type Index = Int
+
+getMatchPatterns :: [Case] -> InternalVariableName -> ExprId -> Context -> Parent -> [Predecessor] -> ([([Indent], CompileResult)], ExprId)
+getMatchPatterns [] internalVariableName exprId context parent predecessors = ([], exprId)
+getMatchPatterns ((Case leftHandSide children) : cases) internalVariableName exprId context@(Context (scope, variableStack)) parent predecessors =
+  let (conditions, variableStack') = leftHandSideToJs variableStack leftHandSide internalVariableName
+      caseChildren@(_, exprId', _, _, _) = compileView children (exprId + 1) (Context (scope, variableStack' ++ variableStack)) parent predecessors
+      (nextPatterns, exprId'') = getMatchPatterns cases internalVariableName exprId' context parent predecessors
+   in ((conditions, caseChildren) : nextPatterns, exprId'')
+
+getCaseSuccessor :: String -> Index -> [CompileResult] -> [Predecessor]
+getCaseSuccessor currentCaseVariable index [] = [Predecessor "(() => {throw new Error(\"Could not find pattern\")})"]
+getCaseSuccessor currentCaseVariable index ((_, _, Predecessor currentPredecessors : np, _, _) : restCaseResult) =
+  let ((Predecessor nextPredecessors) : nP) = getCaseSuccessor currentCaseVariable (index + 1) restCaseResult
+   in [Predecessor ("(" ++ currentCaseVariable ++ " === " ++ show index ++ " ? " ++ currentPredecessors ++ " : " ++ nextPredecessors ++ ")")]
+
+getCaseCondition :: Int -> [[Indent]] -> [Indent]
+getCaseCondition index [] = [Ln "(() => {throw new Error(\"No matching pattern found\")})();"]
+getCaseCondition index ([] : restConditions) = [Ln (show index ++ ";")]
+getCaseCondition index (currentConditions : restConditions) = intersperse (Ln " && ") currentConditions ++ [Ln (" ? " ++ show index ++ " : "), Br] ++ getCaseCondition (index + 1) restConditions
 
 type Child = String
 
@@ -413,5 +579,4 @@ appendChild _ ((Predecessor predecessor) : ps) child = predecessor ++ ".after(" 
 
 predecessorChain :: [Predecessor] -> String
 predecessorChain (Predecessor predecessor : ps) = predecessor
-predecessorChain (MaybePredecessor predecessor : ps) = predecessor ++ " || " ++ predecessorChain ps
 predecessorChain [] = "null"

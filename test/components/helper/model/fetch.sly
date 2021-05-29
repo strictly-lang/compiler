@@ -1,6 +1,8 @@
+import strictly.http
+
 model:data{
-	init* = id -> fetch(GET "/api/${id}")
-	reducer = _ action -> action
+	init* = id -> http.getText("/api/${id}")
+	reducer = _, action -> action
 }
 
 view
@@ -9,9 +11,9 @@ view
 			#match dataState
 				#case Pending
 					"Loading..."
-				#case Result content
+				#case Result( content )
 					"${content}"
-				#case Error _
+				#case Error( _ )
 					"could not load"
 	#else
 		"not to be loaded"

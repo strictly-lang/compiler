@@ -1,7 +1,7 @@
 model:counter{
 	init = -> 0
-	reducer = state Increment -> state + 1
-	reducer = state Decrement -> state - 1
+	reducer = state, Increment -> state + 1
+	reducer = state, Decrement -> state - 1
 }
 
 view

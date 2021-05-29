@@ -1,4 +1,4 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, filter', rightHandSideValueToJs, functionToJs, rightHandSideValueFunctionCallToJs) where
+module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, filter', rightHandSideValueToJs, functionToJs, rightHandSideValueFunctionCallToJs, leftHandSideToJs) where
 
 import Compiler.Types
 import Data.Char (toUpper)
@@ -96,7 +96,7 @@ functionToJs' variableStack ((FunctionDefinition arguments rightHandSideValue) :
       ++ [Br]
       ++ functionToJs' variableStack restFunctionDefinition
   where
-    (patterns, variableStack') = leftHandSidesToJs variableStack arguments ["_arg" ++ show index | index <- [0 ..]]
+    (patterns, variableStack') = leftHandSidesToJs variableStack ["_arg" ++ show index | index <- [0 ..]] arguments
     variableStack'' = variableStack' ++ variableStack
 
 rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> ([Indent], [String])
@@ -116,7 +116,20 @@ rightHandSideValueToJs variableStack (MixedTextValue ((DynamicText rightHandSide
   where
     (currentValue, currentDependencies) = rightHandSideValueToJs variableStack rightHandSide
     (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
-rightHandSideValueToJs variableStack (RightHandSideType typeName) = ([Ln ("{ _type: \"" ++ typeName ++ "\"}")], [])
+rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideValues) =
+  let rightHandSidesJs = map (rightHandSideValueToJs variableStack) rightHandSideValues
+   in ( [ Ln ("{ _type: \"" ++ typeName ++ "\",")
+        ]
+          ++ ( intercalate
+                 [Ln ","]
+                 [ Ln ("_dt" ++ show index ++ ": ") : rightHandSideJs
+                   | ((rightHandSideJs, _), index) <-
+                       zip rightHandSidesJs [0 ..]
+                 ]
+                 ++ [Ln "}"]
+             ),
+        concatMap snd rightHandSidesJs
+      )
 rightHandSideValueToJs variableStack (Number number) = ([Ln (show number)], [])
 rightHandSideValueToJs variableStack (RightHandSideOperation rightHandSideOperator firstRightHandSideValue secondRightHandSideValue) =
   let (firstRightHandSideJs, firstDependencies) = rightHandSideValueToJs variableStack firstRightHandSideValue
@@ -140,14 +153,16 @@ rightHandSideValueFunctionCallToJs curry variableStack (FunctionCall functionRef
       function = functionValue ++ [Ln "("] ++ intercalate [Ln ","] (curry ++ map fst arguments) ++ [Ln ")"]
    in (function, functionDependencies ++ concatMap snd arguments)
 
-leftHandSidesToJs :: VariableStack -> [LeftHandSide] -> [InternalVariableName] -> ([Indent], VariableStack)
-leftHandSidesToJs variableStack [] _ = ([], variableStack)
-leftHandSidesToJs variableStack (currentLeftHandSide : restLeftHandSides) (currentInternalVariableName : restInternalVariableNames) =
+leftHandSidesToJs :: VariableStack -> [InternalVariableName] -> [LeftHandSide] -> ([Indent], VariableStack)
+leftHandSidesToJs variableStack _ [] = ([], variableStack)
+leftHandSidesToJs variableStack (currentInternalVariableName : restInternalVariableNames) (currentLeftHandSide : restLeftHandSides) =
   let (currentIndents, variableStack') = leftHandSideToJs variableStack currentLeftHandSide currentInternalVariableName
-      (restIndentations, variableStack'') = leftHandSidesToJs (variableStack' ++ variableStack) restLeftHandSides restInternalVariableNames
+      (restIndentations, variableStack'') = leftHandSidesToJs (variableStack' ++ variableStack) restInternalVariableNames restLeftHandSides
    in (currentIndents ++ restIndentations, variableStack'' ++ variableStack')
 
 leftHandSideToJs :: VariableStack -> LeftHandSide -> InternalVariableName -> ([Indent], VariableStack)
-leftHandSideToJs variableStack (LeftVariable variableName) internalvariableName = ([], [([variableName], internalvariableName)])
-leftHandSideToJs variableStack LeftHole internalvariableName = ([], [])
-leftHandSideToJs variableStack (LeftType typeName) internalVariableName = ([Ln (internalVariableName ++ "._type === \"" ++ typeName ++ "\"")], [])
+leftHandSideToJs variableStack (LeftVariable variableName) internalVariableName = ([], [([variableName], internalVariableName)])
+leftHandSideToJs variableStack LeftHole internalVariableName = ([], [])
+leftHandSideToJs variableStack (LeftType typeName leftHandSides) internalVariableName =
+  let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ "._dt" ++ show index) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
+   in (Ln (internalVariableName ++ "._type == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)

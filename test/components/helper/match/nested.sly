@@ -1,0 +1,22 @@
+model:data{
+	init = -> First
+	reducer = First, action -> Second( Third( action + 2), action )
+	reducer = Second( Third( nestedValue ), outerValue ), action -> Fourth( nestedValue + outerValue + action)
+}
+
+view
+	div
+		#model (dataState, dataDispatch) <- data()
+			#match dataState
+				#case First
+					button{
+						onclick = _ -> dataDispatch(1)
+					}
+						"first"
+				#case Second( Third( nestedValue ), siblingValue)
+					button{
+						onclick = _ -> dataDispatch(2)
+					}
+						"second nestedValue: ${nestedValue} siblingValue: ${siblingValue}"
+				#case Fourth(value)
+					"third: ${value}"
