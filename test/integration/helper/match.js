@@ -76,7 +76,7 @@ describe("match case handling", () => {
         expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
         expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
         expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe("BUTTON");
-        expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("first bar");
+        expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("first: 1 bar");
         expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
 
         element.foo = "baz";
@@ -85,7 +85,7 @@ describe("match case handling", () => {
         expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
         expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
         expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe("BUTTON");
-        expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("first baz");
+        expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("first: 1 baz");
         expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
 
         element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(new MouseEvent("click"));

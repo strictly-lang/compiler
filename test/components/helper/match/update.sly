@@ -8,11 +8,11 @@ view
 	div
 		#model (dataState, dataDispatch) <- data()
 			#match dataState
-				#case First
+				#case First( value )
 					button{
 						onclick = _ -> dataDispatch(1)
 					}
-						"first ${props.foo}"
+						"first: ${value} ${props.foo}"
 				#case Second( value )
 					button{
 						onclick = _ -> dataDispatch(3)
