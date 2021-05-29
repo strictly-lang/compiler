@@ -5,7 +5,7 @@ describe("match case handling", () => {
         document.body.appendChild(container);
     });
     afterEach(() => {
-        // container.remove();
+        container.remove();
     });
 
     it("with basic case", () => {
@@ -79,7 +79,7 @@ describe("match case handling", () => {
         expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("first bar");
         expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
 
-        element.bar = "baz";
+        element.foo = "baz";
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
@@ -106,7 +106,7 @@ describe("match case handling", () => {
         expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe("second: 8 baz");
         expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
 
-        element.bar = "mep";
+        element.foo = "mep";
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");

@@ -419,6 +419,50 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
       updateCallback = scope ++ ".updateCallback" ++ show exprId
       (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
       (patterns, exprId') = getMatchPatterns cases currentValueVariable (exprId + 1) context parent predecessors
+      updateCases = map (filter' (isPrefixOf (currentValueVariable ++ ".") . fst) . (\(_, (_, _, _, UpdateCallbacks updateCallbacks, _)) -> updateCallbacks)) patterns
+      activeUpdates =
+        zipWith
+          ( curry
+              ( \((activeUpdates, _), index) ->
+                  map
+                    ( \(_, updateCode) ->
+                        [ Ln
+                            ("if (" ++ currentCaseVariable ++ " == " ++ show index ++ ") {"),
+                          Br,
+                          Ind updateCode,
+                          Br,
+                          Ln "}",
+                          Br
+                        ]
+                    )
+                    activeUpdates
+              )
+          )
+          updateCases
+          [0 ..]
+
+      restUpdates =
+        zipWith
+          ( curry
+              ( \((_, restUpdates), index) ->
+                  map
+                    ( \(internalVariableName, updateCode) ->
+                        ( internalVariableName,
+                          [ Ln
+                              ("if (" ++ currentCaseVariable ++ " == " ++ show index ++ ") {"),
+                            Br,
+                            Ind updateCode,
+                            Br,
+                            Ln "}",
+                            Br
+                          ]
+                        )
+                    )
+                    restUpdates
+              )
+          )
+          updateCases
+          [0 ..]
       (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns exprId' context parent (getCaseSuccessor currentCaseVariable 0 (map snd patterns))
    in ( [ Ln (currentValueVariable ++ " = undefined;"),
           Br,
@@ -439,40 +483,53 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
                      Br,
                      Ind (getCaseCondition 0 (map fst patterns)),
                      Br,
-                     Ln "if (previousValue !== undefined) {",
+                     Ln ("if (previousCase === " ++ currentCaseVariable ++ ") {"),
                      Br,
                      Ind
-                       ( intercalate
-                           [Br]
-                           [ [ if index == 0
-                                 then Ln ""
-                                 else Ln " else ",
-                               Ln ("if (previousCase === " ++ show index ++ ") {"),
-                               Br,
-                               Ind removeCallbacks,
-                               Br,
-                               Ln "}"
+                       (concat (concat activeUpdates)),
+                     Br,
+                     Ln "} else {",
+                     Br,
+                     Ind
+                       ( [ Ln "if (previousCase !== undefined) {",
+                           Br,
+                           Ind
+                             ( intercalate
+                                 [Br]
+                                 [ [ if index == 0
+                                       then Ln ""
+                                       else Ln " else ",
+                                     Ln ("if (previousCase === " ++ show index ++ ") {"),
+                                     Br,
+                                     Ind removeCallbacks,
+                                     Br,
+                                     Ln "}"
+                                   ]
+                                   | ((_, (_, _, _, _, RemoveCallbacks removeCallbacks)), index) <- zip patterns [0 ..]
+                                 ]
+                             ),
+                           Br,
+                           Ln "}",
+                           Br
+                         ]
+                           ++ intercalate
+                             [Br]
+                             [ [ if index == 0
+                                   then Ln ""
+                                   else Ln " else ",
+                                 Ln ("if (" ++ currentCaseVariable ++ " === " ++ show index ++ ") {"),
+                                 Br,
+                                 Ind caseContent,
+                                 Br,
+                                 Ln "}"
+                               ]
+                               | ((_, (caseContent, _, _, _, _)), index) <- zip patterns [0 ..]
                              ]
-                             | ((_, (_, _, _, _, RemoveCallbacks removeCallbacks)), index) <- zip patterns [0 ..]
-                           ]
                        ),
                      Br,
                      Ln "}",
                      Br
                    ]
-                ++ intercalate
-                  [Br]
-                  [ [ if index == 0
-                        then Ln ""
-                        else Ln " else ",
-                      Ln ("if (" ++ currentCaseVariable ++ " === " ++ show index ++ ") {"),
-                      Br,
-                      Ind caseContent,
-                      Br,
-                      Ln "}"
-                    ]
-                    | ((_, (caseContent, _, _, _, _)), index) <- zip patterns [0 ..]
-                  ]
             ),
           Br,
           Ln "}",
@@ -487,9 +544,10 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
           ( [ (dependency, [Ln (updateCallback ++ "()")])
               | dependency <- dependencies
             ]
+              ++ concat restUpdates
               ++ successorUpdateCallbacks
           ),
-        RemoveCallbacks (successorRemoveCallback)
+        RemoveCallbacks successorRemoveCallback
       )
 
 type Index = Int

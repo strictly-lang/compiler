@@ -122,7 +122,7 @@ rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideVa
         ]
           ++ ( intercalate
                  [Ln ","]
-                 [ Ln (show index ++ ": ") : rightHandSideJs
+                 [ Ln ("_dt" ++ show index ++ ": ") : rightHandSideJs
                    | ((rightHandSideJs, _), index) <-
                        zip rightHandSidesJs [0 ..]
                  ]
@@ -164,5 +164,5 @@ leftHandSideToJs :: VariableStack -> InternalVariableName -> LeftHandSide -> ([I
 leftHandSideToJs variableStack internalvariableName (LeftVariable variableName) = ([], [([variableName], internalvariableName)])
 leftHandSideToJs variableStack internalvariableName LeftHole = ([], [])
 leftHandSideToJs variableStack internalVariableName (LeftType typeName leftHandSides) =
-  let nestedDataTypes = [leftHandSideToJs variableStack (internalVariableName ++ "[" ++ show index ++ "]") leftHandSide | (leftHandSide, index) <- zip leftHandSides [0 ..]]
+  let nestedDataTypes = [leftHandSideToJs variableStack (internalVariableName ++ "._dt" ++ show index) leftHandSide | (leftHandSide, index) <- zip leftHandSides [0 ..]]
    in (Ln (internalVariableName ++ "._type == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)
