@@ -114,7 +114,7 @@ compileView ((ViewModel (Expression (leftHandSide, FeedOperator, sourceValue)) c
         ]
       (modelValue, modelDependencies) = rightHandSideValueFunctionCallToJs [modelUpdateCallbackJs] variableStack sourceValue
       (successorContent, exprId''', predecessors'', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent predecessors'
-   in ( [Ln (modelScope ++ " = ")] ++ modelValue ++ [Br]
+   in ( [Ln (modelScope ++ " = ")] ++ modelValue ++ [Ln ";", Br]
           ++ childrenContent
           ++ successorContent,
         exprId',
@@ -314,7 +314,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
           Ind positiveChildrenContent,
           Ln "}",
           Br,
-          Ln (createNegativeCallback ++ " = ()=> {"),
+          Ln (createNegativeCallback ++ " = () => {"),
           Br,
           Ind negativeChildrenContent,
           Ln "}",
@@ -469,14 +469,13 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
           Ln (updateCallback ++ " = () => {"),
           Br,
           Ind
-            ( [ Ln ("const previousValue = " ++ currentValueVariable ++ ";"),
-                Br,
-                Ln ("const previousCase = " ++ currentCaseVariable ++ ";"),
+            ( [ Ln ("const previousCase = " ++ currentCaseVariable ++ ";"),
                 Br,
                 Ln (currentValueVariable ++ " = ")
               ]
                 ++ rightHandValueJs
-                ++ [ Br,
+                ++ [ Ln ";",
+                     Br,
                      Ln (currentCaseVariable ++ " = "),
                      Br,
                      Ind (getCaseCondition 0 (map fst patterns)),

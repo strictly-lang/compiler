@@ -80,7 +80,7 @@ functionToJs variableStack [RightHandSideValue rightHandSideValue] =
 functionToJs' :: VariableStack -> [RightHandSide] -> [Indent]
 functionToJs' variableStack [] = []
 functionToJs' variableStack ((FunctionDefinition arguments rightHandSideValue) : restFunctionDefinition)
-  | null patterns = Ln "return " : fst (rightHandSideValueToJs variableStack'' rightHandSideValue) ++ [Br]
+  | null patterns = Ln "return " : fst (rightHandSideValueToJs variableStack'' rightHandSideValue) ++ [Ln ";", Br]
   | otherwise =
     [ Ln "if( "
     ]
@@ -89,7 +89,7 @@ functionToJs' variableStack ((FunctionDefinition arguments rightHandSideValue) :
            Br,
            Ind
              ( Ln "return " :
-               fst (rightHandSideValueToJs variableStack'' rightHandSideValue)
+               fst (rightHandSideValueToJs variableStack'' rightHandSideValue) ++ [Ln ";"]
              ),
            Br,
            Ln "}"

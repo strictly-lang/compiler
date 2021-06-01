@@ -39,7 +39,7 @@ compileModel (Model name options) variableStack =
                            Ln "if (Object.is(reducerResult, result[0]) === false) {",
                            Br,
                            Ind
-                             [ Ln "result[0] = reducerResult",
+                             [ Ln "result[0] = reducerResult;",
                                Br,
                                Ln "updateCallback();",
                                Br
@@ -65,7 +65,7 @@ compileModel (Model name options) variableStack =
                                  Br,
                                  Ln "done = iterableResult.done;",
                                  Br,
-                                 Ln "result[0] = await iterableResult.value,",
+                                 Ln "result[0] = await iterableResult.value;",
                                  Br,
                                  Ln "updateCallback();",
                                  Br
@@ -74,14 +74,14 @@ compileModel (Model name options) variableStack =
                              Ln "}",
                              Br
                            ],
-                         Ln "})()",
+                         Ln "})();",
                          Br
                        ]
                      else []
                  )
               ++ [ Br,
                    Ln
-                     "return result",
+                     "return result;",
                    Br
                  ]
           ),
