@@ -1,3 +1,9 @@
+async function nextTick(amount) {
+    for (let i = amount; i > 0; i--) {
+        await new Promise(resolve => resolve());
+    }
+}
+
 describe("model element handling", () => {
     let container;
     beforeEach(() => {
@@ -34,5 +40,29 @@ describe("model element handling", () => {
         expect(element.shadowRoot.childNodes[0].tagName).toBe("BUTTON");
         expect(element.shadowRoot.childNodes[1].tagName).toBe("BUTTON");
         expect(element.shadowRoot.childNodes[2].textContent).toBe("1");
+    });
+
+    it("async model handling", async () => {
+        const fetchSpy = spyOn(window, "fetch").and.callFake(function () {
+            return new Promise(resolve => {
+                resolve({
+                    text: () => Promise.resolve("text response")
+                });
+            });
+        });
+
+        const element = document.createElement("test-components-helper-model-fetch");
+        element.load = true;
+        element.id = 23
+
+        container.appendChild(element);
+
+        expect(fetchSpy).toHaveBeenCalledOnceWith("/api/23");
+        expect(element.shadowRoot.textContent).toBe("Loading...");
+
+
+        await nextTick(10);
+
+        expect(element.shadowRoot.textContent).toBe("text response");
     });
 });

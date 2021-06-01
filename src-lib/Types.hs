@@ -20,7 +20,7 @@ type Name = String
 
 type IndentationLevel = Int
 
-data Root = View [ViewContent] | Model Name [MergedOption RightHandSide]
+data Root = View [ViewContent] | Model Name [MergedOption (Bool, RightHandSide)] | Import String [String]
   deriving (Show)
 
 data LeftHandSide = LeftVariable String | LeftTuple [LeftHandSide] | LeftType String [LeftHandSide] | LeftHole
@@ -49,7 +49,5 @@ data Case = Case LeftHandSide [ViewContent]
 
 data MixedText = StaticText String | DynamicText RightHandSideValue
   deriving (Show)
-
-type Compiler a = String -> [Root] -> Root -> String
 
 type Parser = Parsec Void String

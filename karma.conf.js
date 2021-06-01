@@ -9,6 +9,10 @@ module.exports = function (config) {
         autoWatch: false,
         singleRun: true,
         files: [
+            {
+                pattern: "vendor/strictly/**/*.js",
+                type: "module"
+            },            
             "test/components/host/attributes.sly",
             "test/components/host/base.sly",
             "test/components/host/siblings.sly",
@@ -19,6 +23,10 @@ module.exports = function (config) {
             "test/components/helper/each/*.sly",
             "test/components/helper/if/*.sly",
             "test/components/helper/model/counter.sly",
+            {
+                pattern: "test/components/helper/model/fetch.sly",
+                type: "module"
+            },            
             "test/components/helper/match/*.sly",
             "test/**/*.js"
         ],

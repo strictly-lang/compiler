@@ -36,6 +36,7 @@ publicVariableToInternal :: VariableStack -> [String] -> Maybe String
 publicVariableToInternal (stack@(publicStack, internalStack) : vs) search
   | publicStack == take (length publicStack) search = Just (intercalate "." (internalStack : drop (length publicStack) search))
   | otherwise = publicVariableToInternal vs search
+publicVariableToInternal stack search = error ("Could not find variable for: " ++ show search)
 
 indent :: [Indent] -> String
 indent = indent' 0
@@ -150,7 +151,7 @@ rightHandSideValueFunctionCallToJs :: [Curry] -> VariableStack -> RightHandSideV
 rightHandSideValueFunctionCallToJs curry variableStack (FunctionCall functionReference argumentPublicNames) =
   let (functionValue, functionDependencies) = rightHandSideValueToJs variableStack functionReference
       arguments = map (rightHandSideValueToJs variableStack) argumentPublicNames
-      function = functionValue ++ [Ln "("] ++ intercalate [Ln ","] (curry ++ map fst arguments) ++ [Ln ")"]
+      function = functionValue ++ [Ln "("] ++ intercalate [Ln ", "] (curry ++ map fst arguments) ++ [Ln ")"]
    in (function, functionDependencies ++ concatMap snd arguments)
 
 leftHandSidesToJs :: VariableStack -> [InternalVariableName] -> [LeftHandSide] -> ([Indent], VariableStack)
@@ -163,6 +164,9 @@ leftHandSidesToJs variableStack (currentInternalVariableName : restInternalVaria
 leftHandSideToJs :: VariableStack -> LeftHandSide -> InternalVariableName -> ([Indent], VariableStack)
 leftHandSideToJs variableStack (LeftVariable variableName) internalVariableName = ([], [([variableName], internalVariableName)])
 leftHandSideToJs variableStack LeftHole internalVariableName = ([], [])
+leftHandSideToJs variableStack (LeftTuple leftHandSides) internalVariableName =
+  let nestedTupleData = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ "[" ++ show index ++ "]") | (leftHandSide, index) <- zip leftHandSides [0 ..]]
+   in ([], concatMap snd nestedTupleData)
 leftHandSideToJs variableStack (LeftType typeName leftHandSides) internalVariableName =
   let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ "._dt" ++ show index) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
    in (Ln (internalVariableName ++ "._type == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)

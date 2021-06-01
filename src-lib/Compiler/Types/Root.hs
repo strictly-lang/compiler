@@ -4,72 +4,82 @@ import Compiler.Types
 import Compiler.Types.Model (compileModel)
 import Compiler.Types.View (compileView)
 import Compiler.Util (filter', indent, slashToCamelCase, slashToDash)
-import Data.List (isPrefixOf)
+import Data.List (intercalate, isPrefixOf)
 import Types
 
 propertiesScope = "this._properties"
 
 mountedBool = "this._mounted"
 
-compileRoot :: Compiler Root
-compileRoot componentPath ast ((View children)) =
-  let scope = "this._el"
-      (viewContent, _, _, updateCallbacks, _) = compileView children 0 (Context (scope, (["props"], propertiesScope) : getModelScopeVariableStack ast)) "this.shadowRoot" []
-   in indent
-        [ Ln "(() => {",
-          Br,
-          Ind
-            [ Ln ("class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {"),
-              Br,
-              Ind
-                ( [ Ln "constructor() {",
-                    Br,
-                    Ind
-                      [ Ln "super();",
-                        Br,
-                        Ln (mountedBool ++ " = false;"),
-                        Br,
-                        Ln (propertiesScope ++ " = {};"),
-                        Br
-                      ],
-                    Ln "}",
-                    Br,
-                    Br
-                  ]
-                    ++ getModelFactories ast
-                    ++ [ Br,
-                         Ln "connectedCallback() {",
-                         Br,
-                         Ind
-                           ( [ Ln (mountedBool ++ " = true;"),
-                               Br,
-                               Ln (scope ++ " = {};"),
-                               Br,
-                               Ln "this.attachShadow({mode: 'open'});",
-                               Br
-                             ]
-                               ++ viewContent
-                           ),
-                         Ln "}",
-                         Br,
-                         Br
-                       ]
-                    ++ walkDependencies updateCallbacks
-                ),
-              Ln "}",
-              Br,
-              Br,
-              Ln ("customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");"),
-              Br
-            ],
-          Ln "})()"
-        ]
-compileRoot _ _ _ = ""
+compileRoot :: String -> [Root] -> String
+compileRoot componentPath ast = indent (compileRoot' componentPath ast ast [])
 
-getModelFactories :: [Root] -> [Indent]
-getModelFactories [] = []
-getModelFactories (model@(Model _ _) : rest) = compileModel model ++ getModelFactories rest
-getModelFactories (_ : rest) = getModelFactories rest
+compileRoot' :: String -> [Root] -> [Root] -> VariableStack -> [Indent]
+compileRoot' componentPath [] ast variableStack = []
+compileRoot' componentPath ((Import path imports) : ns) ast variableStack =
+  [ Ln ("import { " ++ intercalate ", " imports ++ " } from \"" ++ path ++ "\";"),
+    Br
+  ]
+    ++ compileRoot' componentPath ns ast ([([importVariable], importVariable) | importVariable <- imports] ++ variableStack)
+compileRoot' componentPath ((View children) : ns) ast variableStack =
+  let scope = "this._el"
+      variableStack' = getModelScopeVariableStack ast ++ variableStack
+      (viewContent, _, _, UpdateCallbacks updateCallbacks, _) = compileView children 0 (Context (scope, (["props"], propertiesScope) : variableStack')) "this.shadowRoot" []
+   in [ Ln "(() => {",
+        Br,
+        Ind
+          [ Ln ("class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {"),
+            Br,
+            Ind
+              ( [ Ln "constructor() {",
+                  Br,
+                  Ind
+                    [ Ln "super();",
+                      Br,
+                      Ln (mountedBool ++ " = false;"),
+                      Br,
+                      Ln (propertiesScope ++ " = {};"),
+                      Br
+                    ],
+                  Ln "}",
+                  Br,
+                  Br
+                ]
+                  ++ getModelFactories ast variableStack
+                  ++ [ Br,
+                       Ln "connectedCallback() {",
+                       Br,
+                       Ind
+                         ( [ Ln (mountedBool ++ " = true;"),
+                             Br,
+                             Ln (scope ++ " = {};"),
+                             Br,
+                             Ln "this.attachShadow({mode: 'open'});",
+                             Br
+                           ]
+                             ++ viewContent
+                         ),
+                       Ln "}",
+                       Br,
+                       Br
+                     ]
+                  ++ walkDependencies (UpdateCallbacks (filter (not . ((\value -> value `elem` map snd variableStack') . fst)) updateCallbacks))
+              ),
+            Ln "}",
+            Br,
+            Br,
+            Ln ("customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");"),
+            Br
+          ],
+        Ln "})()"
+      ]
+        ++ compileRoot' componentPath ns ast variableStack
+compileRoot' componentPath ((Model _ _) : ns) ast variableStack = compileRoot' componentPath ns ast variableStack
+
+getModelFactories :: [Root] -> VariableStack -> [Indent]
+getModelFactories [] _ = []
+getModelFactories (model@(Model _ _) : rest) variableStack = compileModel model variableStack ++ getModelFactories rest variableStack
+getModelFactories (_ : rest) variableStack = getModelFactories rest variableStack
 
 splitBy :: (Foldable t, Eq a) => a -> t a -> [[a]]
 splitBy delimiter = foldr f [[]]
