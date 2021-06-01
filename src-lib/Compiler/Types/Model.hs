@@ -71,7 +71,8 @@ compileModel (Model name options) variableStack =
                                  Br
                                ],
                              Br,
-                             Ln "}"
+                             Ln "}",
+                             Br
                            ],
                          Ln "})()",
                          Br
