@@ -19,7 +19,7 @@ extra-source-files:  CHANGELOG.md, README.md
 
 library
   exposed-modules:     Compiler.Main
-  other-modules:       Types, Parser.Main, Parser.Util.Base, Parser.Model.Base, Parser.Util.Base, Parser.View.Base, Compiler.Types, Compiler.Util, Compiler.Javascript, Compiler.Types.Root, Compiler.Types.Model, Compiler.Types.View
+  other-modules:       Types, Parser.Main, Parser.Util.Base, Parser.Model.Base, Parser.Import.Base, Parser.Util.Base, Parser.View.Base, Compiler.Types, Compiler.Util, Compiler.Javascript, Compiler.Types.Root, Compiler.Types.Model, Compiler.Types.View
   -- other-extensions:
   build-depends:       base, megaparsec
   hs-source-dirs:      src-lib

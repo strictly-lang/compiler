@@ -1,6 +1,7 @@
 module Parser.Model.Base (modelParser) where
 
-import Parser.Util.Base (optionsParser, rightHandSideFunctionParser, sc, identityParser, mergeOptions)
+import Control.Applicative (optional)
+import Parser.Util.Base (identityParser, mergeOptions, optionsParser, rightHandSideFunctionParser, sc)
 import Text.Megaparsec.Char (char, string)
 import Types
 
@@ -12,9 +13,15 @@ modelParser = do
   options <- optionsParser 0 (modelOptionParser rightHandSideFunctionParser)
   return (Model name (mergeOptions options))
 
-modelOptionParser :: Parser a -> Parser (Option a)
+modelOptionParser :: Parser a -> Parser (Option (Bool, a))
 modelOptionParser rightHandSideParser = do
-  attributeName <- identityParser <* sc
+  attributeName <- identityParser
+  isGenerator <- optional (char '*')
+  _ <- sc
   _ <- char '=' <* sc
   rightHandSide <- rightHandSideParser
-  return (attributeName, rightHandSide)
+  return (attributeName, (maybeToBool isGenerator, rightHandSide))
+
+maybeToBool :: Maybe a -> Bool
+maybeToBool (Just _) = True
+maybeToBool Nothing = False

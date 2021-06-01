@@ -100,13 +100,11 @@ compileView ((Host nodeName options children) : ns) exprId context@(Context (sco
           ),
         RemoveCallbacks (Ln (elementVariable ++ ".remove();") : successorRemoveCallbacks)
       )
-compileView ((ViewModel (Expression (LeftTuple [LeftVariable publicStateVariable, LeftVariable publicDispatchVariable], FeedOperator, sourceValue)) children) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
+compileView ((ViewModel (Expression (leftHandSide, FeedOperator, sourceValue)) children) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
   let modelScope = scope ++ ".model" ++ show exprId
-      modelState = modelScope ++ "[0]"
-      dispatcher = modelScope ++ "[1]"
-      modeledVariableStack = ([publicStateVariable], modelState) : ([publicDispatchVariable], dispatcher) : variableStack
+      modeledVariableStack = snd (leftHandSideToJs variableStack leftHandSide modelScope) ++ variableStack
       (childrenContent, exprId', predecessors', UpdateCallbacks childrenUpdateCallbacks, removeCallbacks) = compileView children (exprId + 1) (Context (scope, modeledVariableStack)) parent predecessors
-      (modelUpdateCallback, restUpdateCallbacks) = filter' ((== modelState) . fst) childrenUpdateCallbacks
+      (modelUpdateCallback, restUpdateCallbacks) = filter' (isPrefixOf modelScope . fst) childrenUpdateCallbacks
       modelUpdateCallbackJs =
         [ Ln "() => {",
           Br,
@@ -121,7 +119,7 @@ compileView ((ViewModel (Expression (LeftTuple [LeftVariable publicStateVariable
           ++ successorContent,
         exprId',
         predecessors'',
-        UpdateCallbacks restUpdateCallbacks,
+        UpdateCallbacks ([(modelDependency, []) | modelDependency <- modelDependencies] ++ restUpdateCallbacks),
         removeCallbacks
       )
 compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, LeftVariable publicIndexVariable], FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =

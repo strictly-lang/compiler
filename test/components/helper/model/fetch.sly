@@ -1,7 +1,7 @@
-import strictly.http
+import /base/vendor/strictly/http/src/index.js (getText)
 
 model:data{
-	init* = id -> http.getText("/api/${id}")
+	init* = id -> getText("/api/${id}")
 	reducer = _, action -> action
 }
 
