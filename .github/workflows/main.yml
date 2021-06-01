@@ -22,9 +22,8 @@ jobs:
     steps:
       - name: Check out source code
         uses: actions/checkout@v2
-
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
+        with:
+          submodules: recursive
 
       - uses: haskell/actions/setup@v1
 
