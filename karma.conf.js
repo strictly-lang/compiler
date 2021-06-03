@@ -11,24 +11,20 @@ module.exports = function (config) {
         files: [
             {
                 pattern: "vendor/strictly/**/*.js",
-                type: "module"
-            },            
-            "test/components/host/attributes.sly",
-            "test/components/host/base.sly",
-            "test/components/host/siblings.sly",
-            "test/components/host/withtext.sly",
-            "test/components/host/nested.sly",
-            "test/components/host/events.sly",
-            "test/components/text/*.sly",
-            "test/components/helper/each/*.sly",
-            "test/components/helper/if/*.sly",
-            "test/components/helper/model/counter.sly",
+                type: "module",
+                included: false,
+            },
             {
-                pattern: "test/components/helper/model/fetch.sly",
+                pattern: "test/components/**/*.sly",
                 type: "module"
-            },            
-            "test/components/helper/match/*.sly",
+            },
             "test/**/*.js"
+        ],
+        exclude: [
+            "test/components/host/style.sly",
+            "test/components/host/namespace.sly",
+            "test/components/helper/model/dependencies.sly",
+            "test/components/nesting/**"
         ],
         preprocessors: {
             "**/*.sly": ["strictly"]

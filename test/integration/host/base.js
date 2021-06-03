@@ -58,17 +58,18 @@ describe("host element handling", () => {
         expect(element.shadowRoot.childNodes[0].title).toBe("combined foofoo text");
     });
 
-    xit("input text change", () => {
+    it("input text change", () => {
         const element = document.createElement("test-components-host-events");
         element.value = "foo";
-        element.oninput = (evt) => {
-            element.value = evt.currentTarget.value;
+        element.oninput = (value) => {
+            element.value = value;
         };
 
         container.appendChild(element);
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
+        expect(element.shadowRoot.childNodes[0].type).toBe("text");
         expect(element.shadowRoot.childNodes[0].value).toBe("foo");
 
         element.shadowRoot.childNodes[0].value = "fooa"
@@ -78,10 +79,10 @@ describe("host element handling", () => {
         expect(element.shadowRoot.childNodes[0].value).toBe("fooa");
     });
 
-    xit("input text non-change", () => {
+    it("input text non-change", () => {
         const element = document.createElement("test-components-host-events");
         element.value = "foo";
-        element.oninput = (evt) => {
+        element.oninput = (_evt) => {
             // Doing nothing with the event
         };
 
@@ -89,6 +90,7 @@ describe("host element handling", () => {
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
+        expect(element.shadowRoot.childNodes[0].type).toBe("text");
         expect(element.shadowRoot.childNodes[0].value).toBe("foo");
 
         element.shadowRoot.childNodes[0].value = "fooa"
@@ -98,10 +100,10 @@ describe("host element handling", () => {
         expect(element.shadowRoot.childNodes[0].value).toBe("foo");
     });
 
-    xit("input text different-change", () => {
+    it("input text different-change", () => {
         const element = document.createElement("test-components-host-events");
         element.value = "foo";
-        element.oninput = (evt) => {
+        element.oninput = (_evt) => {
             element.value = "foob"
         };
 
@@ -109,6 +111,7 @@ describe("host element handling", () => {
 
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
+        expect(element.shadowRoot.childNodes[0].type).toBe("text");
         expect(element.shadowRoot.childNodes[0].value).toBe("foo");
 
         element.shadowRoot.childNodes[0].value = "fooa"
@@ -117,4 +120,47 @@ describe("host element handling", () => {
         expect(element.shadowRoot.childNodes.length).toBe(1);
         expect(element.shadowRoot.childNodes[0].value).toBe("foob");
     });
+
+    it("input checkbox change", () => {
+        const element = document.createElement("test-components-host-checkbox");
+        element.value = true;
+        element.oninput = (value) => {
+            element.value = value;
+        };
+
+        container.appendChild(element);
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
+        expect(element.shadowRoot.childNodes[0].type).toBe("checkbox");
+        expect(element.shadowRoot.childNodes[0].checked).toBe(true);
+
+        element.shadowRoot.childNodes[0].checked = false
+        element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].checked).toBe(false);
+    });
+
+    it("input checkbox non-change", () => {
+        const element = document.createElement("test-components-host-checkbox");
+        element.value = true;
+        element.oninput = (_evt) => {
+            // Doing nothing with the event
+        };
+
+        container.appendChild(element);
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
+        expect(element.shadowRoot.childNodes[0].type).toBe("checkbox");
+        expect(element.shadowRoot.childNodes[0].checked).toBe(true);
+
+        element.shadowRoot.childNodes[0].checked = false
+        element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
+
+        expect(element.shadowRoot.childNodes.length).toBe(1);
+        expect(element.shadowRoot.childNodes[0].checked).toBe(true);
+    });
+
 });

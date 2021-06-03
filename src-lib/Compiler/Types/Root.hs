@@ -2,7 +2,7 @@ module Compiler.Types.Root (compileRoot) where
 
 import Compiler.Types
 import Compiler.Types.Model (compileModel)
-import Compiler.Types.View (compileView)
+import Compiler.Types.View.Base (compileView)
 import Compiler.Util (filter', indent, slashToCamelCase, slashToDash)
 import Data.List (intercalate, isPrefixOf)
 import Types
@@ -107,7 +107,12 @@ walkDependencies (UpdateCallbacks ((internalName, updateCallback) : updateCallba
     isProps = (propertiesScope ++ ".") `isPrefixOf` internalName
 
 internalNameToSetterName :: String -> String
-internalNameToSetterName internalName = head (drop (length (splitByDot propertiesScope)) (splitByDot internalName))
+internalNameToSetterName internalName
+  | splitPropertiesScope `isPrefixOf` splitInternalName = head (drop (length splitPropertiesScope) splitInternalName)
+  | otherwise = error ("There is an observer missing for " ++ internalName)
+  where
+    splitInternalName = splitByDot internalName
+    splitPropertiesScope = splitByDot propertiesScope
 
 getSetter :: String -> [[Indent]] -> [Indent]
 getSetter name updateCallback =

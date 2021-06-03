@@ -6,6 +6,6 @@ model:main{
 view
 	#model (mainState, mainDispatch) <- main()
 		input{
-			value = mainState
-			oninput = value -> mainDispatch(value)
+			value = Text(mainState)
+			oninput = Text(value) -> mainDispatch(value)
 		}

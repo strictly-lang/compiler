@@ -17,3 +17,5 @@ newtype RemoveCallbacks = RemoveCallbacks [Indent]
 newtype Predecessor = Predecessor String
 
 data Indent = Ln String | Br | Ind [Indent]
+
+type ExprId = Int

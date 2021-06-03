@@ -62,43 +62,55 @@ filter' predicate (a : as)
 unsafeVariable :: Maybe String -> String
 unsafeVariable (Just variable) = variable
 
-functionToJs :: VariableStack -> [RightHandSide] -> [Indent]
+functionToJs :: VariableStack -> [RightHandSide] -> ([Indent], [String])
 functionToJs variableStack allFunctions@((FunctionDefinition arguments _) : restFunctionDefinition) =
-  [ Ln ("(" ++ intercalate ", " ["_arg" ++ show index | (_, index) <- zip arguments [0 ..]] ++ ") => {"),
-    Br,
-    Ind (functionToJs' variableStack allFunctions),
-    Ln "}"
-  ]
+  let (patterns, dependencies) = functionToJs' variableStack allFunctions
+      argumentsJs = ["_arg" ++ show index | (_, index) <- zip arguments [0 ..]]
+      dependencies' = filter (not . \dependency -> any (`isPrefixOf` dependency) argumentsJs) dependencies
+   in ( [ Ln ("(" ++ intercalate ", " argumentsJs ++ ") => {"),
+          Br,
+          Ind patterns,
+          Ln "}"
+        ],
+        dependencies'
+      )
 functionToJs variableStack [RightHandSideValue rightHandSideValue] =
-  [ Ln "(evt) => {",
-    Br,
-    Ind (fst (rightHandSideValueToJs variableStack rightHandSideValue) ++ [Ln "(evt)"]),
-    Br,
-    Ln "}"
-  ]
+  let (functionBodyJs, dependencies) = rightHandSideValueToJs variableStack rightHandSideValue
+   in ( [ Ln "(evt) => {",
+          Br,
+          Ind (functionBodyJs ++ [Ln "(evt)"]),
+          Br,
+          Ln "}"
+        ],
+        dependencies
+      )
 
-functionToJs' :: VariableStack -> [RightHandSide] -> [Indent]
-functionToJs' variableStack [] = []
+functionToJs' :: VariableStack -> [RightHandSide] -> ([Indent], [String])
+functionToJs' variableStack [] = ([], [])
 functionToJs' variableStack ((FunctionDefinition arguments rightHandSideValue) : restFunctionDefinition)
-  | null patterns = Ln "return " : fst (rightHandSideValueToJs variableStack'' rightHandSideValue) ++ [Ln ";", Br]
+  | null patterns = (Ln "return " : rightHandValueJs ++ [Ln ";", Br], dependencies)
   | otherwise =
-    [ Ln "if( "
-    ]
-      ++ intersperse (Ln " && ") patterns
-      ++ [ Ln ") {",
-           Br,
-           Ind
-             ( Ln "return " :
-               fst (rightHandSideValueToJs variableStack'' rightHandSideValue) ++ [Ln ";"]
-             ),
-           Br,
-           Ln "}"
-         ]
-      ++ [Br]
-      ++ functionToJs' variableStack restFunctionDefinition
+    let (nextPatterns, nextDependencies) = functionToJs' variableStack restFunctionDefinition
+     in ( [ Ln "if( "
+          ]
+            ++ intersperse (Ln " && ") patterns
+            ++ [ Ln ") {",
+                 Br,
+                 Ind
+                   ( Ln "return " :
+                     fst (rightHandSideValueToJs variableStack'' rightHandSideValue) ++ [Ln ";"]
+                   ),
+                 Br,
+                 Ln "}"
+               ]
+            ++ [Br]
+            ++ nextPatterns,
+          dependencies ++ nextDependencies
+        )
   where
     (patterns, variableStack') = leftHandSidesToJs variableStack ["_arg" ++ show index | index <- [0 ..]] arguments
     variableStack'' = variableStack' ++ variableStack
+    (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack'' rightHandSideValue
 
 rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> ([Indent], [String])
 rightHandSideValueToJs variableStack functionCall@(FunctionCall functionReference argumentPublicNames) = rightHandSideValueFunctionCallToJs [] variableStack functionCall
