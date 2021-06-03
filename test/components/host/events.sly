@@ -1,6 +1,5 @@
 view
 	input{
-		type="text"
-		value =  props.value
-		oninput = props.oninput
+		value = Text(props.value)
+		oninput = Text(value) -> props.oninput(value)
 	}

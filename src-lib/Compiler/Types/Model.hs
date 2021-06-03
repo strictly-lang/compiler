@@ -12,7 +12,7 @@ compileModel (Model name options) variableStack =
         Br,
         Ind
           ( ( concat
-                [Ln ("const __" ++ optionName ++ " = ") : functionToJs variableStack (map snd optionValue) ++ [Br] | (optionName, optionValue) <- options]
+                [Ln ("const __" ++ optionName ++ " = ") : fst (functionToJs variableStack (map snd optionValue)) ++ [Br] | (optionName, optionValue) <- options]
             )
               ++ ( if hasGnerator
                      then

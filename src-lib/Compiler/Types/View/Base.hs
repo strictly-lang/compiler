@@ -1,13 +1,12 @@
-module Compiler.Types.View (compileView) where
+module Compiler.Types.View.Base (compileView) where
 
 import Compiler.Types
+import Compiler.Types.View.Host (compileHost)
 import Compiler.Util (filter', functionToJs, indent, leftHandSideToJs, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
 import Data.List (intercalate, intersect, intersperse, isPrefixOf)
 import Types
 
 type Successor = String
-
-type ExprId = Int
 
 type Parent = String
 
@@ -68,33 +67,41 @@ compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableS
         UpdateCallbacks (concatMap secondOfTriplet textContents ++ successorUpdateCallbacks),
         RemoveCallbacks (concatMap lastOfTriplet textContents ++ successorRemoveCallback)
       )
-compileView ((Host nodeName options children) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
+compileView (host@Host {} : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
   let elementVariable = scope ++ ".el" ++ show exprId
+      (Host nodeName options children, hostSpecificContent, UpdateCallbacks hostSpecificUpdateCallbacks) = compileHost context exprId elementVariable host
       (childrenContent, exprId', _, UpdateCallbacks childrenUpdateCallbacks, _) = compileView children (exprId + 1) context elementVariable []
       (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent (Predecessor elementVariable : predecessors)
       getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
    in ( [Ln (elementVariable ++ " = document.createElement(\"" ++ nodeName ++ "\");"), Br]
           ++ concat
             [ if "on" `isPrefixOf` attributeKey
-                then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ functionToJs variableStack attributeRightHandSide ++ [Ln ");", Br]
+                then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ fst (functionToJs variableStack attributeRightHandSide) ++ [Ln ");", Br]
                 else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : concatMap fst (getAttributeValue attributeRightHandSide) ++ [Ln ");", Br]
               | (attributeKey, attributeRightHandSide) <- options
             ]
           ++ [ Ln (appendChild parent predecessors elementVariable),
                Br
              ]
+          ++ hostSpecificContent
           ++ childrenContent
           ++ successorContent,
         exprId'',
         predecessors',
         UpdateCallbacks
-          ( [ ( dependency,
-                Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : attributeJs ++ [Ln ");", Br]
-              )
-              | (attributeKey, attributeRightHandSide) <- options,
-                (attributeJs, dependencies) <- getAttributeValue attributeRightHandSide,
-                dependency <- dependencies
-            ]
+          ( hostSpecificUpdateCallbacks
+              ++ [ ( dependency,
+                     Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : attributeJs ++ [Ln ");", Br]
+                   )
+                   | (attributeKey, attributeRightHandSide) <- options,
+                     (attributeJs, dependencies) <- getAttributeValue attributeRightHandSide,
+                     dependency <- dependencies
+                 ]
+              ++ [ (dependency, [])
+                   | (attributeKey, attributeRightHandSide) <- options,
+                     attributeKey `isPrefixOf` "on",
+                     dependency <- snd (functionToJs variableStack attributeRightHandSide)
+                 ]
               ++ childrenUpdateCallbacks
               ++ successorUpdateCallbacks
           ),
