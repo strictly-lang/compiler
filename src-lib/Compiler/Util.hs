@@ -1,4 +1,4 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, filter', rightHandSideValueToJs, functionToJs, rightHandSideValueFunctionCallToJs, leftHandSideToJs) where
+module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, rightHandSideValueToJs, functionToJs, rightHandSideValueFunctionCallToJs, leftHandSideToJs) where
 
 import Compiler.Types
 import Data.Char (toUpper)
@@ -48,15 +48,6 @@ indent' indentationLevel (Br : restLines)
   | otherwise = "\n" ++ replicate indentationLevel '\t' ++ indent' indentationLevel restLines
 indent' indentationLevel ((Ln line) : restLines) = line ++ indent' indentationLevel restLines
 indent' indentationLevel ((Ind indentedLines) : lines) = '\t' : indent' (indentationLevel + 1) indentedLines ++ replicate indentationLevel '\t' ++ indent' indentationLevel lines
-
-filter' :: (a -> Bool) -> [a] -> ([a], [a])
-filter' _ [] = ([], [])
-filter' predicate (a : as)
-  | matched = (a : nextMatches, nextUnmatches)
-  | otherwise = (nextMatches, a : nextUnmatches)
-  where
-    matched = predicate a
-    (nextMatches, nextUnmatches) = filter' predicate as
 
 -- TODO: a compileerror should be thrown instead
 unsafeVariable :: Maybe String -> String

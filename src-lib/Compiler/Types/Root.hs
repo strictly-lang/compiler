@@ -3,8 +3,8 @@ module Compiler.Types.Root (compileRoot) where
 import Compiler.Types
 import Compiler.Types.Model (compileModel)
 import Compiler.Types.View.Base (compileView)
-import Compiler.Util (filter', indent, slashToCamelCase, slashToDash)
-import Data.List (intercalate, isPrefixOf)
+import Compiler.Util (indent, slashToCamelCase, slashToDash)
+import Data.List (intercalate, isPrefixOf, partition)
 import Types
 
 propertiesScope = "this._properties"
@@ -100,7 +100,7 @@ walkDependencies (UpdateCallbacks []) = []
 walkDependencies (UpdateCallbacks ((internalName, updateCallback) : updateCallbacks))
   | isProps =
     let setterName = internalNameToSetterName internalName
-        (matchedUpdateCallbacks, unmatchedUpdateCallbacks) = filter' ((setterName ==) . internalNameToSetterName . fst) updateCallbacks
+        (matchedUpdateCallbacks, unmatchedUpdateCallbacks) = partition ((setterName ==) . internalNameToSetterName . fst) updateCallbacks
      in getSetter setterName (updateCallback : map snd matchedUpdateCallbacks) ++ walkDependencies (UpdateCallbacks unmatchedUpdateCallbacks)
   | otherwise = error ("There is an observer missing for " ++ internalName)
   where

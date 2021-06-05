@@ -2,8 +2,8 @@ module Compiler.Types.View.Base (compileView) where
 
 import Compiler.Types
 import Compiler.Types.View.Host (compileHost)
-import Compiler.Util (filter', functionToJs, indent, leftHandSideToJs, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
-import Data.List (intercalate, intersect, intersperse, isPrefixOf)
+import Compiler.Util (functionToJs, indent, leftHandSideToJs, publicVariableToInternal, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
+import Data.List (intercalate, intersect, intersperse, isPrefixOf, partition)
 import Types
 
 type Successor = String
@@ -111,7 +111,7 @@ compileView ((ViewModel (Expression (leftHandSide, FeedOperator, sourceValue)) c
   let modelScope = scope ++ ".model" ++ show exprId
       modeledVariableStack = snd (leftHandSideToJs variableStack leftHandSide modelScope) ++ variableStack
       (childrenContent, exprId', predecessors', UpdateCallbacks childrenUpdateCallbacks, removeCallbacks) = compileView children (exprId + 1) (Context (scope, modeledVariableStack)) parent predecessors
-      (modelUpdateCallback, restUpdateCallbacks) = filter' (isPrefixOf modelScope . fst) childrenUpdateCallbacks
+      (modelUpdateCallback, restUpdateCallbacks) = partition (isPrefixOf modelScope . fst) childrenUpdateCallbacks
       modelUpdateCallbackJs =
         [ Ln "() => {",
           Br,
@@ -146,8 +146,8 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
       (entityChildrenContent, exprId', entitySuccessor, UpdateCallbacks entityChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView entityChildren (exprId + 1) (Context (entityScope, entityVariableStack)) parent (Predecessor entityPredecessor : predecessors)
       (negativeChildrenContent, exprId'', negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) = compileView negativeChildren (exprId' + 1) context parent predecessors
       (successorContent, exprId''', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId'' + 1) context parent [Predecessor successor]
-      (_, updateCallbacks) = filter' ((== indexVariable) . fst) entityChildrenUpdateCallbacks -- index-variable-value of a single entity is unchangable, therefore needs to tracking
-      (entityUpdateCallback, restEntityUpdateCallbacks) = filter' ((== entityValue) . fst) updateCallbacks
+      (_, updateCallbacks) = partition ((== indexVariable) . fst) entityChildrenUpdateCallbacks -- index-variable-value of a single entity is unchangable, therefore needs to tracking
+      (entityUpdateCallback, restEntityUpdateCallbacks) = partition ((== entityValue) . fst) updateCallbacks
    in ( [ Ln (entitiesScope ++ " = [];"),
           Br,
           Ln (predecessorOf ++ " = (" ++ indexVariable ++ ") => {"),
@@ -424,7 +424,7 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
       updateCallback = scope ++ ".updateCallback" ++ show exprId
       (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
       (patterns, exprId') = getMatchPatterns cases currentValueVariable (exprId + 1) context parent predecessors
-      updateCases = map (filter' (isPrefixOf (currentValueVariable ++ ".") . fst) . (\(_, (_, _, _, UpdateCallbacks updateCallbacks, _)) -> updateCallbacks)) patterns
+      updateCases = map (partition (isPrefixOf (currentValueVariable ++ ".") . fst) . (\(_, (_, _, _, UpdateCallbacks updateCallbacks, _)) -> updateCallbacks)) patterns
       activeUpdates =
         zipWith
           ( curry

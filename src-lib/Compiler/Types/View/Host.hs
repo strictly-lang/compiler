@@ -1,14 +1,15 @@
 module Compiler.Types.View.Host where
 
 import Compiler.Types
-import Compiler.Util (filter', functionToJs, rightHandSideValueToJs)
+import Compiler.Util (functionToJs, rightHandSideValueToJs)
 import Data.Char (toLower)
+import Data.List (partition)
 import Types
 
 compileHost :: Context -> ExprId -> String -> ViewContent -> (ViewContent, [Indent], UpdateCallbacks)
 compileHost (Context (scope, variableStack)) exprId elementVariable (Host "input" options children) =
-  let ([("value", [value])], options') = filter' ((== "value") . fst) options
-      ([oninput], options'') = filter' ((== "oninput") . fst) options'
+  let ([("value", [value])], options') = partition ((== "value") . fst) options
+      ([oninput], options'') = partition ((== "oninput") . fst) options'
       (typeName, valueJs, dependencies) = getTypeAndValue variableStack value
       valueAttribute = getValueAttributeOfType typeName
       valueVariable = scope ++ ".valueContainer" ++ show exprId
