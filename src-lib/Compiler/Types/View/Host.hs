@@ -1,7 +1,7 @@
 module Compiler.Types.View.Host where
 
 import Compiler.Types
-import Compiler.Util (functionToJs, rightHandSideValueToJs)
+import Compiler.Util (functionToJs, propertyChainToString, rightHandSideValueToJs)
 import Data.Char (toLower)
 import Data.List (partition)
 import Types
@@ -12,8 +12,8 @@ compileHost (Context (scope, variableStack)) exprId elementVariable (Host "input
       ([oninput], options'') = partition ((== "oninput") . fst) options'
       (typeName, valueJs, dependencies) = getTypeAndValue variableStack value
       valueAttribute = getValueAttributeOfType typeName
-      valueVariable = scope ++ ".valueContainer" ++ show exprId
-      valueChanged = scope ++ ".valueChanged" ++ show exprId
+      valueVariable = propertyChainToString scope ++ ".valueContainer" ++ show exprId
+      valueChanged = propertyChainToString scope ++ ".valueChanged" ++ show exprId
       (functionJs, functionDependencies) = functionToJs variableStack (snd oninput)
    in ( Host "input" options'' children,
         [ Ln (elementVariable ++ ".setAttribute(\"type\", \"" ++ toLowerCase typeName ++ "\");"),
@@ -35,7 +35,7 @@ compileHost (Context (scope, variableStack)) exprId elementVariable (Host "input
                      Ln "("
                    ]
                      ++ functionJs
-                     ++ [ Ln (")({ _type: \"" ++ typeName ++ "\", _dt0: evt.currentTarget." ++ valueAttribute ++ "});"),
+                     ++ [ Ln (")({ _type: \"" ++ typeName ++ "\", [0]: evt.currentTarget." ++ valueAttribute ++ "});"),
                           Br,
                           Br,
                           Ln ("if (" ++ valueChanged ++ " === false) {"),

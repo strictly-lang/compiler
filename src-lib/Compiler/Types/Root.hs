@@ -3,11 +3,11 @@ module Compiler.Types.Root (compileRoot) where
 import Compiler.Types
 import Compiler.Types.Model (compileModel)
 import Compiler.Types.View.Base (compileView)
-import Compiler.Util (indent, slashToCamelCase, slashToDash)
+import Compiler.Util (indent, propertyChainToString, slashToCamelCase, slashToDash)
 import Data.List (intercalate, isPrefixOf, partition)
 import Types
 
-propertiesScope = "this._properties"
+propertiesScope = [DotNotation "this", DotNotation "properties"]
 
 mountedBool = "this._mounted"
 
@@ -20,9 +20,9 @@ compileRoot' componentPath ((Import path imports) : ns) ast variableStack =
   [ Ln ("import { " ++ intercalate ", " imports ++ " } from \"" ++ path ++ "\";"),
     Br
   ]
-    ++ compileRoot' componentPath ns ast ([([importVariable], importVariable) | importVariable <- imports] ++ variableStack)
+    ++ compileRoot' componentPath ns ast ([([importVariable], [DotNotation importVariable]) | importVariable <- imports] ++ variableStack)
 compileRoot' componentPath ((View children) : ns) ast variableStack =
-  let scope = "this._el"
+  let scope = [DotNotation "this", DotNotation "_el"]
       variableStack' = getModelScopeVariableStack ast ++ variableStack
       (viewContent, _, _, UpdateCallbacks updateCallbacks, _) = compileView children 0 (Context (scope, (["props"], propertiesScope) : variableStack')) "this.shadowRoot" []
    in [ Ln "(() => {",
@@ -38,7 +38,7 @@ compileRoot' componentPath ((View children) : ns) ast variableStack =
                       Br,
                       Ln (mountedBool ++ " = false;"),
                       Br,
-                      Ln (propertiesScope ++ " = {};"),
+                      Ln (propertyChainToString propertiesScope ++ " = {};"),
                       Br
                     ],
                   Ln "}",
@@ -52,7 +52,7 @@ compileRoot' componentPath ((View children) : ns) ast variableStack =
                        Ind
                          ( [ Ln (mountedBool ++ " = true;"),
                              Br,
-                             Ln (scope ++ " = {};"),
+                             Ln (propertyChainToString scope ++ " = {};"),
                              Br,
                              Ln "this.attachShadow({mode: 'open'});",
                              Br
@@ -90,10 +90,8 @@ splitBy delimiter = foldr f [[]]
 
 getModelScopeVariableStack :: [Root] -> [([PublicVariableName], InternalVariableName)]
 getModelScopeVariableStack [] = []
-getModelScopeVariableStack ((Model name _) : restRoot) = ([name], "this." ++ name) : getModelScopeVariableStack restRoot
+getModelScopeVariableStack ((Model name _) : restRoot) = ([name], [DotNotation "this", DotNotation name]) : getModelScopeVariableStack restRoot
 getModelScopeVariableStack (currentRoot : restRoot) = getModelScopeVariableStack restRoot
-
-splitByDot = splitBy '.'
 
 walkDependencies :: UpdateCallbacks -> [Indent]
 walkDependencies (UpdateCallbacks []) = []
@@ -102,24 +100,23 @@ walkDependencies (UpdateCallbacks ((internalName, updateCallback) : updateCallba
     let setterName = internalNameToSetterName internalName
         (matchedUpdateCallbacks, unmatchedUpdateCallbacks) = partition ((setterName ==) . internalNameToSetterName . fst) updateCallbacks
      in getSetter setterName (updateCallback : map snd matchedUpdateCallbacks) ++ walkDependencies (UpdateCallbacks unmatchedUpdateCallbacks)
-  | otherwise = error ("There is an observer missing for " ++ internalName)
+  | otherwise = error ("There is an observer missing for " ++ propertyChainToString internalName)
   where
-    isProps = (propertiesScope ++ ".") `isPrefixOf` internalName
+    isProps = propertiesScope `isPrefixOf` internalName
 
-internalNameToSetterName :: String -> String
+internalNameToSetterName :: InternalVariableName -> String
 internalNameToSetterName internalName
-  | splitPropertiesScope `isPrefixOf` splitInternalName = head (drop (length splitPropertiesScope) splitInternalName)
-  | otherwise = error ("There is an observer missing for " ++ internalName)
-  where
-    splitInternalName = splitByDot internalName
-    splitPropertiesScope = splitByDot propertiesScope
+  | propertiesScope `isPrefixOf` internalName =
+    let DotNotation setterName = head (drop (length propertiesScope) internalName)
+     in setterName
+  | otherwise = error ("There is an observer missing for " ++ propertyChainToString internalName)
 
 getSetter :: String -> [[Indent]] -> [Indent]
 getSetter name updateCallback =
   [ Ln ("set " ++ name ++ "(value) {"),
     Br,
     Ind
-      [ Ln (propertiesScope ++ "." ++ name ++ " = value;"),
+      [ Ln (propertyChainToString (propertiesScope ++ [DotNotation name]) ++ " = value;"),
         Br,
         Ln ("if (" ++ mountedBool ++ ") {"),
         Br,

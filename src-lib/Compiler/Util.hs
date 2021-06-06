@@ -1,4 +1,4 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, publicVariableToInternal, indent, rightHandSideValueToJs, functionToJs, rightHandSideValueFunctionCallToJs, leftHandSideToJs) where
+module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, indent, rightHandSideValueToJs, functionToJs, rightHandSideValueFunctionCallToJs, leftHandSideToJs, propertyChainToString) where
 
 import Compiler.Types
 import Data.Char (toUpper)
@@ -32,9 +32,9 @@ slashToCamelCase' [] = []
 slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
 
-publicVariableToInternal :: VariableStack -> [String] -> Maybe String
+publicVariableToInternal :: VariableStack -> [String] -> InternalVariableName
 publicVariableToInternal (stack@(publicStack, internalStack) : vs) search
-  | publicStack == take (length publicStack) search = Just (intercalate "." (internalStack : drop (length publicStack) search))
+  | publicStack `isPrefixOf` search = internalStack ++ map DotNotation (drop (length publicStack) search)
   | otherwise = publicVariableToInternal vs search
 publicVariableToInternal stack search = error ("Could not find variable for: " ++ show search)
 
@@ -49,16 +49,12 @@ indent' indentationLevel (Br : restLines)
 indent' indentationLevel ((Ln line) : restLines) = line ++ indent' indentationLevel restLines
 indent' indentationLevel ((Ind indentedLines) : lines) = '\t' : indent' (indentationLevel + 1) indentedLines ++ replicate indentationLevel '\t' ++ indent' indentationLevel lines
 
--- TODO: a compileerror should be thrown instead
-unsafeVariable :: Maybe String -> String
-unsafeVariable (Just variable) = variable
-
-functionToJs :: VariableStack -> [RightHandSide] -> ([Indent], [String])
+functionToJs :: VariableStack -> [RightHandSide] -> ([Indent], [InternalVariableName])
 functionToJs variableStack allFunctions@((FunctionDefinition arguments _) : restFunctionDefinition) =
   let (patterns, dependencies) = functionToJs' variableStack allFunctions
-      argumentsJs = ["_arg" ++ show index | (_, index) <- zip arguments [0 ..]]
+      argumentsJs = [[DotNotation ("_arg" ++ show index)] | (_, index) <- zip arguments [0 ..]]
       dependencies' = filter (not . \dependency -> any (`isPrefixOf` dependency) argumentsJs) dependencies
-   in ( [ Ln ("(" ++ intercalate ", " argumentsJs ++ ") => {"),
+   in ( [ Ln ("(" ++ intercalate ", " [propertyChainToString argumentJs | argumentJs <- argumentsJs] ++ ") => {"),
           Br,
           Ind patterns,
           Ln "}"
@@ -76,7 +72,7 @@ functionToJs variableStack [RightHandSideValue rightHandSideValue] =
         dependencies
       )
 
-functionToJs' :: VariableStack -> [RightHandSide] -> ([Indent], [String])
+functionToJs' :: VariableStack -> [RightHandSide] -> ([Indent], [InternalVariableName])
 functionToJs' variableStack [] = ([], [])
 functionToJs' variableStack ((FunctionDefinition arguments rightHandSideValue) : restFunctionDefinition)
   | null patterns = (Ln "return " : rightHandValueJs ++ [Ln ";", Br], dependencies)
@@ -99,15 +95,15 @@ functionToJs' variableStack ((FunctionDefinition arguments rightHandSideValue) :
           dependencies ++ nextDependencies
         )
   where
-    (patterns, variableStack') = leftHandSidesToJs variableStack ["_arg" ++ show index | index <- [0 ..]] arguments
+    (patterns, variableStack') = leftHandSidesToJs variableStack [[DotNotation ("_arg" ++ show index)] | index <- [0 ..]] arguments
     variableStack'' = variableStack' ++ variableStack
     (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack'' rightHandSideValue
 
-rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> ([Indent], [String])
+rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> ([Indent], [InternalVariableName])
 rightHandSideValueToJs variableStack functionCall@(FunctionCall functionReference argumentPublicNames) = rightHandSideValueFunctionCallToJs [] variableStack functionCall
 rightHandSideValueToJs variableStack (Variable variableParts) =
-  let variableName = unsafeVariable (publicVariableToInternal variableStack variableParts)
-   in ([Ln variableName], [variableName])
+  let variableName = publicVariableToInternal variableStack variableParts
+   in ([Ln (propertyChainToString variableName)], [variableName])
 rightHandSideValueToJs variableStack (MixedTextValue []) = ([Ln ""], [])
 rightHandSideValueToJs variableStack (MixedTextValue ((StaticText staticText) : restMixedTextValues))
   | null restMixedTextValues = ([Ln ("\"" ++ staticText ++ "\"")], [])
@@ -126,7 +122,7 @@ rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideVa
         ]
           ++ ( intercalate
                  [Ln ","]
-                 [ Ln ("_dt" ++ show index ++ ": ") : rightHandSideJs
+                 [ Ln ("[" ++ show index ++ "]: ") : rightHandSideJs
                    | ((rightHandSideJs, _), index) <-
                        zip rightHandSidesJs [0 ..]
                  ]
@@ -150,7 +146,7 @@ rightHandSideOperatorToJs Division = Ln " / "
 
 type Curry = [Indent]
 
-rightHandSideValueFunctionCallToJs :: [Curry] -> VariableStack -> RightHandSideValue -> ([Indent], [String])
+rightHandSideValueFunctionCallToJs :: [Curry] -> VariableStack -> RightHandSideValue -> ([Indent], [InternalVariableName])
 rightHandSideValueFunctionCallToJs curry variableStack (FunctionCall functionReference argumentPublicNames) =
   let (functionValue, functionDependencies) = rightHandSideValueToJs variableStack functionReference
       arguments = map (rightHandSideValueToJs variableStack) argumentPublicNames
@@ -168,8 +164,16 @@ leftHandSideToJs :: VariableStack -> LeftHandSide -> InternalVariableName -> ([I
 leftHandSideToJs variableStack (LeftVariable variableName) internalVariableName = ([], [([variableName], internalVariableName)])
 leftHandSideToJs variableStack LeftHole internalVariableName = ([], [])
 leftHandSideToJs variableStack (LeftTuple leftHandSides) internalVariableName =
-  let nestedTupleData = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ "[" ++ show index ++ "]") | (leftHandSide, index) <- zip leftHandSides [0 ..]]
+  let nestedTupleData = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ [BracketNotation (show index)]) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
    in ([], concatMap snd nestedTupleData)
 leftHandSideToJs variableStack (LeftType typeName leftHandSides) internalVariableName =
-  let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ "._dt" ++ show index) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
-   in (Ln (internalVariableName ++ "._type == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)
+  let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ [BracketNotation (show index)]) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
+   in (Ln (propertyChainToString (internalVariableName ++ [DotNotation "_type"]) ++ " == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)
+
+propertyChainToString :: InternalVariableName -> String
+propertyChainToString ((DotNotation value) : pcs) = value ++ propertyChainToString' pcs
+
+propertyChainToString' :: InternalVariableName -> String
+propertyChainToString' [] = ""
+propertyChainToString' ((DotNotation value) : pcs) = '.' : value ++ propertyChainToString' pcs
+propertyChainToString' ((BracketNotation value) : pcs) = '[' : value ++ "]" ++ propertyChainToString' pcs

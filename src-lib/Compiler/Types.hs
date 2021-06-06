@@ -2,13 +2,14 @@ module Compiler.Types where
 
 type PublicVariableName = String
 
-type InternalVariableName = String
+type InternalVariableName = [Property]
+
+data Property = DotNotation String | BracketNotation String
+  deriving (Eq)
 
 type VariableStack = [([PublicVariableName], InternalVariableName)]
 
-type Scope = String
-
-newtype Context = Context (Scope, VariableStack)
+newtype Context = Context (InternalVariableName, VariableStack)
 
 newtype UpdateCallbacks = UpdateCallbacks [(InternalVariableName, [Indent])]
 
