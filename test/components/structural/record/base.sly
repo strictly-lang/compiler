@@ -1,6 +1,6 @@
 model:main{
-	init = -> { x = 0, y = 0}
-	reducer = state, x -> { x = x | state}
+	init = -> { x = 1, y = 0}
+	reducer = state, x -> { x = state.x + x | state}
 }
 
 view

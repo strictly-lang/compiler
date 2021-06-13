@@ -26,7 +26,7 @@ module.exports = function (config) {
             "test/components/helper/model/dependencies.sly",
             "test/components/nesting/**",
             "test/components/structural/array/**/*.sly",
-            "test/components/structural/records/destructure.sly",
+            "test/components/structural/record/destructure.sly",
         ],
         preprocessors: {
             "**/*.sly": ["strictly"]

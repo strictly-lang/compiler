@@ -131,6 +131,21 @@ rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideVa
         concatMap snd rightHandSidesJs
       )
 rightHandSideValueToJs variableStack (Number number) = ([Ln (show number)], [])
+rightHandSideValueToJs variableStack (RightHandSideRecord (rightHandSideValues) (msourceRightHandSideValue)) =
+  let jsValues = map (rightHandSideValueToJs variableStack . snd) rightHandSideValues
+      zipedJsValues = zip (map fst rightHandSideValues) jsValues
+      (sourceRightHandSideJs, sourceRightHandSideDependencies) = case msourceRightHandSideValue of
+        Just sourceRightHandSide ->
+          let (jsValue, dependencies) = rightHandSideValueToJs variableStack sourceRightHandSide
+           in (Ln "..." : jsValue ++ [Ln ","], dependencies)
+        Nothing -> ([], [])
+   in ( [Ln "{"]
+          ++ sourceRightHandSideJs
+          ++ intercalate [Ln ", "] (map (\(propertyName, (jsValue, _)) -> Ln (propertyName ++ ": ") : jsValue) zipedJsValues)
+          ++ [ Ln "}"
+             ],
+        sourceRightHandSideDependencies ++ concatMap snd jsValues
+      )
 rightHandSideValueToJs variableStack (RightHandSideOperation rightHandSideOperator firstRightHandSideValue secondRightHandSideValue) =
   let (firstRightHandSideJs, firstDependencies) = rightHandSideValueToJs variableStack firstRightHandSideValue
       (secondRightHandSideJs, secondDpendencies) = rightHandSideValueToJs variableStack secondRightHandSideValue
