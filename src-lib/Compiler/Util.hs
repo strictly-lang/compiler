@@ -131,6 +131,21 @@ rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideVa
         concatMap snd rightHandSidesJs
       )
 rightHandSideValueToJs variableStack (Number number) = ([Ln (show number)], [])
+rightHandSideValueToJs variableStack (RightHandSideRecord rightHandSideValues msourceRightHandSideValue) =
+  let jsValues = map (rightHandSideValueToJs variableStack . snd) rightHandSideValues
+      zipedJsValues = zip (map fst rightHandSideValues) jsValues
+      (sourceRightHandSideJs, sourceRightHandSideDependencies) = case msourceRightHandSideValue of
+        Just sourceRightHandSide ->
+          let (jsValue, dependencies) = rightHandSideValueToJs variableStack sourceRightHandSide
+           in (Ln "..." : jsValue ++ [Ln ","], dependencies)
+        Nothing -> ([], [])
+   in ( [Ln "{"]
+          ++ sourceRightHandSideJs
+          ++ intercalate [Ln ", "] (map (\(propertyName, (jsValue, _)) -> Ln (propertyName ++ ": ") : jsValue) zipedJsValues)
+          ++ [ Ln "}"
+             ],
+        sourceRightHandSideDependencies ++ concatMap snd jsValues
+      )
 rightHandSideValueToJs variableStack (RightHandSideOperation rightHandSideOperator firstRightHandSideValue secondRightHandSideValue) =
   let (firstRightHandSideJs, firstDependencies) = rightHandSideValueToJs variableStack firstRightHandSideValue
       (secondRightHandSideJs, secondDpendencies) = rightHandSideValueToJs variableStack secondRightHandSideValue
@@ -169,6 +184,7 @@ leftHandSideToJs variableStack (LeftTuple leftHandSides) internalVariableName =
 leftHandSideToJs variableStack (LeftType typeName leftHandSides) internalVariableName =
   let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ [BracketNotation (show index)]) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
    in (Ln (propertyChainToString (internalVariableName ++ [DotNotation "_type"]) ++ " == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)
+leftHandSideToJs variableStack (LeftRecord properties) internalVariableName = ([], map (\property -> ([property], internalVariableName ++ [DotNotation property])) (reverse properties))
 
 propertyChainToString :: InternalVariableName -> String
 propertyChainToString ((DotNotation value) : pcs) = value ++ propertyChainToString' pcs

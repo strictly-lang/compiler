@@ -1,0 +1,12 @@
+model:main{
+	init = -> { x = 1, y = 0}
+	reducer = state, x -> { x = state.x + x | state}
+}
+
+view
+	#model (mainState, mainDispatch) <- main()
+		button{
+			onclick = _ -> mainDispatch(2)
+		}
+		div
+			"${mainState.x} ${mainState.y}"

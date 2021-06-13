@@ -1,0 +1,17 @@
+model:main{
+	init = -> [0, 1, 2, 3]
+	reducer = state, multiply -> [ value * 2 | (value, _) <- state, value % 2 == 0]
+}
+
+view
+	#model ([first, second | rest], mainDispatch) <- main()
+		button{
+			onclick = _ -> mainDispatch(2)
+		}
+		span
+			"first: ${first}, second: ${second}"
+		#each (value, index) <- mainState
+			div
+				"${index}: ${value}"
+		#else
+			"empty"

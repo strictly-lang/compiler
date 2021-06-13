@@ -83,8 +83,13 @@ leftHandSideTypeParser = do
     Nothing -> do
       return (LeftType typeName [])
 
+leftHandSideRecordParser :: Parser LeftHandSide
+leftHandSideRecordParser = do
+  destructuredProperties <- between (char '{' <* sc) (char '}' <* sc) (sepBy identityParser (char ',' <* sc))
+  return (LeftRecord destructuredProperties)
+
 leftHandSideParser :: Parser LeftHandSide
-leftHandSideParser = (leftHandSideHoleParser <|> leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser) <* sc
+leftHandSideParser = (leftHandSideHoleParser <|> leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser <|> leftHandSideRecordParser) <* sc
 
 feedOperatorParser :: Parser Operator
 feedOperatorParser = do
@@ -118,6 +123,31 @@ rightHandSideOperatorDivisionParser = do
   _ <- char '/'
   return Division
 
+rightHandSideValueRecordParser :: Parser RightHandSideValue
+rightHandSideValueRecordParser = do
+  entities <- between (char '{' <* sc) (lookAhead (char '}' <|> char '|')) (sepBy rightHandSideValueRecordEntityParser (char ',' <* sc))
+
+  hasSource <- optional (char '|' <* sc)
+
+  source <-
+    case hasSource of
+      Just _ -> do
+        Just <$> rightHandSideValueParser
+      Nothing -> do
+        return Nothing
+
+  _ <- char '}' <* sc
+
+  return (RightHandSideRecord entities source)
+
+rightHandSideValueRecordEntityParser :: Parser (String, RightHandSideValue)
+rightHandSideValueRecordEntityParser = do
+  name <- identityParser
+  _ <- sc <* char '=' <* sc
+  value <- rightHandSideValueParser
+
+  return (name, value)
+
 rightHandSideValueVariableParser :: Parser RightHandSideValue
 rightHandSideValueVariableParser = do
   variableName <- Variable <$> identityParser `sepBy` char '.'
@@ -146,7 +176,7 @@ rightHandSideValueTypeParser = do
 
 rightHandSideValueParser :: Parser RightHandSideValue
 rightHandSideValueParser = do
-  rightHandSideValue <- (rightHandSideValueTypeParser <|> rightHandSideValueNumberParser <|> rightHandSideValueTextParser <|> rightHandSideValueVariableParser) <* sc
+  rightHandSideValue <- (rightHandSideValueTypeParser <|> rightHandSideValueNumberParser <|> rightHandSideValueTextParser <|> rightHandSideValueRecordParser <|> rightHandSideValueVariableParser) <* sc
   optionalOperator <- optional rightHandSideOperatorParser
 
   case optionalOperator of

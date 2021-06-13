@@ -1,0 +1,15 @@
+model:main{
+	init = -> [0, 1, 3]
+	reducer = state, multiply -> [ value * 2 | (value, _) <- state]
+}
+
+view
+	#model (mainState, mainDispatch) <- main()
+		button{
+			onclick = _ -> mainDispatch(2)
+		}
+		#each (value, index) <- mainState
+			div
+				"${index}: ${value}"
+		#else
+			"empty"
