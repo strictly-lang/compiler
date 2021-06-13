@@ -83,8 +83,13 @@ leftHandSideTypeParser = do
     Nothing -> do
       return (LeftType typeName [])
 
+leftHandSideRecordParser :: Parser LeftHandSide
+leftHandSideRecordParser = do
+  destructuredProperties <- between (char '{' <* sc) (char '}' <* sc) (sepBy identityParser (char ',' <* sc))
+  return (LeftRecord destructuredProperties)
+
 leftHandSideParser :: Parser LeftHandSide
-leftHandSideParser = (leftHandSideHoleParser <|> leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser) <* sc
+leftHandSideParser = (leftHandSideHoleParser <|> leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser <|> leftHandSideRecordParser) <* sc
 
 feedOperatorParser :: Parser Operator
 feedOperatorParser = do

@@ -20,16 +20,28 @@ type Name = String
 
 type IndentationLevel = Int
 
-data Root = View [ViewContent] | Model Name [MergedOption (Bool, RightHandSide)] | Import String [String]
+data Root
+  = View [ViewContent]
+  | Model Name [MergedOption (Bool, RightHandSide)]
+  | Import String [String]
   deriving (Show)
 
-data LeftHandSide = LeftVariable String | LeftTuple [LeftHandSide] | LeftType String [LeftHandSide] | LeftHole
+data LeftHandSide
+  = LeftVariable String
+  | LeftTuple [LeftHandSide]
+  | LeftType String [LeftHandSide]
+  | LeftHole
+  | LeftRecord [String]
   deriving (Show)
 
 data Operator = FeedOperator
   deriving (Show)
 
-data RightHandSideOperator = Plus | Minus | Multiply | Division
+data RightHandSideOperator
+  = Plus
+  | Minus
+  | Multiply
+  | Division
   deriving (Show)
 
 data RightHandSideValue
@@ -43,7 +55,9 @@ data RightHandSideValue
   | RightHandSideType String [RightHandSideValue]
   deriving (Show)
 
-data RightHandSide = RightHandSideValue RightHandSideValue | FunctionDefinition [LeftHandSide] RightHandSideValue
+data RightHandSide
+  = RightHandSideValue RightHandSideValue
+  | FunctionDefinition [LeftHandSide] RightHandSideValue
   deriving (Show)
 
 newtype Expression a = Expression (LeftHandSide, Operator, a)
@@ -61,7 +75,9 @@ data ViewContent
 data Case = Case LeftHandSide [ViewContent]
   deriving (Show)
 
-data MixedText = StaticText String | DynamicText RightHandSideValue
+data MixedText
+  = StaticText String
+  | DynamicText RightHandSideValue
   deriving (Show)
 
 type Parser = Parsec Void String

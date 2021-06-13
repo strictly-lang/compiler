@@ -184,6 +184,7 @@ leftHandSideToJs variableStack (LeftTuple leftHandSides) internalVariableName =
 leftHandSideToJs variableStack (LeftType typeName leftHandSides) internalVariableName =
   let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ [BracketNotation (show index)]) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
    in (Ln (propertyChainToString (internalVariableName ++ [DotNotation "_type"]) ++ " == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)
+leftHandSideToJs variableStack (LeftRecord properties) internalVariableName = ([], map (\property -> ([property], internalVariableName ++ [DotNotation property])) (reverse properties))
 
 propertyChainToString :: InternalVariableName -> String
 propertyChainToString ((DotNotation value) : pcs) = value ++ propertyChainToString' pcs
