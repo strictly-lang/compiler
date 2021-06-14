@@ -1,12 +1,12 @@
 model:main{
-	init = -> { x = 1, y = 0}
+	init = -> { x = 1, deep = { y = 0 } }
 	reducer = state, x -> { x = state.x + x | state}
 }
 
 view
-	#model ({x, y}, mainDispatch) <- main()
+	#model ({x, deep = { y = yValue }}, mainDispatch) <- main()
 		button{
 			onclick = _ -> mainDispatch(2)
 		}
 		div
-			"${x} ${y}"
+			"${x} ${yValue}"

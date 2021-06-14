@@ -3,6 +3,7 @@ module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, indent, ri
 import Compiler.Types
 import Data.Char (toUpper)
 import Data.List (intercalate, intersperse, isPrefixOf)
+import Data.Maybe (fromMaybe)
 import Types
 
 type AbsolutePath = String
@@ -184,7 +185,9 @@ leftHandSideToJs variableStack (LeftTuple leftHandSides) internalVariableName =
 leftHandSideToJs variableStack (LeftType typeName leftHandSides) internalVariableName =
   let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ [BracketNotation (show index)]) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
    in (Ln (propertyChainToString (internalVariableName ++ [DotNotation "_type"]) ++ " == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)
-leftHandSideToJs variableStack (LeftRecord properties) internalVariableName = ([], map (\property -> ([property], internalVariableName ++ [DotNotation property])) (reverse properties))
+leftHandSideToJs variableStack (LeftRecord properties) internalVariableName =
+  let propertiesJs = map (\(property, alias) -> leftHandSideToJs variableStack (fromMaybe (LeftVariable property) alias) (internalVariableName ++ [DotNotation property])) (reverse properties)
+   in (concatMap fst propertiesJs, concatMap snd propertiesJs)
 
 propertyChainToString :: InternalVariableName -> String
 propertyChainToString ((DotNotation value) : pcs) = value ++ propertyChainToString' pcs
