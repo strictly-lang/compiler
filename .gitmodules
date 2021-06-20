@@ -1,3 +1,6 @@
 [submodule "vendor/strictly/http"]
 	path = vendor/strictly/http
 	url = git@github.com:strictly-lang/http.git
+[submodule "vendor/strictly/prelude"]
+	path = vendor/strictly/prelude
+	url = git@github.com:strictly-lang/prelude.git

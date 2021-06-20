@@ -5,7 +5,7 @@ model:selection{
 }
 
 view
-	#each (entity, _) <- [props.page * 10 .. props.page * 10 + 10]
+	#each entity <- [props.page * 10 .. props.page * 10 + 10]
 		#model (selectionState, selectionDispatch) <- selection(props.page)
 			div{
 				class?selected = selectionState
