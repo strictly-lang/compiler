@@ -129,7 +129,7 @@ compileView ((ViewModel (Expression (leftHandSide, FeedOperator, sourceValue)) c
         UpdateCallbacks ([(modelDependency, []) | modelDependency <- modelDependencies] ++ restUpdateCallbacks),
         removeCallbacks
       )
-compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, LeftVariable publicIndexVariable], FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
+compileView ((Each [Expression (leftHandSideValue, FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
   let indexVariable = ("index" ++ show exprId)
       entitiesScope = scope ++ [DotNotation ("entities" ++ show exprId)]
       entityScope = entitiesScope ++ [BracketNotation indexVariable]
@@ -142,12 +142,11 @@ compileView ((Each [Expression (LeftTuple [LeftVariable publicEntityVariable, Le
       successor = predecessorOf ++ "(" ++ propertyChainToString entitiesScope ++ ".length - 1)"
       entityPredecessor = predecessorOf ++ "(" ++ indexVariable ++ " - 1)"
       entityVariable = "entity" ++ show exprId
-      entityVariableStack = ([publicIndexVariable], [DotNotation indexVariable]) : ([publicEntityVariable], entityValue) : variableStack
-      (entityChildrenContent, exprId', entitySuccessor, UpdateCallbacks entityChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView entityChildren (exprId + 1) (Context (entityScope, entityVariableStack)) parent (Predecessor entityPredecessor : predecessors)
+      (_conditions, entityStack) = leftHandSideToJs variableStack leftHandSideValue entityValue
+      (entityChildrenContent, exprId', entitySuccessor, UpdateCallbacks entityChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView entityChildren (exprId + 1) (Context (entityScope, entityStack ++ variableStack)) parent (Predecessor entityPredecessor : predecessors)
       (negativeChildrenContent, exprId'', negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) = compileView negativeChildren (exprId' + 1) context parent predecessors
       (successorContent, exprId''', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId'' + 1) context parent [Predecessor successor]
-      (_, updateCallbacks) = partition ((== [DotNotation indexVariable]) . fst) entityChildrenUpdateCallbacks -- index-variable-value of a single entity is unchangable, therefore needs to tracking
-      (entityUpdateCallback, restEntityUpdateCallbacks) = partition ((== entityValue) . fst) updateCallbacks
+      (entityUpdateCallback, restEntityUpdateCallbacks) = partition (isPrefixOf entityValue . fst) entityChildrenUpdateCallbacks
    in ( [ Ln (propertyChainToString entitiesScope ++ " = [];"),
           Br,
           Ln (predecessorOf ++ " = (" ++ indexVariable ++ ") => {"),

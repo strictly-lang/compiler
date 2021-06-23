@@ -1,7 +1,7 @@
 module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions, rightHandSideParser, leftHandSideParser) where
 
 import Control.Applicative (Alternative (many), optional, (<|>))
-import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, some)
+import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, sepBy1, some)
 import Text.Megaparsec.Char (char, digitChar, eol, letterChar, lowerChar, string, upperChar)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
@@ -113,7 +113,25 @@ operatorParser = feedOperatorParser <* sc
 
 rightHandSideOperatorParser :: Parser RightHandSideOperator
 rightHandSideOperatorParser = do
-  (rightHandSideOperatorPlusParser <|> rightHandSideOperatorMinusParser <|> rightHandSideOperatorMultiplyParser <|> rightHandSideOperatorDivisionParser) <* sc
+  ( rightHandSideOperatorEqualParser
+      <|> rightHandSideOperatorUnequalParser
+      <|> rightHandSideOperatorPlusParser
+      <|> rightHandSideOperatorMinusParser
+      <|> rightHandSideOperatorMultiplyParser
+      <|> rightHandSideOperatorDivisionParser
+      <|> rightHandSideOperatorModuloParser
+    )
+    <* sc
+
+rightHandSideOperatorEqualParser :: Parser RightHandSideOperator
+rightHandSideOperatorEqualParser = do
+  _ <- string "=="
+  return Equal
+
+rightHandSideOperatorUnequalParser :: Parser RightHandSideOperator
+rightHandSideOperatorUnequalParser = do
+  _ <- string "!="
+  return Unequal
 
 rightHandSideOperatorPlusParser :: Parser RightHandSideOperator
 rightHandSideOperatorPlusParser = do
@@ -135,9 +153,14 @@ rightHandSideOperatorDivisionParser = do
   _ <- char '/'
   return Division
 
+rightHandSideOperatorModuloParser :: Parser RightHandSideOperator
+rightHandSideOperatorModuloParser = do
+  _ <- char '%'
+  return Modulo
+
 rightHandSideValueRecordParser :: Parser RightHandSideValue
 rightHandSideValueRecordParser = do
-  entities <- between (char '{' <* sc) (lookAhead (char '}' <|> char '|')) (sepBy rightHandSideValueRecordEntityParser (char ',' <* sc))
+  entities <- between (char '{' <* sc) (lookAhead (char '}' <|> char '|')) (rightHandSideValueRecordEntityParser `sepBy` (char ',' <* sc))
 
   hasSource <- optional (char '|' <* sc)
 
@@ -152,6 +175,32 @@ rightHandSideValueRecordParser = do
 
   return (RightHandSideRecord entities source)
 
+rightHandSideValueListParser :: Parser RightHandSideValue
+rightHandSideValueListParser = do
+  entities <- between (char '[' <* sc) (lookAhead (char ']' <|> char '|')) (rightHandSideValueParser `sepBy` (char ',' <* sc))
+
+  hasSource <- optional (char '|' <* sc)
+
+  source <-
+    case hasSource of
+      Just _ -> do
+        rightHandSideValueListSourceOrFilterParser `sepBy1` (char ',' <* sc)
+      Nothing -> do
+        return []
+
+  _ <- char ']' <* sc
+
+  return (RightHandSideList entities source)
+
+rightHandSideValueListSourceOrFilterParser :: Parser ListSourceOrFilter
+rightHandSideValueListSourceOrFilterParser = do
+  rightHandSideFeedParser <|> (Filter <$> rightHandSideValueParser)
+
+rightHandSideFeedParser :: Parser ListSourceOrFilter
+rightHandSideFeedParser = do
+  leftHandSide <- try (leftHandSideParser <* feedOperatorParser <* sc)
+  ListSource leftHandSide <$> rightHandSideValueParser
+
 rightHandSideValueRecordEntityParser :: Parser (String, RightHandSideValue)
 rightHandSideValueRecordEntityParser = do
   name <- identityParser
@@ -162,7 +211,7 @@ rightHandSideValueRecordEntityParser = do
 
 rightHandSideValueVariableParser :: Parser RightHandSideValue
 rightHandSideValueVariableParser = do
-  variableName <- Variable <$> identityParser `sepBy` char '.'
+  variableName <- Variable <$> (identityParser `sepBy1` char '.')
   hasFunctionCall <- optional (char '(')
 
   case hasFunctionCall of
@@ -181,14 +230,14 @@ rightHandSideValueTypeParser = do
   hasOptions <- optional (lookAhead (char '('))
   case hasOptions of
     Just _ -> do
-      values <- between (char '(' <* sc) (char ')') (sepBy rightHandSideValueParser (char ',' <* sc))
+      values <- between (char '(' <* sc) (char ')') (rightHandSideValueParser `sepBy` (char ',' <* sc))
       return (RightHandSideType typeName values)
     Nothing -> do
       return (RightHandSideType typeName [])
 
 rightHandSideValueParser :: Parser RightHandSideValue
 rightHandSideValueParser = do
-  rightHandSideValue <- (rightHandSideValueTypeParser <|> rightHandSideValueNumberParser <|> rightHandSideValueTextParser <|> rightHandSideValueRecordParser <|> rightHandSideValueVariableParser) <* sc
+  rightHandSideValue <- (rightHandSideValueTypeParser <|> rightHandSideValueNumberParser <|> rightHandSideValueTextParser <|> rightHandSideValueRecordParser <|> rightHandSideValueVariableParser <|> rightHandSideValueListParser) <* sc
   optionalOperator <- optional rightHandSideOperatorParser
 
   case optionalOperator of
