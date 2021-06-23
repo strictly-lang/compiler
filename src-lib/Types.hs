@@ -38,7 +38,9 @@ data Operator = FeedOperator
   deriving (Show)
 
 data RightHandSideOperator
-  = Plus
+  = Equal
+  | Unequal
+  | Plus
   | Minus
   | Multiply
   | Division
@@ -51,8 +53,14 @@ data RightHandSideValue
   | MixedTextValue [MixedText]
   | Number Integer
   | RightHandSideRecord [(String, RightHandSideValue)] (Maybe RightHandSideValue)
+  | RightHandSideList [RightHandSideValue] [ListSourceOrFilter]
   | RightHandSideOperation RightHandSideOperator RightHandSideValue RightHandSideValue
   | RightHandSideType String [RightHandSideValue]
+  deriving (Show)
+
+data ListSourceOrFilter
+  = ListSource LeftHandSide RightHandSideValue
+  | Filter RightHandSideValue
   deriving (Show)
 
 data RightHandSide

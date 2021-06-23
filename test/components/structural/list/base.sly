@@ -2,7 +2,7 @@ import /base/vendor/strictly/prelude/src/index.js (zipWithIndex)
 
 model:main{
 	init = -> [0, 1, 3]
-	reducer = state, multiply -> [ value * 2 | (value, _) <- state]
+	reducer = state, multiply -> [ value, value * 2 | value <- state, value != 0]
 }
 
 view

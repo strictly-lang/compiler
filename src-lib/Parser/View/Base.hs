@@ -2,7 +2,7 @@ module Parser.View.Base (viewParser, viewContentParser) where
 
 import Control.Applicative (optional, (<|>))
 import Parser.Util.Base (expressionParser, identityParser, indentParser, indentParserRepeat, leftHandSideParser, mergeOptions, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideParser, rightHandSideValueParser, sc)
-import Text.Megaparsec (between, many, manyTill, sepBy1, some)
+import Text.Megaparsec (some)
 import Text.Megaparsec.Char (char, eol, lowerChar, newline, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
 import Types
