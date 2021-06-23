@@ -44,6 +44,7 @@ data RightHandSideOperator
   | Minus
   | Multiply
   | Division
+  | Modulo
   deriving (Show)
 
 data RightHandSideValue

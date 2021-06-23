@@ -153,12 +153,85 @@ rightHandSideValueToJs variableStack (RightHandSideOperation rightHandSideOperat
    in ( firstRightHandSideJs ++ [rightHandSideOperatorToJs rightHandSideOperator] ++ secondRightHandSideJs,
         firstDependencies ++ secondDpendencies
       )
+rightHandSideValueToJs variableStack (RightHandSideList rightHandSideValues []) =
+  let rightHandSideValuesJs = map (rightHandSideValueToJs variableStack) rightHandSideValues
+   in ( Ln "[" :
+        intercalate [Ln ", "] (map fst rightHandSideValuesJs)
+          ++ [ Ln "]"
+             ],
+        concatMap snd rightHandSideValuesJs
+      )
+rightHandSideValueToJs variableStack (RightHandSideList rightHandSideValues feedRightHandSideValues) =
+  let (content, dependencies) = rightHandSideListGenerator variableStack rightHandSideValues feedRightHandSideValues
+   in ( [ Ln "(() => {",
+          Br,
+          Ind
+            ( [ Ln "const result = [];",
+                Br
+              ]
+                ++ content
+                ++ [ Br,
+                     Ln "return result;",
+                     Br
+                   ]
+            )
+        ]
+          ++ [ Ln "})()"
+             ],
+        dependencies
+      )
 
 rightHandSideOperatorToJs :: RightHandSideOperator -> Indent
+rightHandSideOperatorToJs Equal = Ln " == "
+rightHandSideOperatorToJs Unequal = Ln " != "
 rightHandSideOperatorToJs Plus = Ln " + "
 rightHandSideOperatorToJs Minus = Ln " - "
 rightHandSideOperatorToJs Multiply = Ln " * "
 rightHandSideOperatorToJs Division = Ln " / "
+rightHandSideOperatorToJs Modulo = Ln " % "
+
+rightHandSideListGenerator :: VariableStack -> [RightHandSideValue] -> [ListSourceOrFilter] -> ([Indent], [InternalVariableName])
+rightHandSideListGenerator variableStack [] [] = ([], [])
+rightHandSideListGenerator variableStack (rightHandSideValue : nextRightHandSideValues) [] =
+  let (rightHandSideValueJs, rightHandSideDependencies) = rightHandSideValueToJs variableStack rightHandSideValue
+      (nextRightHandSideValueJs, nextRightHandSideDependencies) = rightHandSideListGenerator variableStack nextRightHandSideValues []
+   in ( Ln "result.push(" :
+        rightHandSideValueJs ++ [Ln ");", Br]
+          ++ nextRightHandSideValueJs,
+        rightHandSideDependencies ++ nextRightHandSideDependencies
+      )
+rightHandSideListGenerator variableStack rightHandSideValues ((ListSource leftHandSide rightHandSideValue) : feedRightHandSideValues) =
+  let (sourceJs, sourceDependencies) = rightHandSideValueToJs variableStack rightHandSideValue
+      (loopConditions, variableStack') = leftHandSideToJs variableStack leftHandSide [DotNotation "entity"]
+      (nestedJs, nestedDependencies) = rightHandSideListGenerator (variableStack' ++ variableStack) rightHandSideValues feedRightHandSideValues
+   in ( Ln "for (const entity of " : -- "entity" variable name needs to be suffixed with exprId
+        sourceJs
+          ++ [ Ln ") {",
+               Br,
+               Ind
+                 nestedJs,
+               Br,
+               Ln "}",
+               Br
+             ],
+        sourceDependencies ++ nestedDependencies
+      )
+rightHandSideListGenerator variableStack rightHandSideValues (Filter filterRightHandValue : feedRightHandSideValues) =
+  let (filterRightHandValueJs, filterRightHandValueDependencies) = rightHandSideValueToJs variableStack filterRightHandValue
+      (nestedJs, nestedDependencies) = rightHandSideListGenerator variableStack rightHandSideValues feedRightHandSideValues
+   in ( [ Ln "if ("
+        ]
+          ++ filterRightHandValueJs
+          ++ [ Ln ") {",
+               Br,
+               Ind
+                 nestedJs,
+               Br,
+               Ln "}",
+               Br
+             ],
+        filterRightHandValueDependencies ++ nestedDependencies
+      )
 
 type Curry = [Indent]
 

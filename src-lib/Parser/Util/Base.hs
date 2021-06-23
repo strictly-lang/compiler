@@ -113,7 +113,15 @@ operatorParser = feedOperatorParser <* sc
 
 rightHandSideOperatorParser :: Parser RightHandSideOperator
 rightHandSideOperatorParser = do
-  (rightHandSideOperatorEqualParser <|> rightHandSideOperatorUnequalParser <|> rightHandSideOperatorPlusParser <|> rightHandSideOperatorMinusParser <|> rightHandSideOperatorMultiplyParser <|> rightHandSideOperatorDivisionParser) <* sc
+  ( rightHandSideOperatorEqualParser
+      <|> rightHandSideOperatorUnequalParser
+      <|> rightHandSideOperatorPlusParser
+      <|> rightHandSideOperatorMinusParser
+      <|> rightHandSideOperatorMultiplyParser
+      <|> rightHandSideOperatorDivisionParser
+      <|> rightHandSideOperatorModuloParser
+    )
+    <* sc
 
 rightHandSideOperatorEqualParser :: Parser RightHandSideOperator
 rightHandSideOperatorEqualParser = do
@@ -144,6 +152,11 @@ rightHandSideOperatorDivisionParser :: Parser RightHandSideOperator
 rightHandSideOperatorDivisionParser = do
   _ <- char '/'
   return Division
+
+rightHandSideOperatorModuloParser :: Parser RightHandSideOperator
+rightHandSideOperatorModuloParser = do
+  _ <- char '%'
+  return Modulo
 
 rightHandSideValueRecordParser :: Parser RightHandSideValue
 rightHandSideValueRecordParser = do
