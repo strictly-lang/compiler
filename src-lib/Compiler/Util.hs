@@ -254,7 +254,7 @@ leftHandSideToJs variableStack (LeftVariable variableName) internalVariableName 
 leftHandSideToJs variableStack LeftHole internalVariableName = ([], [])
 leftHandSideToJs variableStack (LeftTuple leftHandSides) internalVariableName =
   let nestedTupleData = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ [BracketNotation (show index)]) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
-   in ([], concatMap snd nestedTupleData)
+   in (concatMap fst nestedTupleData, concatMap snd nestedTupleData)
 leftHandSideToJs variableStack (LeftType typeName leftHandSides) internalVariableName =
   let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ [BracketNotation (show index)]) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
    in (Ln (propertyChainToString (internalVariableName ++ [DotNotation "_type"]) ++ " == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)
