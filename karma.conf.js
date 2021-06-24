@@ -25,7 +25,6 @@ module.exports = function (config) {
       "test/components/host/namespace.sly",
       "test/components/helper/model/dependencies.sly",
       "test/components/nesting/**",
-      "test/components/structural/list/destructure.sly",
     ],
     preprocessors: {
       "**/*.sly": ["strictly"],

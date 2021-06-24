@@ -259,8 +259,15 @@ leftHandSideToJs variableStack (LeftType typeName leftHandSides) internalVariabl
   let nestedDataTypes = [leftHandSideToJs variableStack leftHandSide (internalVariableName ++ [BracketNotation (show index)]) | (leftHandSide, index) <- zip leftHandSides [0 ..]]
    in (Ln (propertyChainToString (internalVariableName ++ [DotNotation "_type"]) ++ " == \"" ++ typeName ++ "\"") : concatMap fst nestedDataTypes, concatMap snd nestedDataTypes)
 leftHandSideToJs variableStack (LeftRecord properties) internalVariableName =
-  let propertiesJs = map (\(property, alias) -> leftHandSideToJs variableStack (fromMaybe (LeftVariable property) alias) (internalVariableName ++ [DotNotation property])) (reverse properties)
-   in (concatMap fst propertiesJs, concatMap snd propertiesJs)
+  let propertiesJs = map (\(property, alias) -> leftHandSideToJs variableStack (fromMaybe (LeftVariable property) alias) (internalVariableName ++ [DotNotation property])) properties
+   in (concatMap fst propertiesJs, concatMap snd (reverse propertiesJs))
+leftHandSideToJs variableStack (LeftList leftEntities mLeftRest) internalVariableName =
+  let leftEntitiesJs = [leftHandSideToJs variableStack leftEntity (internalVariableName ++ [BracketNotation (show index)]) | (leftEntity, index) <- zip leftEntities [0 ..]]
+      rest = case mLeftRest of
+        Just leftRest ->
+          return (leftHandSideToJs variableStack leftRest (internalVariableName ++ [DotNotation ("slice(" ++ show (length leftEntities) ++ ")")]))
+        Nothing -> []
+   in (concatMap fst (leftEntitiesJs ++ rest), concatMap snd (reverse (leftEntitiesJs ++ rest)))
 
 propertyChainToString :: InternalVariableName -> String
 propertyChainToString ((DotNotation value) : pcs) = value ++ propertyChainToString' pcs

@@ -2,7 +2,7 @@ import /base/vendor/strictly/prelude/src/index.js (zipWithIndex)
 
 model:main{
 	init = -> [0, 1, 2, 3]
-	reducer = state, multiply -> [ value * 2 | (value, _) <- state, value % 2 == 0]
+	reducer = state, multiply -> [ value * multiply | value <- state]
 }
 
 view
@@ -12,7 +12,7 @@ view
 		}
 		span
 			"first: ${first}, second: ${second}"
-		#each (value, index) <- zipWithIndex(mainState)
+		#each (value, index) <- zipWithIndex(rest)
 			div
 				"${index}: ${value}"
 		#else
