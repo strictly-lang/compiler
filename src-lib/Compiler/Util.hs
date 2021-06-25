@@ -3,7 +3,7 @@ module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, indent, ri
 import Compiler.Types
 import Data.Char (toUpper)
 import Data.List (intercalate, intersperse, isPrefixOf)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isNothing)
 import Types
 
 type AbsolutePath = String
@@ -267,7 +267,19 @@ leftHandSideToJs variableStack (LeftList leftEntities mLeftRest) internalVariabl
         Just leftRest ->
           return (leftHandSideToJs variableStack leftRest (internalVariableName ++ [DotNotation ("slice(" ++ show (length leftEntities) ++ ")")]))
         Nothing -> []
-   in (concatMap fst (leftEntitiesJs ++ rest), concatMap snd (reverse (leftEntitiesJs ++ rest)))
+   in ( Ln
+          ( propertyChainToString (internalVariableName ++ [DotNotation "length"])
+              ++ " "
+              ++ ( if isNothing mLeftRest
+                     then "=="
+                     else ">="
+                 )
+              ++ " "
+              ++ show (length leftEntities)
+          ) :
+        concatMap fst (leftEntitiesJs ++ rest),
+        concatMap snd (reverse (leftEntitiesJs ++ rest))
+      )
 
 propertyChainToString :: InternalVariableName -> String
 propertyChainToString ((DotNotation value) : pcs) = value ++ propertyChainToString' pcs
