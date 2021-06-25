@@ -36,4 +36,42 @@ describe("list handling", () => {
     expect(element.shadowRoot.childNodes[4].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[4].textContent).toBe("3: 6");
   });
+
+  it("destructure list", () => {
+    const element = document.createElement(
+      "test-components-structural-list-destructure"
+    );
+    element.values = [];
+    container.appendChild(element);
+
+    expect(element.shadowRoot.childNodes.length).toBe(1);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[0].textContent).toBe("empty values");
+
+    element.values = ["foo"];
+
+    expect(element.shadowRoot.childNodes.length).toBe(1);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[0].textContent).toBe("one value foo");
+
+    element.values = ["foo", "bar"];
+
+    expect(element.shadowRoot.childNodes.length).toBe(2);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[0].textContent).toBe(
+      "first: foo, second: bar"
+    );
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).toBe("empty rest");
+
+    element.values = ["foo1", "bar1", "baz"];
+
+    expect(element.shadowRoot.childNodes.length).toBe(2);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[0].textContent).toBe(
+      "first: foo1, second: bar1"
+    );
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).toBe("0: baz");
+  });
 });

@@ -32,6 +32,7 @@ data LeftHandSide
   | LeftType String [LeftHandSide]
   | LeftHole
   | LeftRecord [(String, Maybe LeftHandSide)]
+  | LeftList [LeftHandSide] (Maybe LeftHandSide)
   deriving (Show)
 
 data Operator = FeedOperator

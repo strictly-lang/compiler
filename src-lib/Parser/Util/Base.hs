@@ -85,8 +85,24 @@ leftHandSideTypeParser = do
 
 leftHandSideRecordParser :: Parser LeftHandSide
 leftHandSideRecordParser = do
-  destructuredProperties <- between (char '{' <* sc) (char '}' <* sc) (sepBy leftHandSideRecordEntityParser (char ',' <* sc))
+  destructuredProperties <- between (char '{' <* sc) (char '}' <* sc) (leftHandSideRecordEntityParser `sepBy` (char ',' <* sc))
   return (LeftRecord destructuredProperties)
+
+leftHandSideListParser :: Parser LeftHandSide
+leftHandSideListParser = do
+  leftEntities <- between (char '[' <* sc) (lookAhead (char ']' <|> char '|') <* sc) (leftHandSideParser `sepBy` (char ',' <* sc))
+
+  hasRest <- optional (char '|' <* sc)
+
+  rest <- case hasRest of
+    Just _ -> do
+      Just <$> leftHandSideParser
+    Nothing -> do
+      return Nothing
+
+  _ <- char ']' <* sc
+
+  return (LeftList leftEntities rest)
 
 leftHandSideRecordEntityParser :: Parser (String, Maybe LeftHandSide)
 leftHandSideRecordEntityParser = do
@@ -101,7 +117,7 @@ leftHandSideRecordEntityParser = do
       return (propertyName, Nothing)
 
 leftHandSideParser :: Parser LeftHandSide
-leftHandSideParser = (leftHandSideHoleParser <|> leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser <|> leftHandSideRecordParser) <* sc
+leftHandSideParser = (leftHandSideHoleParser <|> leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser <|> leftHandSideRecordParser <|> leftHandSideListParser) <* sc
 
 feedOperatorParser :: Parser Operator
 feedOperatorParser = do
