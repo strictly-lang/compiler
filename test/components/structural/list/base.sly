@@ -1,4 +1,4 @@
-import /base/vendor/strictly/prelude/src/index.js (zipWithIndex)
+import /vendor/strictly/prelude/src/index.js (zipWithIndex)
 
 model:main{
 	init = -> [0, 1, 3]

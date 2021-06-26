@@ -1,6 +1,7 @@
 module Compiler.Types where
 
 import Control.Monad.State.Lazy
+import Types
 
 type PublicVariableName = String
 
@@ -21,6 +22,6 @@ newtype Predecessor = Predecessor String
 
 data Indent = Ln String | Br | Ind [Indent]
 
-type AppState = Int
+type AppState = (Int, [Import])
 
 type AppStateMonad = State AppState

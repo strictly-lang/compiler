@@ -15,11 +15,12 @@ mountedBool = "this._mounted"
 compileRoot :: String -> [Root] -> String
 compileRoot componentPath ast = indent (compileRoot' componentPath ast ast [])
 
-startState = 0
+startState :: AppState
+startState = (0, [])
 
 compileRoot' :: String -> [Root] -> [Root] -> VariableStack -> [Indent]
 compileRoot' componentPath [] ast variableStack = []
-compileRoot' componentPath ((Import path imports) : ns) ast variableStack =
+compileRoot' componentPath ((RootImport (Import (path, imports))) : ns) ast variableStack =
   [ Ln ("import { " ++ intercalate ", " imports ++ " } from \"" ++ path ++ "\";"),
     Br
   ]

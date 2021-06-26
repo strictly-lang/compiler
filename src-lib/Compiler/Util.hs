@@ -290,11 +290,9 @@ propertyChainToString' [] = ""
 propertyChainToString' ((DotNotation value) : pcs) = '.' : value ++ propertyChainToString' pcs
 propertyChainToString' ((BracketNotation value) : pcs) = '[' : value ++ "]" ++ propertyChainToString' pcs
 
-nextState :: AppState -> AppState
-nextState x = 1 + x
-
-valFromState :: AppState -> Int
-valFromState s = s
-
 getGetFreshExprId :: AppStateMonad Int
-getGetFreshExprId = state (\st -> let st' = nextState st in (valFromState st', st'))
+getGetFreshExprId =
+  state
+    ( \(exprId, imports) ->
+        (exprId, (exprId + 1, imports))
+    )

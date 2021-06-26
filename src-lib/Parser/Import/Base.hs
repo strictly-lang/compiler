@@ -11,7 +11,7 @@ importParser = do
   _ <- string "import" <* space1
   path <- pathParser <* sc
   imports <- between (char '(') (char ')') (some identityParser)
-  return (Import path imports)
+  return (RootImport (Import (path, imports)))
 
 pathParser :: Parser String
 pathParser = do

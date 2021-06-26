@@ -23,7 +23,10 @@ type IndentationLevel = Int
 data Root
   = View [ViewContent]
   | Model Name [MergedOption (Bool, RightHandSide)]
-  | Import String [String]
+  | RootImport Import
+  deriving (Show)
+
+newtype Import = Import (String, [String])
   deriving (Show)
 
 data LeftHandSide

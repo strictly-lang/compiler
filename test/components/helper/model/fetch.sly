@@ -1,4 +1,4 @@
-import /base/vendor/strictly/http/src/index.js (getText)
+import /vendor/strictly/http/src/index.js (getText)
 
 model:data{
 	init* = id -> getText("/api/${id}")

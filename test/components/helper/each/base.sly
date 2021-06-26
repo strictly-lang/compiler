@@ -1,4 +1,4 @@
-import /base/vendor/strictly/prelude/src/index.js (zipWithIndex)
+import /vendor/strictly/prelude/src/index.js (zipWithIndex)
 
 view
 	header

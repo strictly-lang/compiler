@@ -29,6 +29,10 @@ module.exports = function (config) {
     preprocessors: {
       "**/*.sly": ["strictly"],
     },
+    proxies: {
+      "/test/": "/base/test/",
+      "/vendor/": "/base/vendor/",
+    },
     plugins: [
       {
         "preprocessor:strictly": [
