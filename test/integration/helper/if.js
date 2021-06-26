@@ -1,3 +1,5 @@
+import "/test/components/helper/if/base.js";
+
 describe("if condition handling", () => {
   let container;
   beforeEach(() => {

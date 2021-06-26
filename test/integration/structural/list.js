@@ -1,3 +1,6 @@
+import "/test/components/structural/list/base.js";
+import "/test/components/structural/list/destructure.js";
+
 describe("list handling", () => {
   let container;
   beforeEach(() => {

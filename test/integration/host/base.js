@@ -1,3 +1,10 @@
+import "/test/components/host/base.js";
+import "/test/components/host/siblings.js";
+import "/test/components/host/nested.js";
+import "/test/components/host/attributes.js";
+import "/test/components/host/events.js";
+import "/test/components/host/checkbox.js";
+
 describe("host element handling", () => {
   let container;
   beforeEach(() => {

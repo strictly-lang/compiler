@@ -1,3 +1,6 @@
+import "/test/components/structural/record/base.js";
+import "/test/components/structural/record/destructure.js";
+
 describe("record handling", () => {
   let container;
   beforeEach(() => {

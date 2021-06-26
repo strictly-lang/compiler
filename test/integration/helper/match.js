@@ -1,3 +1,8 @@
+import "/test/components/helper/match/base.js";
+import "/test/components/helper/match/siblings.js";
+import "/test/components/helper/match/nested.js";
+import "/test/components/helper/match/update.js";
+
 describe("match case handling", () => {
   let container;
   beforeEach(() => {

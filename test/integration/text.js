@@ -1,3 +1,8 @@
+import "/test/components/text/base.js";
+import "/test/components/text/dynamic.js";
+import "/test/components/text/multidynamic.js";
+import "/test/components/text/whitespace.js";
+
 describe("text element handling", () => {
   let container;
   beforeEach(() => {

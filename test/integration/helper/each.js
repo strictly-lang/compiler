@@ -1,3 +1,5 @@
+import "/test/components/helper/each/base.js";
+
 describe("each loop handling", () => {
   let container;
   beforeEach(() => {

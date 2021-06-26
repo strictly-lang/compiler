@@ -17,14 +17,17 @@ module.exports = function (config) {
       {
         pattern: "test/components/**/*.sly",
         type: "module",
+        included: false,
       },
-      "test/**/*.js",
+      {
+        pattern: "test/**/*.js",
+        type: "module",
+      },
     ],
     exclude: [
       "test/components/host/style.sly",
       "test/components/host/namespace.sly",
       "test/components/helper/model/dependencies.sly",
-      "test/components/nesting/**",
     ],
     preprocessors: {
       "**/*.sly": ["strictly"],
