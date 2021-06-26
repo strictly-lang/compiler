@@ -4,6 +4,7 @@ import Compiler.Types
 import Compiler.Types.Model (compileModel)
 import Compiler.Types.View.Base (compileView)
 import Compiler.Util (indent, propertyChainToString, slashToCamelCase, slashToDash)
+import Control.Monad.State
 import Data.List (intercalate, isPrefixOf, partition)
 import Types
 
@@ -13,6 +14,8 @@ mountedBool = "this._mounted"
 
 compileRoot :: String -> [Root] -> String
 compileRoot componentPath ast = indent (compileRoot' componentPath ast ast [])
+
+startState = 0
 
 compileRoot' :: String -> [Root] -> [Root] -> VariableStack -> [Indent]
 compileRoot' componentPath [] ast variableStack = []
@@ -24,7 +27,7 @@ compileRoot' componentPath ((Import path imports) : ns) ast variableStack =
 compileRoot' componentPath ((View children) : ns) ast variableStack =
   let scope = [DotNotation "this", DotNotation "_el"]
       variableStack' = getModelScopeVariableStack ast ++ variableStack
-      (viewContent, _, _, UpdateCallbacks updateCallbacks, _) = compileView children 0 (Context (scope, (["props"], propertiesScope) : variableStack')) "this.shadowRoot" []
+      ((viewContent, _, UpdateCallbacks updateCallbacks, _), _) = runState (compileView children (Context (scope, (["props"], propertiesScope) : variableStack')) "this.shadowRoot" []) startState
    in [ Ln "(() => {",
         Br,
         Ind

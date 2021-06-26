@@ -74,12 +74,15 @@ newtype Expression a = Expression (LeftHandSide, Operator, a)
   deriving (Show)
 
 data ViewContent
-  = Host Name [MergedOption RightHandSide] [ViewContent]
+  = Host HostElement
   | MixedText [MixedText]
   | Condition RightHandSideValue [ViewContent] [ViewContent]
   | Each [Expression RightHandSideValue] [ViewContent] [ViewContent]
   | ViewModel (Expression RightHandSideValue) [ViewContent]
   | Match RightHandSideValue [Case]
+  deriving (Show)
+
+newtype HostElement = HostElement (Name, [MergedOption RightHandSide], [ViewContent])
   deriving (Show)
 
 data Case = Case LeftHandSide [ViewContent]

@@ -1,6 +1,7 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, indent, rightHandSideValueToJs, functionToJs, rightHandSideValueFunctionCallToJs, leftHandSideToJs, propertyChainToString) where
+module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, indent, rightHandSideValueToJs, functionToJs, rightHandSideValueFunctionCallToJs, leftHandSideToJs, propertyChainToString, getGetFreshExprId) where
 
 import Compiler.Types
+import Control.Monad.State
 import Data.Char (toUpper)
 import Data.List (intercalate, intersperse, isPrefixOf)
 import Data.Maybe (fromMaybe, isNothing)
@@ -288,3 +289,12 @@ propertyChainToString' :: InternalVariableName -> String
 propertyChainToString' [] = ""
 propertyChainToString' ((DotNotation value) : pcs) = '.' : value ++ propertyChainToString' pcs
 propertyChainToString' ((BracketNotation value) : pcs) = '[' : value ++ "]" ++ propertyChainToString' pcs
+
+nextState :: AppState -> AppState
+nextState x = 1 + x
+
+valFromState :: AppState -> Int
+valFromState s = s
+
+getGetFreshExprId :: AppStateMonad Int
+getGetFreshExprId = state (\st -> let st' = nextState st in (valFromState st', st'))

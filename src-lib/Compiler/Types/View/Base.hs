@@ -2,7 +2,7 @@ module Compiler.Types.View.Base (compileView) where
 
 import Compiler.Types
 import Compiler.Types.View.Host (compileHost)
-import Compiler.Util (functionToJs, indent, leftHandSideToJs, propertyChainToString, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
+import Compiler.Util (functionToJs, getGetFreshExprId, indent, leftHandSideToJs, propertyChainToString, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
 import Data.List (intercalate, intersect, intersperse, isPrefixOf, partition)
 import Types
 
@@ -19,61 +19,65 @@ secondOfTriplet (_, b, _) = b
 lastOfTriplet :: (a, b, c) -> c
 lastOfTriplet (_, _, c) = c
 
-type CompileResult = ([Indent], ExprId, [Predecessor], UpdateCallbacks, RemoveCallbacks)
+type CompileResult = ([Indent], [Predecessor], UpdateCallbacks, RemoveCallbacks)
 
-compileView :: [ViewContent] -> ExprId -> Context -> Parent -> [Predecessor] -> CompileResult
-compileView [] exprId context _ predecessors = ([], exprId, predecessors, UpdateCallbacks [], RemoveCallbacks [])
-compileView (((MixedText texts) : ns)) exprId context@(Context (scope, variableStack)) parent predecessors =
-  let elementVariableFactory = \exprId' -> propertyChainToString scope ++ ".el" ++ show exprId'
-      predecessorFactory = \exprId' -> if exprId' == exprId then predecessors else [Predecessor (elementVariableFactory (exprId' - 1))]
-      textContents =
-        [ case text of
-            DynamicText rightHandValue ->
-              let elementVariable = elementVariableFactory exprId'
-                  updateCallback = propertyChainToString scope ++ ".updateCallback" ++ show exprId'
-                  rightHandJsValue = rightHandSideValueToJs variableStack rightHandValue
-               in ( Ln (elementVariable ++ " = document.createTextNode(") :
-                    fst rightHandJsValue
-                      ++ [ Ln ");",
-                           Br,
-                           Ln (appendChild parent (predecessorFactory exprId') elementVariable),
-                           Br
-                         ],
-                    [ ( dependency,
-                        [Ln (elementVariable ++ ".textContent = ")] ++ fst rightHandJsValue ++ [Ln ";", Br]
-                      )
-                      | dependency <- snd rightHandJsValue
-                    ],
-                    [Ln (elementVariable ++ ".remove();"), Br]
-                  )
-            StaticText content ->
-              let elementVariable = elementVariableFactory exprId'
-               in ( [ Ln (elementVariable ++ " = document.createTextNode(\"" ++ content ++ "\");"),
-                      Br,
-                      Ln (appendChild parent (predecessorFactory exprId') elementVariable),
-                      Br
-                    ],
-                    [],
-                    [Ln (elementVariable ++ ".remove();"), Br]
-                  )
-          | (text, exprId') <- zip texts [exprId ..]
-        ]
-      successorExprId = exprId + length texts
-      gfhg = concatMap secondOfTriplet textContents
-      (successorContent, exprId', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns successorExprId context parent (predecessorFactory successorExprId ++ predecessors)
-   in ( concatMap firstOfTriplet textContents ++ successorContent,
-        exprId',
+compileView :: [ViewContent] -> Context -> Parent -> [Predecessor] -> AppStateMonad CompileResult
+compileView [] context _ predecessors = do return ([], predecessors, UpdateCallbacks [], RemoveCallbacks [])
+compileView ((MixedText [] : ns)) context@(Context (scope, variableStack)) parent predecessors = compileView ns context parent predecessors
+compileView (((MixedText (StaticText staticText : nextTexts)) : ns)) context@(Context (scope, variableStack)) parent predecessors =
+  do
+    exprId <- getGetFreshExprId
+    let elementVariable = propertyChainToString scope ++ ".el" ++ show exprId
+
+    (successorContent, predecessors', successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) <- compileView (MixedText nextTexts : ns) context parent (Predecessor elementVariable : predecessors)
+    return
+      ( Ln (elementVariable ++ " = document.createTextNode(\"" ++ staticText ++ "\");") :
+        Br :
+        Ln (appendChild parent predecessors elementVariable) :
+        Br :
+        successorContent,
         predecessors',
-        UpdateCallbacks (concatMap secondOfTriplet textContents ++ successorUpdateCallbacks),
-        RemoveCallbacks (concatMap lastOfTriplet textContents ++ successorRemoveCallback)
+        successorUpdateCallbacks,
+        RemoveCallbacks ([Ln (elementVariable ++ ".remove();"), Br] ++ successorRemoveCallback)
       )
-compileView (host@Host {} : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
-  let elementVariable = propertyChainToString scope ++ ".el" ++ show exprId
-      (Host nodeName options children, hostSpecificContent, UpdateCallbacks hostSpecificUpdateCallbacks) = compileHost context exprId elementVariable host
-      (childrenContent, exprId', _, UpdateCallbacks childrenUpdateCallbacks, _) = compileView children (exprId + 1) context elementVariable []
-      (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent (Predecessor elementVariable : predecessors)
-      getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
-   in ( [Ln (elementVariable ++ " = document.createElement(\"" ++ nodeName ++ "\");"), Br]
+compileView (((MixedText (DynamicText rightHandSideValue : nextTexts)) : ns)) context@(Context (scope, variableStack)) parent predecessors =
+  do
+    exprId <- getGetFreshExprId
+    let elementVariable = propertyChainToString scope ++ ".el" ++ show exprId
+        (rightHandValueJs, rightHandDependencies) = rightHandSideValueToJs variableStack rightHandSideValue
+
+    (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) <- compileView (MixedText nextTexts : ns) context parent (Predecessor elementVariable : predecessors)
+    return
+      ( Ln (elementVariable ++ " = document.createTextNode(") :
+        rightHandValueJs
+          ++ [ Ln ");",
+               Br,
+               Ln (appendChild parent predecessors elementVariable),
+               Br
+             ]
+          ++ successorContent,
+        predecessors',
+        UpdateCallbacks
+          ( [ ( dependency,
+                [Ln (elementVariable ++ ".textContent = ")] ++ rightHandValueJs ++ [Ln ";", Br]
+              )
+              | dependency <- rightHandDependencies
+            ]
+              ++ successorUpdateCallbacks
+          ),
+        RemoveCallbacks ([Ln (elementVariable ++ ".remove();"), Br] ++ successorRemoveCallback)
+      )
+compileView (Host host : ns) context@(Context (scope, variableStack)) parent predecessors =
+  do
+    exprId <- getGetFreshExprId
+    let elementVariable = propertyChainToString scope ++ ".el" ++ show exprId
+    (HostElement (nodeName, options, children), hostSpecificContent, UpdateCallbacks hostSpecificUpdateCallbacks) <- compileHost context elementVariable host
+    (childrenContent, _, UpdateCallbacks childrenUpdateCallbacks, _) <- compileView children context elementVariable []
+    (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) <- compileView ns context parent (Predecessor elementVariable : predecessors)
+    let getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
+
+    return
+      ( [Ln (elementVariable ++ " = document.createElement(\"" ++ nodeName ++ "\");"), Br]
           ++ concat
             [ if "on" `isPrefixOf` attributeKey
                 then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ fst (functionToJs variableStack attributeRightHandSide) ++ [Ln ");", Br]
@@ -86,7 +90,6 @@ compileView (host@Host {} : ns) exprId context@(Context (scope, variableStack)) 
           ++ hostSpecificContent
           ++ childrenContent
           ++ successorContent,
-        exprId'',
         predecessors',
         UpdateCallbacks
           ( hostSpecificUpdateCallbacks
@@ -107,47 +110,54 @@ compileView (host@Host {} : ns) exprId context@(Context (scope, variableStack)) 
           ),
         RemoveCallbacks (Ln (elementVariable ++ ".remove();") : successorRemoveCallbacks)
       )
-compileView ((ViewModel (Expression (leftHandSide, FeedOperator, sourceValue)) children) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
-  let modelScope = scope ++ [DotNotation ("model" ++ show exprId)]
-      modeledVariableStack = snd (leftHandSideToJs variableStack leftHandSide modelScope) ++ variableStack
-      (childrenContent, exprId', predecessors', UpdateCallbacks childrenUpdateCallbacks, removeCallbacks) = compileView children (exprId + 1) (Context (scope, modeledVariableStack)) parent predecessors
-      (modelUpdateCallback, restUpdateCallbacks) = partition (isPrefixOf modelScope . fst) childrenUpdateCallbacks
-      modelUpdateCallbackJs =
-        [ Ln "() => {",
-          Br,
-          Ind (intercalate [Br] (map snd modelUpdateCallback)),
-          Br,
-          Ln "}"
-        ]
-      (modelValue, modelDependencies) = rightHandSideValueFunctionCallToJs [modelUpdateCallbackJs] variableStack sourceValue
-      (successorContent, exprId''', predecessors'', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId' + 1) context parent predecessors'
-   in ( [Ln (propertyChainToString modelScope ++ " = ")] ++ modelValue ++ [Ln ";", Br]
+compileView ((ViewModel (Expression (leftHandSide, FeedOperator, sourceValue)) children) : ns) context@(Context (scope, variableStack)) parent predecessors =
+  do
+    exprId <- getGetFreshExprId
+    let modelScope = scope ++ [DotNotation ("model" ++ show exprId)]
+        modeledVariableStack = snd (leftHandSideToJs variableStack leftHandSide modelScope) ++ variableStack
+    (childrenContent, predecessors', UpdateCallbacks childrenUpdateCallbacks, removeCallbacks) <- compileView children (Context (scope, modeledVariableStack)) parent predecessors
+    let (modelUpdateCallback, restUpdateCallbacks) = partition (isPrefixOf modelScope . fst) childrenUpdateCallbacks
+        modelUpdateCallbackJs =
+          [ Ln "() => {",
+            Br,
+            Ind (intercalate [Br] (map snd modelUpdateCallback)),
+            Br,
+            Ln "}"
+          ]
+        (modelValue, modelDependencies) = rightHandSideValueFunctionCallToJs [modelUpdateCallbackJs] variableStack sourceValue
+    (successorContent, predecessors'', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) <- compileView ns context parent predecessors'
+
+    return
+      ( [Ln (propertyChainToString modelScope ++ " = ")] ++ modelValue ++ [Ln ";", Br]
           ++ childrenContent
           ++ successorContent,
-        exprId',
         predecessors'',
         UpdateCallbacks ([(modelDependency, []) | modelDependency <- modelDependencies] ++ restUpdateCallbacks),
         removeCallbacks
       )
-compileView ((Each [Expression (leftHandSideValue, FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
-  let indexVariable = ("index" ++ show exprId)
-      entitiesScope = scope ++ [DotNotation ("entities" ++ show exprId)]
-      entityScope = entitiesScope ++ [BracketNotation indexVariable]
-      entityValue = entityScope ++ [DotNotation "value"]
-      updateCallback = propertyChainToString scope ++ ".updateCallback" ++ show exprId
-      (internalEntitiesVariable, sourceValueDependencies) = rightHandSideValueToJs variableStack sourceValue
-      createEntityCallback = propertyChainToString scope ++ ".createEach" ++ show exprId
-      createElseCallback = propertyChainToString scope ++ ".createElse" ++ show exprId
-      predecessorOf = propertyChainToString scope ++ ".getPredecessorOf" ++ show exprId
-      successor = predecessorOf ++ "(" ++ propertyChainToString entitiesScope ++ ".length - 1)"
-      entityPredecessor = predecessorOf ++ "(" ++ indexVariable ++ " - 1)"
-      entityVariable = "entity" ++ show exprId
-      (_conditions, entityStack) = leftHandSideToJs variableStack leftHandSideValue entityValue
-      (entityChildrenContent, exprId', entitySuccessor, UpdateCallbacks entityChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView entityChildren (exprId + 1) (Context (entityScope, entityStack ++ variableStack)) parent (Predecessor entityPredecessor : predecessors)
-      (negativeChildrenContent, exprId'', negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) = compileView negativeChildren (exprId' + 1) context parent predecessors
-      (successorContent, exprId''', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId'' + 1) context parent [Predecessor successor]
-      (entityUpdateCallback, restEntityUpdateCallbacks) = partition (isPrefixOf entityValue . fst) entityChildrenUpdateCallbacks
-   in ( [ Ln (propertyChainToString entitiesScope ++ " = [];"),
+compileView ((Each [Expression (leftHandSideValue, FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
+  do
+    exprId <- getGetFreshExprId
+    let indexVariable = "index" ++ show exprId
+        entitiesScope = scope ++ [DotNotation ("entities" ++ show exprId)]
+        entityScope = entitiesScope ++ [BracketNotation indexVariable]
+        entityValue = entityScope ++ [DotNotation "value"]
+        updateCallback = propertyChainToString scope ++ ".updateCallback" ++ show exprId
+        (internalEntitiesVariable, sourceValueDependencies) = rightHandSideValueToJs variableStack sourceValue
+        createEntityCallback = propertyChainToString scope ++ ".createEach" ++ show exprId
+        createElseCallback = propertyChainToString scope ++ ".createElse" ++ show exprId
+        predecessorOf = propertyChainToString scope ++ ".getPredecessorOf" ++ show exprId
+        successor = predecessorOf ++ "(" ++ propertyChainToString entitiesScope ++ ".length - 1)"
+        entityPredecessor = predecessorOf ++ "(" ++ indexVariable ++ " - 1)"
+        entityVariable = "entity" ++ show exprId
+        (_conditions, entityStack) = leftHandSideToJs variableStack leftHandSideValue entityValue
+    (entityChildrenContent, entitySuccessor, UpdateCallbacks entityChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) <- compileView entityChildren (Context (entityScope, entityStack ++ variableStack)) parent (Predecessor entityPredecessor : predecessors)
+    (negativeChildrenContent, negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) <- compileView negativeChildren context parent predecessors
+    (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) <- compileView ns context parent [Predecessor successor]
+    let (entityUpdateCallback, restEntityUpdateCallbacks) = partition (isPrefixOf entityValue . fst) entityChildrenUpdateCallbacks
+
+    return
+      ( [ Ln (propertyChainToString entitiesScope ++ " = [];"),
           Br,
           Ln (predecessorOf ++ " = (" ++ indexVariable ++ ") => {"),
           Br,
@@ -280,7 +290,6 @@ compileView ((Each [Expression (leftHandSideValue, FeedOperator, sourceValue)] e
                Br
              ]
           ++ successorContent,
-        exprId''',
         predecessors',
         UpdateCallbacks
           ( [(dependency, [Ln (updateCallback ++ "();"), Br]) | dependency <- sourceValueDependencies]
@@ -303,19 +312,23 @@ compileView ((Each [Expression (leftHandSideValue, FeedOperator, sourceValue)] e
           ),
         RemoveCallbacks []
       )
-compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) exprId context@(Context (scope, variableStack)) parent predecessors =
-  let conditionVariable = propertyChainToString scope ++ ".condition" ++ show exprId
-      (positiveChildrenContent, exprId', positiveSuccessor, UpdateCallbacks positiveChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) = compileView positiveChildren (exprId + 1) context parent predecessors
-      (negativeChildrenContent, exprId'', negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) = compileView negativeChildren (exprId' + 1) context parent predecessors
-      successor = "(" ++ conditionVariable ++ " ? " ++ predecessorChain positiveSuccessor ++ " : " ++ predecessorChain negativeSuccessor ++ ")"
-      (internalConditionValue, conditionValueDependencies) = rightHandSideValueToJs variableStack conditionValue
-      createPositiveCallback = propertyChainToString scope ++ ".createPositive" ++ show exprId
-      createNegativeCallback = propertyChainToString scope ++ ".createNegative" ++ show exprId
-      removeCallback = propertyChainToString scope ++ ".removeCallback" ++ show exprId
-      createCallback = "createCondition" ++ show exprId
-      updateCallback = propertyChainToString scope ++ ".updateCondition" ++ show exprId
-      (successorContent, exprId''', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) = compileView ns (exprId'' + 1) context parent (Predecessor successor : predecessors)
-   in ( [ Ln (createPositiveCallback ++ " = () => {"),
+compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
+  do
+    exprId <- getGetFreshExprId
+    let conditionVariable = propertyChainToString scope ++ ".condition" ++ show exprId
+    (positiveChildrenContent, positiveSuccessor, UpdateCallbacks positiveChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) <- compileView positiveChildren context parent predecessors
+    (negativeChildrenContent, negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) <- compileView negativeChildren context parent predecessors
+    let successor = "(" ++ conditionVariable ++ " ? " ++ predecessorChain positiveSuccessor ++ " : " ++ predecessorChain negativeSuccessor ++ ")"
+        (internalConditionValue, conditionValueDependencies) = rightHandSideValueToJs variableStack conditionValue
+        createPositiveCallback = propertyChainToString scope ++ ".createPositive" ++ show exprId
+        createNegativeCallback = propertyChainToString scope ++ ".createNegative" ++ show exprId
+        removeCallback = propertyChainToString scope ++ ".removeCallback" ++ show exprId
+        createCallback = "createCondition" ++ show exprId
+        updateCallback = propertyChainToString scope ++ ".updateCondition" ++ show exprId
+    (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) <- compileView ns context parent (Predecessor successor : predecessors)
+
+    return
+      ( [ Ln (createPositiveCallback ++ " = () => {"),
           Br,
           Ind positiveChildrenContent,
           Ln "}",
@@ -386,7 +399,6 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
           Br
         ]
           ++ successorContent,
-        exprId''',
         predecessors',
         UpdateCallbacks
           ( [(dependency, [Ln (updateCallback ++ "();")]) | dependency <- conditionValueDependencies]
@@ -417,41 +429,21 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
           ),
         RemoveCallbacks successorRemoveCallbacks -- TODO add self removage
       )
-compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, variableStack)) parent predecessors =
-  let currentValueVariable = scope ++ [DotNotation ("currentValue" ++ show exprId)]
-      currentCaseVariable = propertyChainToString scope ++ ".currentCase" ++ show exprId
-      updateCallback = propertyChainToString scope ++ ".updateCallback" ++ show exprId
-      (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
-      (patterns, exprId') = getMatchPatterns cases currentValueVariable (exprId + 1) context parent predecessors
-      updateCases = map (partition (isPrefixOf currentValueVariable . fst) . (\(_, (_, _, _, UpdateCallbacks updateCallbacks, _)) -> updateCallbacks)) patterns
-      activeUpdates =
-        zipWith
-          ( curry
-              ( \((activeUpdates, _), index) ->
-                  map
-                    ( \(_, updateCode) ->
-                        [ Ln
-                            ("if (" ++ currentCaseVariable ++ " == " ++ show index ++ ") {"),
-                          Br,
-                          Ind updateCode,
-                          Br,
-                          Ln "}",
-                          Br
-                        ]
-                    )
-                    activeUpdates
-              )
-          )
-          updateCases
-          [0 ..]
-
-      restUpdates =
-        zipWith
-          ( curry
-              ( \((_, restUpdates), index) ->
-                  map
-                    ( \(internalVariableName, updateCode) ->
-                        ( internalVariableName,
+compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variableStack)) parent predecessors =
+  do
+    exprId <- getGetFreshExprId
+    let currentValueVariable = scope ++ [DotNotation ("currentValue" ++ show exprId)]
+        currentCaseVariable = propertyChainToString scope ++ ".currentCase" ++ show exprId
+        updateCallback = propertyChainToString scope ++ ".updateCallback" ++ show exprId
+        (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
+    patterns <- getMatchPatterns cases currentValueVariable context parent predecessors
+    let updateCases = map (partition (isPrefixOf currentValueVariable . fst) . (\(_, (_, _, UpdateCallbacks updateCallbacks, _)) -> updateCallbacks)) patterns
+        activeUpdates =
+          zipWith
+            ( curry
+                ( \((activeUpdates, _), index) ->
+                    map
+                      ( \(_, updateCode) ->
                           [ Ln
                               ("if (" ++ currentCaseVariable ++ " == " ++ show index ++ ") {"),
                             Br,
@@ -460,15 +452,39 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
                             Ln "}",
                             Br
                           ]
-                        )
-                    )
-                    restUpdates
-              )
-          )
-          updateCases
-          [0 ..]
-      (successorContent, exprId'', predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) = compileView ns exprId' context parent (getCaseSuccessor currentCaseVariable 0 (map snd patterns))
-   in ( [ Ln (propertyChainToString currentValueVariable ++ " = undefined;"),
+                      )
+                      activeUpdates
+                )
+            )
+            updateCases
+            [0 ..]
+
+        restUpdates =
+          zipWith
+            ( curry
+                ( \((_, restUpdates), index) ->
+                    map
+                      ( \(internalVariableName, updateCode) ->
+                          ( internalVariableName,
+                            [ Ln
+                                ("if (" ++ currentCaseVariable ++ " == " ++ show index ++ ") {"),
+                              Br,
+                              Ind updateCode,
+                              Br,
+                              Ln "}",
+                              Br
+                            ]
+                          )
+                      )
+                      restUpdates
+                )
+            )
+            updateCases
+            [0 ..]
+    (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallback) <- compileView ns context parent (getCaseSuccessor currentCaseVariable 0 (map snd patterns))
+
+    return
+      ( [ Ln (propertyChainToString currentValueVariable ++ " = undefined;"),
           Br,
           Ln (currentCaseVariable ++ " = undefined;"),
           Br,
@@ -508,7 +524,7 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
                                      Br,
                                      Ln "}"
                                    ]
-                                   | ((_, (_, _, _, _, RemoveCallbacks removeCallbacks)), index) <- zip patterns [0 ..]
+                                   | ((_, (_, _, _, RemoveCallbacks removeCallbacks)), index) <- zip patterns [0 ..]
                                  ]
                              ),
                            Br,
@@ -526,7 +542,7 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
                                  Br,
                                  Ln "}"
                                ]
-                               | ((_, (caseContent, _, _, _, _)), index) <- zip patterns [0 ..]
+                               | ((_, (caseContent, _, _, _)), index) <- zip patterns [0 ..]
                              ]
                        ),
                      Br,
@@ -541,7 +557,6 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
           Br
         ]
           ++ successorContent,
-        exprId',
         predecessors',
         UpdateCallbacks
           ( [ (dependency, [Ln (updateCallback ++ "()")])
@@ -555,17 +570,21 @@ compileView ((Match rightHandValue cases : ns)) exprId context@(Context (scope, 
 
 type Index = Int
 
-getMatchPatterns :: [Case] -> InternalVariableName -> ExprId -> Context -> Parent -> [Predecessor] -> ([([Indent], CompileResult)], ExprId)
-getMatchPatterns [] internalVariableName exprId context parent predecessors = ([], exprId)
-getMatchPatterns ((Case leftHandSide children) : cases) internalVariableName exprId context@(Context (scope, variableStack)) parent predecessors =
-  let (conditions, variableStack') = leftHandSideToJs variableStack leftHandSide internalVariableName
-      caseChildren@(_, exprId', _, _, _) = compileView children (exprId + 1) (Context (scope, variableStack' ++ variableStack)) parent predecessors
-      (nextPatterns, exprId'') = getMatchPatterns cases internalVariableName exprId' context parent predecessors
-   in ((conditions, caseChildren) : nextPatterns, exprId'')
+getMatchPatterns :: [Case] -> InternalVariableName -> Context -> Parent -> [Predecessor] -> AppStateMonad [([Indent], CompileResult)]
+getMatchPatterns [] internalVariableName context parent predecessors =
+  do
+    return []
+getMatchPatterns ((Case leftHandSide children) : cases) internalVariableName context@(Context (scope, variableStack)) parent predecessors =
+  do
+    let (conditions, variableStack') = leftHandSideToJs variableStack leftHandSide internalVariableName
+    caseChildren@(_, _, _, _) <- compileView children (Context (scope, variableStack' ++ variableStack)) parent predecessors
+    nextPatterns <- getMatchPatterns cases internalVariableName context parent predecessors
+
+    return ((conditions, caseChildren) : nextPatterns)
 
 getCaseSuccessor :: String -> Index -> [CompileResult] -> [Predecessor]
 getCaseSuccessor currentCaseVariable index [] = [Predecessor "(() => {throw new Error(\"Could not find pattern\")})"]
-getCaseSuccessor currentCaseVariable index ((_, _, Predecessor currentPredecessors : np, _, _) : restCaseResult) =
+getCaseSuccessor currentCaseVariable index ((_, Predecessor currentPredecessors : np, _, _) : restCaseResult) =
   let ((Predecessor nextPredecessors) : nP) = getCaseSuccessor currentCaseVariable (index + 1) restCaseResult
    in [Predecessor ("(" ++ currentCaseVariable ++ " === " ++ show index ++ " ? " ++ currentPredecessors ++ " : " ++ nextPredecessors ++ ")")]
 

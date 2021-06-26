@@ -1,21 +1,24 @@
 module Compiler.Types.View.Host where
 
 import Compiler.Types
-import Compiler.Util (functionToJs, propertyChainToString, rightHandSideValueToJs)
+import Compiler.Util (functionToJs, getGetFreshExprId, propertyChainToString, rightHandSideValueToJs)
 import Data.Char (toLower)
 import Data.List (partition)
 import Types
 
-compileHost :: Context -> ExprId -> String -> ViewContent -> (ViewContent, [Indent], UpdateCallbacks)
-compileHost (Context (scope, variableStack)) exprId elementVariable (Host "input" options children) =
-  let ([("value", [value])], options') = partition ((== "value") . fst) options
-      ([oninput], options'') = partition ((== "oninput") . fst) options'
-      (typeName, valueJs, dependencies) = getTypeAndValue variableStack value
-      valueAttribute = getValueAttributeOfType typeName
-      valueVariable = propertyChainToString scope ++ ".valueContainer" ++ show exprId
-      valueChanged = propertyChainToString scope ++ ".valueChanged" ++ show exprId
-      (functionJs, functionDependencies) = functionToJs variableStack (snd oninput)
-   in ( Host "input" options'' children,
+compileHost :: Context -> String -> HostElement -> AppStateMonad (HostElement, [Indent], UpdateCallbacks)
+compileHost (Context (scope, variableStack)) elementVariable (HostElement ("input", options, children)) =
+  do
+    exprId <- getGetFreshExprId
+    let ([("value", [value])], options') = partition ((== "value") . fst) options
+        ([oninput], options'') = partition ((== "oninput") . fst) options'
+        (typeName, valueJs, dependencies) = getTypeAndValue variableStack value
+        valueAttribute = getValueAttributeOfType typeName
+        valueVariable = propertyChainToString scope ++ ".valueContainer" ++ show exprId
+        valueChanged = propertyChainToString scope ++ ".valueChanged" ++ show exprId
+        (functionJs, functionDependencies) = functionToJs variableStack (snd oninput)
+    return
+      ( HostElement ("input", options'', children),
         [ Ln (elementVariable ++ ".setAttribute(\"type\", \"" ++ toLowerCase typeName ++ "\");"),
           Br,
           Ln (valueChanged ++ " = false;"),
@@ -70,7 +73,7 @@ compileHost (Context (scope, variableStack)) exprId elementVariable (Host "input
               ++ [(functionDependency, []) | functionDependency <- functionDependencies]
           )
       )
-compileHost context exprId elementVariable host@Host {} = (host, [], UpdateCallbacks [])
+compileHost context elementVariable host = do return (host, [], UpdateCallbacks [])
 
 getTypeAndValue :: VariableStack -> RightHandSide -> (String, [Indent], [InternalVariableName])
 getTypeAndValue variableStack (RightHandSideValue (RightHandSideType typeName [rightHandSideValue])) =

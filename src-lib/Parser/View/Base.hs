@@ -21,7 +21,7 @@ hostParser indentationLevel = do
   hostElement <- some lowerChar
   options <- optionsParser indentationLevel hostOptionParser
   children <- viewContentParser (indentationLevel + 1)
-  return (Host hostElement (mergeOptions options) children)
+  return (Host (HostElement (hostElement, mergeOptions options, children)))
 
 hostOptionParser :: Parser (Option RightHandSide)
 hostOptionParser = do
