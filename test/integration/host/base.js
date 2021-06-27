@@ -1,9 +1,9 @@
-import "/test/components/host/base.js";
-import "/test/components/host/siblings.js";
-import "/test/components/host/nested.js";
-import "/test/components/host/attributes.js";
-import "/test/components/host/events.js";
-import "/test/components/host/checkbox.js";
+import "/test/components/host/base.sly";
+import "/test/components/host/siblings.sly";
+import "/test/components/host/nested.sly";
+import "/test/components/host/attributes.sly";
+import "/test/components/host/events.sly";
+import "/test/components/host/checkbox.sly";
 
 describe("host element handling", () => {
   let container;

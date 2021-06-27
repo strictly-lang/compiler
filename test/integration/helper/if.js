@@ -1,4 +1,4 @@
-import "/test/components/helper/if/base.js";
+import "/test/components/helper/if/base.sly";
 
 describe("if condition handling", () => {
   let container;

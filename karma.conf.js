@@ -36,13 +36,16 @@ module.exports = function (config) {
       "/test/": "/base/test/",
       "/vendor/": "/base/vendor/",
     },
+    mime: {
+      "text/javascript": ["sly"],
+    },
     plugins: [
       {
         "preprocessor:strictly": [
           "factory",
           function () {
             return async (_, file) => {
-              file.path = file.originalPath.replace(/\.sly$/, ".js");
+              // file.path = file.originalPath.replace(/\.sly$/, ".js");
 
               const { stdout, stderror } = await exec(
                 `cabal v2-run --verbose=silent strictly-compiler ${file.originalPath}`

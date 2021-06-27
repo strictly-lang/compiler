@@ -1,5 +1,5 @@
-import "/test/components/structural/list/base.js";
-import "/test/components/structural/list/destructure.js";
+import "/test/components/structural/list/base.sly";
+import "/test/components/structural/list/destructure.sly";
 
 describe("list handling", () => {
   let container;

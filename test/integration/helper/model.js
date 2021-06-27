@@ -1,5 +1,5 @@
-import "/test/components/helper/model/counter.js";
-import "/test/components/helper/model/fetch.js";
+import "/test/components/helper/model/counter.sly";
+import "/test/components/helper/model/fetch.sly";
 
 async function nextTick(amount) {
   for (let i = amount; i > 0; i--) {

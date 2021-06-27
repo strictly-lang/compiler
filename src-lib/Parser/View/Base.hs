@@ -33,12 +33,12 @@ hostElementRelativeComponentParser = do
   _ <- char '-'
   componentName <- componentNameParser
 
-  return (intercalate "-" componentName, Just (Import ("./" ++ intercalate "/" componentName ++ ".js", [])))
+  return (intercalate "-" componentName, Just (Import ("./" ++ intercalate "/" componentName ++ ".sly", [])))
 
 hostElementParser :: Parser (String, Maybe Import)
 hostElementParser = do
   elementName <- componentNameParser
-  return (intercalate "-" elementName, if length elementName > 1 then Just (Import ("/" ++ intercalate "/" elementName ++ ".js", [])) else Nothing)
+  return (intercalate "-" elementName, if length elementName > 1 then Just (Import ("/" ++ intercalate "/" elementName ++ ".sly", [])) else Nothing)
 
 componentNameParser :: Parser [String]
 componentNameParser = some lowerChar `sepBy1` char '-'

@@ -1,4 +1,4 @@
-import "/test/components/helper/each/base.js";
+import "/test/components/helper/each/base.sly";
 
 describe("each loop handling", () => {
   let container;

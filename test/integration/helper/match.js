@@ -1,7 +1,7 @@
-import "/test/components/helper/match/base.js";
-import "/test/components/helper/match/siblings.js";
-import "/test/components/helper/match/nested.js";
-import "/test/components/helper/match/update.js";
+import "/test/components/helper/match/base.sly";
+import "/test/components/helper/match/siblings.sly";
+import "/test/components/helper/match/nested.sly";
+import "/test/components/helper/match/update.sly";
 
 describe("match case handling", () => {
   let container;
