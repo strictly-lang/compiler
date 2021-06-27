@@ -12,24 +12,41 @@ propertiesScope = [DotNotation "this", DotNotation "properties"]
 
 mountedBool = "this._mounted"
 
+startState :: String -> AppState
+startState componentPath = (componentPath, 0, [])
+
 compileRoot :: String -> [Root] -> String
-compileRoot componentPath ast = indent (compileRoot' componentPath ast ast [])
+compileRoot componentPath ast =
+  let (result, (_, _, imports)) = runState (compileRoot' componentPath ast ast []) (startState componentPath)
+   in indent
+        ( concat
+            ( [ [ Ln ("import \"" ++ path ++ "\";"),
+                  Br
+                ]
+                | Import (path, _) <- imports
+              ]
+            )
+            ++ result
+        )
 
-startState :: AppState
-startState = (0, [])
-
-compileRoot' :: String -> [Root] -> [Root] -> VariableStack -> [Indent]
-compileRoot' componentPath [] ast variableStack = []
-compileRoot' componentPath ((RootImport (Import (path, imports))) : ns) ast variableStack =
-  [ Ln ("import { " ++ intercalate ", " imports ++ " } from \"" ++ path ++ "\";"),
-    Br
-  ]
-    ++ compileRoot' componentPath ns ast ([([importVariable], [DotNotation importVariable]) | importVariable <- imports] ++ variableStack)
-compileRoot' componentPath ((View children) : ns) ast variableStack =
+compileRoot' :: String -> [Root] -> [Root] -> VariableStack -> AppStateMonad [Indent]
+compileRoot' componentPath [] ast variableStack = do return []
+compileRoot' componentPath ((RootImport (Import (path, imports))) : ns) ast variableStack = do
+  next <- compileRoot' componentPath ns ast ([([importVariable], [DotNotation importVariable]) | importVariable <- imports] ++ variableStack)
+  return
+    ( [ Ln ("import { " ++ intercalate ", " imports ++ " } from \"" ++ path ++ "\";"),
+        Br
+      ]
+        ++ next
+    )
+compileRoot' componentPath ((View children) : ns) ast variableStack = do
   let scope = [DotNotation "this", DotNotation "_el"]
       variableStack' = getModelScopeVariableStack ast ++ variableStack
-      ((viewContent, _, UpdateCallbacks updateCallbacks, _), _) = runState (compileView children (Context (scope, (["props"], propertiesScope) : variableStack')) "this.shadowRoot" []) startState
-   in [ Ln "(() => {",
+  (viewContent, _, UpdateCallbacks updateCallbacks, _) <- compileView children (Context (scope, (["props"], propertiesScope) : variableStack')) "this.shadowRoot" []
+  next <- compileRoot' componentPath ns ast variableStack
+
+  return
+    ( [ Ln "(() => {",
         Br,
         Ind
           [ Ln ("class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {"),
@@ -77,7 +94,8 @@ compileRoot' componentPath ((View children) : ns) ast variableStack =
           ],
         Ln "})()"
       ]
-        ++ compileRoot' componentPath ns ast variableStack
+        ++ next
+    )
 compileRoot' componentPath ((Model _ _) : ns) ast variableStack = compileRoot' componentPath ns ast variableStack
 
 getModelFactories :: [Root] -> VariableStack -> [Indent]

@@ -1,8 +1,9 @@
 module Parser.View.Base (viewParser, viewContentParser) where
 
 import Control.Applicative (optional, (<|>))
+import Data.List
 import Parser.Util.Base (expressionParser, identityParser, indentParser, indentParserRepeat, leftHandSideParser, mergeOptions, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideParser, rightHandSideValueParser, sc)
-import Text.Megaparsec (some)
+import Text.Megaparsec (sepBy1, some)
 import Text.Megaparsec.Char (char, eol, lowerChar, newline, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
 import Types
@@ -18,10 +19,29 @@ viewContentParser indentationLevel = indentParserRepeat indentationLevel (hostPa
 
 hostParser :: IndentationLevel -> Parser ViewContent
 hostParser indentationLevel = do
-  hostElement <- some lowerChar
+  (hostElement, importPath) <- hostElementeParser
   options <- optionsParser indentationLevel hostOptionParser
   children <- viewContentParser (indentationLevel + 1)
-  return (Host (HostElement (hostElement, mergeOptions options, children)))
+  return (Host (HostElement (hostElement, mergeOptions options, children)) importPath)
+
+hostElementeParser :: Parser (String, Maybe Import)
+hostElementeParser = hostElementRelativeComponentParser <|> hostElementParser
+
+hostElementRelativeComponentParser :: Parser (String, Maybe Import)
+hostElementRelativeComponentParser = do
+  _ <- char '.'
+  _ <- char '-'
+  componentName <- componentNameParser
+
+  return (intercalate "-" componentName, Just (Import ("./" ++ intercalate "/" componentName ++ ".js", [])))
+
+hostElementParser :: Parser (String, Maybe Import)
+hostElementParser = do
+  elementName <- componentNameParser
+  return (intercalate "-" elementName, if length elementName > 1 then Just (Import ("/" ++ intercalate "/" elementName ++ ".js", [])) else Nothing)
+
+componentNameParser :: Parser [String]
+componentNameParser = some lowerChar `sepBy1` char '-'
 
 hostOptionParser :: Parser (Option RightHandSide)
 hostOptionParser = do

@@ -1,13 +1,14 @@
 module Compiler.Types.View.Host where
 
 import Compiler.Types
-import Compiler.Util (functionToJs, getGetFreshExprId, propertyChainToString, rightHandSideValueToJs)
+import Compiler.Util (addImport, functionToJs, getGetFreshExprId, propertyChainToString, rightHandSideValueToJs, splitOn)
+import Control.Monad.State
 import Data.Char (toLower)
-import Data.List (partition)
+import Data.List (intercalate, partition)
 import Types
 
-compileHost :: Context -> String -> HostElement -> AppStateMonad (HostElement, [Indent], UpdateCallbacks)
-compileHost (Context (scope, variableStack)) elementVariable (HostElement ("input", options, children)) =
+compileHost :: Context -> String -> HostElement -> Maybe Import -> AppStateMonad (HostElement, [Indent], UpdateCallbacks)
+compileHost (Context (scope, variableStack)) elementVariable (HostElement ("input", options, children)) importPath =
   do
     exprId <- getGetFreshExprId
     let ([("value", [value])], options') = partition ((== "value") . fst) options
@@ -73,7 +74,16 @@ compileHost (Context (scope, variableStack)) elementVariable (HostElement ("inpu
               ++ [(functionDependency, []) | functionDependency <- functionDependencies]
           )
       )
-compileHost context elementVariable host = do return (host, [], UpdateCallbacks [])
+compileHost context elementVariable host@(HostElement (hostElementName, mergedOptions, children)) (Just importPath@(Import ('.' : '/' : _, []))) =
+  do
+    _ <- addImport importPath
+    (currentComponentPath, _, _) <- get
+    return (HostElement (getRelativeComponentName currentComponentPath hostElementName, mergedOptions, children), [], UpdateCallbacks [])
+compileHost context elementVariable host@(HostElement hostElementName) (Just importPath) =
+  do
+    _ <- addImport importPath
+    return (host, [], UpdateCallbacks [])
+compileHost context elementVariable host importPath = do return (host, [], UpdateCallbacks [])
 
 getTypeAndValue :: VariableStack -> RightHandSide -> (String, [Indent], [InternalVariableName])
 getTypeAndValue variableStack (RightHandSideValue (RightHandSideType typeName [rightHandSideValue])) =
@@ -86,3 +96,8 @@ getValueAttributeOfType _ = "value"
 
 toLowerCase :: String -> String
 toLowerCase value = [toLower loweredString | loweredString <- value]
+
+getRelativeComponentName :: String -> String -> String
+getRelativeComponentName currentComponentName hostElementName =
+  let splitedCurrentComponentName = splitOn (== '/') currentComponentName
+   in intercalate "-" (take (length splitedCurrentComponentName - 1) splitedCurrentComponentName) ++ "-" ++ hostElementName

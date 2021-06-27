@@ -10,15 +10,6 @@ type Successor = String
 
 type Parent = String
 
-firstOfTriplet :: (a, b, c) -> a
-firstOfTriplet (a, _, _) = a
-
-secondOfTriplet :: (a, b, c) -> b
-secondOfTriplet (_, b, _) = b
-
-lastOfTriplet :: (a, b, c) -> c
-lastOfTriplet (_, _, c) = c
-
 type CompileResult = ([Indent], [Predecessor], UpdateCallbacks, RemoveCallbacks)
 
 compileView :: [ViewContent] -> Context -> Parent -> [Predecessor] -> AppStateMonad CompileResult
@@ -67,11 +58,11 @@ compileView (((MixedText (DynamicText rightHandSideValue : nextTexts)) : ns)) co
           ),
         RemoveCallbacks ([Ln (elementVariable ++ ".remove();"), Br] ++ successorRemoveCallback)
       )
-compileView (Host host : ns) context@(Context (scope, variableStack)) parent predecessors =
+compileView ((Host host importPath) : ns) context@(Context (scope, variableStack)) parent predecessors =
   do
     exprId <- getGetFreshExprId
     let elementVariable = propertyChainToString scope ++ ".el" ++ show exprId
-    (HostElement (nodeName, options, children), hostSpecificContent, UpdateCallbacks hostSpecificUpdateCallbacks) <- compileHost context elementVariable host
+    (HostElement (nodeName, options, children), hostSpecificContent, UpdateCallbacks hostSpecificUpdateCallbacks) <- compileHost context elementVariable host importPath
     (childrenContent, _, UpdateCallbacks childrenUpdateCallbacks, _) <- compileView children context elementVariable []
     (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) <- compileView ns context parent (Predecessor elementVariable : predecessors)
     let getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])

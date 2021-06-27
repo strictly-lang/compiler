@@ -22,6 +22,6 @@ newtype Predecessor = Predecessor String
 
 data Indent = Ln String | Br | Ind [Indent]
 
-type AppState = (Int, [Import])
+type AppState = (String, Int, [Import])
 
 type AppStateMonad = State AppState

@@ -77,7 +77,7 @@ newtype Expression a = Expression (LeftHandSide, Operator, a)
   deriving (Show)
 
 data ViewContent
-  = Host HostElement
+  = Host HostElement (Maybe Import)
   | MixedText [MixedText]
   | Condition RightHandSideValue [ViewContent] [ViewContent]
   | Each [Expression RightHandSideValue] [ViewContent] [ViewContent]

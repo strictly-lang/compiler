@@ -1,4 +1,18 @@
-module Compiler.Util (pathToComponent, slashToDash, slashToCamelCase, indent, rightHandSideValueToJs, functionToJs, rightHandSideValueFunctionCallToJs, leftHandSideToJs, propertyChainToString, getGetFreshExprId) where
+module Compiler.Util
+  ( pathToComponent,
+    slashToDash,
+    slashToCamelCase,
+    indent,
+    rightHandSideValueToJs,
+    functionToJs,
+    rightHandSideValueFunctionCallToJs,
+    leftHandSideToJs,
+    propertyChainToString,
+    getGetFreshExprId,
+    addImport,
+    splitOn,
+  )
+where
 
 import Compiler.Types
 import Control.Monad.State
@@ -293,6 +307,21 @@ propertyChainToString' ((BracketNotation value) : pcs) = '[' : value ++ "]" ++ p
 getGetFreshExprId :: AppStateMonad Int
 getGetFreshExprId =
   state
-    ( \(exprId, imports) ->
-        (exprId, (exprId + 1, imports))
+    ( \(componentPath, exprId, imports) ->
+        (exprId, (componentPath, exprId + 1, imports))
     )
+
+addImport :: Import -> AppStateMonad ()
+addImport importPath =
+  state
+    ( \(componentPath, exprId, imports) ->
+        ( (),
+          (componentPath, exprId, imports ++ [importPath])
+        )
+    )
+
+splitOn :: (a -> Bool) -> [a] -> [[a]]
+splitOn _ [] = []
+splitOn f l@(x : xs)
+  | f x = splitOn f xs
+  | otherwise = let (h, t) = break f l in h : splitOn f t
