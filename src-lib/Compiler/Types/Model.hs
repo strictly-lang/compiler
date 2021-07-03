@@ -65,9 +65,7 @@ compileModel (Model name options) variableStack =
                                  Br,
                                  Ln "done = iterableResult.done;",
                                  Br,
-                                 Ln "result[0] = await iterableResult.value;",
-                                 Br,
-                                 Ln "updateCallback();",
+                                 Ln "result[1](await iterableResult.value);",
                                  Br
                                ],
                              Br,
