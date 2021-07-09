@@ -2,7 +2,8 @@ import /vendor/strictly/prelude/src/index.js (fetchText)
 
 model:data{
 	init* = id -> fetchText("/api/${id}")
-	reducer = _, action -> action
+	reducer = Pending, Ok(response) -> Result( response )
+	reducer = Pending, error@Error(_) -> error
 }
 
 view
@@ -11,7 +12,7 @@ view
 			#match dataState
 				#case Pending
 					"Loading..."
-				#case Ok( content )
+				#case Result( content )
 					"${content}"
 				#case Error( _ )
 					"could not load"

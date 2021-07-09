@@ -70,7 +70,12 @@ leftHandSideHoleParser = do
 leftHandSideVariableParser :: Parser LeftHandSide
 leftHandSideVariableParser = do
   variable <- identityParser <* sc
-  return (LeftVariable variable)
+  hasAlias <- optional (char '@')
+
+  ( case hasAlias of
+      Just _ -> do LeftAlias variable <$> leftHandSideParser
+      Nothing -> do return (LeftVariable variable)
+    )
 
 leftHandSideTypeParser :: Parser LeftHandSide
 leftHandSideTypeParser = do

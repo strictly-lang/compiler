@@ -30,7 +30,8 @@ newtype Import = Import (String, [String])
   deriving (Show)
 
 data LeftHandSide
-  = LeftVariable String
+  = LeftAlias String LeftHandSide
+  | LeftVariable String
   | LeftTuple [LeftHandSide]
   | LeftType String [LeftHandSide]
   | LeftHole

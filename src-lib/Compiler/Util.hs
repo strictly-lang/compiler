@@ -265,6 +265,9 @@ leftHandSidesToJs variableStack (currentInternalVariableName : restInternalVaria
    in (currentIndents ++ restIndentations, variableStack'' ++ variableStack')
 
 leftHandSideToJs :: VariableStack -> LeftHandSide -> InternalVariableName -> ([Indent], VariableStack)
+leftHandSideToJs variableStack (LeftAlias name leftHandSide) internalVariableName =
+  let (conditions, variableStack') = leftHandSideToJs variableStack leftHandSide internalVariableName
+   in (conditions, variableStack' ++ [([name], internalVariableName)])
 leftHandSideToJs variableStack (LeftVariable variableName) internalVariableName = ([], [([variableName], internalVariableName)])
 leftHandSideToJs variableStack LeftHole internalVariableName = ([], [])
 leftHandSideToJs variableStack (LeftTuple leftHandSides) internalVariableName =
