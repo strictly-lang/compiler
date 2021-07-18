@@ -1,0 +1,46 @@
+style
+	.row{
+		color = Blue
+	}
+		&.done {
+			color = Grey
+		}
+
+model:main{
+	init = -> {currentText = "", todos = []}
+	reducer = state@{ currentText }, ChangeText(text) ->
+		{ currentText = text | state}
+	reducer = { todos, currentText }, CreateTodo ->
+		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
+	reducer = state@{ todos }, ToggleDone(index) ->
+		let todos' = [{ isDone = if index == index' then False else isDone == False | todo }} | ( todo@{ isDone }, index' ) <- zipWithIndex(todos)]
+		in { todos' | state }
+}
+
+model:text{
+	init = -> ""
+	reducer = _, value -> value
+}
+
+view
+	#model ({todos, textValue}, todosDispatch) <- main()
+		#model 
+		input{
+			value = Text(textValue)
+			oninput = Text(textValue) ->
+				todosDispatch(ChangeText(textValue))
+		}
+		button{
+			type = Submit
+			onclick = _ -> todosDispatch(CreateTodo)
+		}
+		ul
+			#each ({ value, isDone }, index) <- zipWithIndex(todos)
+				li{
+					class = "row"
+					class?done = isDone
+					onclick = _ -> todosDispatch(ToggleDone(index))
+				}
+					"${name}"
+			#else
+				"You don't have any todos left"

@@ -1,6 +1,23 @@
 style
-	:host(div)
-		color black
+	.row{
+		color = Grey
+	}
+		&.active {
+			color = BLue
+		}
+
+model:main{
+	init= -> [{name = "foo", isActive: False}, {name = "bar", isActive: True}, {name = "baz", isActive: False}]
+	reducer= state, Toggle(index) -> [{isActive = if index == index' then False else isActive == False | user } | ( user@{ isActive }, index' ) <- zipWithIndex(state)]
+}
 
 view
-	div
+	#model (users, userDispatch) <- main()
+		ul
+			#each ({ name, isActive }, index) <- zipWithIndex(users)
+				li{
+					class="row"
+					class?active=isActive
+					onclick = _ -> userDispatch(Toggle(index))
+				}
+					"${name}"
