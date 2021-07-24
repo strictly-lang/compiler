@@ -67,15 +67,12 @@ jobs:
           path: artifacts
 
       - name: Tag
-        shell: bash
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git tag -a release
 e
-
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
         run: gh release upload release artifacts/*/*.zip --clobber
