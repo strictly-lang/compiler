@@ -62,7 +62,7 @@ jobs:
           path: .
 
       - name: Update CI tag
-        uses: richardsimko/update-tag@main
+        uses: richardsimko/update-tag@master
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: CI
