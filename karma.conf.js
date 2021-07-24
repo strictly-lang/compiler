@@ -48,7 +48,7 @@ module.exports = function (config) {
               // file.path = file.originalPath.replace(/\.sly$/, ".js");
 
               const { stdout, stderror } = await exec(
-                `cabal v2-run --verbose=silent strictly-compiler ${file.originalPath}`
+                `cabal run --verbose=silent strictly ${file.originalPath}`
               );
               if (stderror) {
                 throw stderror;

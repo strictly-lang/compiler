@@ -37,7 +37,7 @@ library
   hs-source-dirs:      src-lib
   default-language:    Haskell2010
 
-executable strictly-compiler
+executable strictly
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
