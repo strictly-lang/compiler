@@ -59,14 +59,10 @@ jobs:
 
       - uses: actions/download-artifact@v2
         with:
-          path: .
+          path: artifacts
 
       - name: Upload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
-        run: |          
-          gh release upload latest \
-            './linux-x64/strictly-linux-x64.zip' \
-            './macos-x64/strictly-macos-x64.zip' \
-            --clobber
+        run: gh release create release artifacts/*.zip --clobber
