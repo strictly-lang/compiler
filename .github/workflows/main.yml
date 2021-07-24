@@ -49,8 +49,8 @@ jobs:
         with:
           name: ${{matrix.PLATFORM}}
           path: ./strictly-${{matrix.PLATFORM}}.zip
-  upload:
-    name: Upload build
+  release:
+    name: release build
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     needs: [build]
