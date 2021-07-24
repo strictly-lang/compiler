@@ -17,13 +17,15 @@ jobs:
         - os: ubuntu-latest
           EXE: strictly
           ZIP: strictly-linux-x64.zip
+          PLATFORM: linux-x64
         - os: macos-latest
           EXE: strictly
           ZIP: strictly-macos-x64.zip
+          PLATFORM: macos-x64
         # - os: windows-latest
         #   EXE: strictly.exe
         #   ZIP: strictly-windows-x64.zip
-
+        #   PLATFORM: windows-x64
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -48,7 +50,7 @@ jobs:
           7z a -mx9 ${{matrix.ZIP}} dist/${{matrix.EXE}}
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{matrix.ZIP}}
+          name: ${{matrix.PLATFORM}}
           path: ./${{matrix.ZIP}}
   release:
     name: release build
@@ -69,4 +71,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
-        run: gh release create release artifacts/*.zip
+        run: gh release create release artifacts/*/*.zip
