@@ -64,11 +64,12 @@ jobs:
         with:
           path: artifacts
 
-      - name: Display structure of downloaded files
-        run: ls -R
+      - name: Tag
+        shell: bash
+        run: git tag -a release
 
       - name: Upload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
-        run: gh release create release artifacts/*/*.zip
+        run: gh release upload release artifacts/*/*.zip --clobber
