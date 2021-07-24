@@ -47,7 +47,8 @@ jobs:
       - name: Build
         run: |
           cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist 
-          7z a -mx9 ${{matrix.ZIP}} -w dist ${{matrix.EXE}}
+          cd dist
+          7z a -mx9 ../${{matrix.ZIP}} ${{matrix.EXE}}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{matrix.PLATFORM}}
