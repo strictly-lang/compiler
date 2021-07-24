@@ -65,4 +65,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
-        run: gh release create release artifacts/*.zip --clobber
+        run: gh release create release artifacts/*.zip
