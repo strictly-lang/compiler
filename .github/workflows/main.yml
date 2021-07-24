@@ -44,11 +44,11 @@ jobs:
       - name: Build
         run: |
           cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist 
-          7z a -mx9 strictly-${{matrix.PLATFORM}}.zip ${{matrix.EXE}}
+          7z a -mx9 strictly-${{matrix.PLATFORM}}.zip dist/${{matrix.EXE}}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{matrix.PLATFORM}}
-          path: ./source/strictly-${{matrix.PLATFORM}}.zip
+          path: ./strictly-${{matrix.PLATFORM}}.zip
   upload:
     name: Upload build
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
