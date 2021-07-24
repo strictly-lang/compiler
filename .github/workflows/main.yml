@@ -61,25 +61,12 @@ jobs:
         with:
           path: .
 
-      - name: Update CI tag
-        uses: richardsimko/update-tag@master
-        if: github.ref == 'refs/heads/main'
-        with:
-          tag_name: CI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
-        run: |
-          tag=`basename ${{ github.ref }}`
-          if [ $tag = 'main' ]; then
-            tag='CI'
-          fi
-          
-          gh release upload $tag \
+        run: |          
+          gh release upload latest \
             './linux-x64/strictly-linux-x64.zip' \
             './macos-x64/strictly-macos-x64.zip' \
             --clobber
