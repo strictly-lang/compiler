@@ -33,7 +33,6 @@ describe("context handling", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
   });
-
   afterEach(() => {
     container.remove();
   });
