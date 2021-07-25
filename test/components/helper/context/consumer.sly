@@ -1,4 +1,4 @@
 view
 	div
-		#context valueFromContext <- some-parent-element
+		#context \valueFromContext <- some-parent-element
 			"${valueFromContext}"

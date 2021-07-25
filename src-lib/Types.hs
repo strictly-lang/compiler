@@ -81,6 +81,7 @@ data ViewContent
   | Each (LeftHandSide, RightHandSideValue) [ViewContent] [ViewContent]
   | ViewModel (LeftHandSide, RightHandSideValue) [ViewContent]
   | Match RightHandSideValue [Case]
+  | ViewContext (LeftHandSide, String) [ViewContent]
   deriving (Show)
 
 newtype HostElement = HostElement (Name, [MergedOption RightHandSide], [ViewContent])
