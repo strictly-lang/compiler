@@ -11,7 +11,7 @@ view
 		#case [firstValue, secondValue | restValues]
 			span
 				"first: ${firstValue}, second: ${secondValue}"
-			#each (value, index) <- zipWithIndex(restValues)
+			#each \(value, index) <- zipWithIndex(restValues)
 				div
 					"${index}: ${value}"
 			#else

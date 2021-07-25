@@ -101,7 +101,7 @@ compileView ((Host host importPath) : ns) context@(Context (scope, variableStack
           ),
         RemoveCallbacks (Ln (elementVariable ++ ".remove();") : successorRemoveCallbacks)
       )
-compileView ((ViewModel (Expression (leftHandSide, FeedOperator, sourceValue)) children) : ns) context@(Context (scope, variableStack)) parent predecessors =
+compileView ((ViewModel (leftHandSide, sourceValue) children) : ns) context@(Context (scope, variableStack)) parent predecessors =
   do
     exprId <- getGetFreshExprId
     let modelScope = scope ++ [DotNotation ("model" ++ show exprId)]
@@ -126,7 +126,7 @@ compileView ((ViewModel (Expression (leftHandSide, FeedOperator, sourceValue)) c
         UpdateCallbacks ([(modelDependency, []) | modelDependency <- modelDependencies] ++ restUpdateCallbacks),
         removeCallbacks
       )
-compileView ((Each [Expression (leftHandSideValue, FeedOperator, sourceValue)] entityChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
+compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
   do
     exprId <- getGetFreshExprId
     let indexVariable = "index" ++ show exprId

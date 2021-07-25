@@ -215,7 +215,7 @@ rightHandSideListGenerator variableStack (rightHandSideValue : nextRightHandSide
           ++ nextRightHandSideValueJs,
         rightHandSideDependencies ++ nextRightHandSideDependencies
       )
-rightHandSideListGenerator variableStack rightHandSideValues ((ListSource leftHandSide rightHandSideValue) : feedRightHandSideValues) =
+rightHandSideListGenerator variableStack rightHandSideValues ((ListSource (leftHandSide, rightHandSideValue)) : feedRightHandSideValues) =
   let (sourceJs, sourceDependencies) = rightHandSideValueToJs variableStack rightHandSideValue
       (loopConditions, variableStack') = leftHandSideToJs variableStack leftHandSide [DotNotation "entity"]
       (nestedJs, nestedDependencies) = rightHandSideListGenerator (variableStack' ++ variableStack) rightHandSideValues feedRightHandSideValues

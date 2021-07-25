@@ -1,7 +1,7 @@
-module Parser.Util.Base (expressionParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions, rightHandSideParser, leftHandSideParser) where
+module Parser.Util.Base (rightHandSideFeedParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions, rightHandSideParser, leftHandSideParser) where
 
 import Control.Applicative (Alternative (many), optional, (<|>))
-import Text.Megaparsec (MonadParsec (lookAhead, try), between, manyTill, sepBy, sepBy1, some)
+import Text.Megaparsec (MonadParsec (lookAhead), between, manyTill, sepBy, sepBy1, some)
 import Text.Megaparsec.Char (char, digitChar, eol, letterChar, lowerChar, string, upperChar)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
@@ -48,14 +48,6 @@ dynamicTextParser = do
   value <- string "${" *> rightHandSideValueParser <* char '}'
 
   return (DynamicText value)
-
-expressionParser :: Parser a -> Parser (Expression a)
-expressionParser rightHandSideParser = do
-  leftHandSide <- leftHandSideParser
-  operator <- operatorParser
-  rightHandSide <- rightHandSideParser
-
-  return (Expression (leftHandSide, operator, rightHandSide))
 
 leftHandSideTupleParser :: Parser LeftHandSide
 leftHandSideTupleParser = do
@@ -123,14 +115,6 @@ leftHandSideRecordEntityParser = do
 
 leftHandSideParser :: Parser LeftHandSide
 leftHandSideParser = (leftHandSideHoleParser <|> leftHandSideTupleParser <|> leftHandSideVariableParser <|> leftHandSideTypeParser <|> leftHandSideRecordParser <|> leftHandSideListParser) <* sc
-
-feedOperatorParser :: Parser Operator
-feedOperatorParser = do
-  _ <- string "<-"
-  return FeedOperator
-
-operatorParser :: Parser Operator
-operatorParser = feedOperatorParser <* sc
 
 rightHandSideOperatorParser :: Parser RightHandSideOperator
 rightHandSideOperatorParser = do
@@ -215,12 +199,15 @@ rightHandSideValueListParser = do
 
 rightHandSideValueListSourceOrFilterParser :: Parser ListSourceOrFilter
 rightHandSideValueListSourceOrFilterParser = do
-  rightHandSideFeedParser <|> (Filter <$> rightHandSideValueParser)
+  (ListSource <$> rightHandSideFeedParser) <|> (Filter <$> rightHandSideValueParser)
 
-rightHandSideFeedParser :: Parser ListSourceOrFilter
+rightHandSideFeedParser :: Parser (LeftHandSide, RightHandSideValue)
 rightHandSideFeedParser = do
-  leftHandSide <- try (leftHandSideParser <* feedOperatorParser <* sc)
-  ListSource leftHandSide <$> rightHandSideValueParser
+  _ <- char '\\' <* sc
+  leftHandSide <- leftHandSideParser
+  _ <- string "<-" <* sc
+  rightHandSide <- rightHandSideValueParser
+  return (leftHandSide, rightHandSide)
 
 rightHandSideValueRecordEntityParser :: Parser (String, RightHandSideValue)
 rightHandSideValueRecordEntityParser = do
@@ -273,7 +260,8 @@ rightHandSideValueNumberParser = do
 
 rightHandSideFunctionParser :: Parser RightHandSide
 rightHandSideFunctionParser = do
-  arguments <- try (leftHandSideParser `sepBy` (char ',' <* sc) <* string "->" <* sc)
+  _ <- char '/' <* sc
+  arguments <- leftHandSideParser `sepBy` (char ',' <* sc) <* string "->" <* sc
   FunctionDefinition arguments <$> rightHandSideValueParser
 
 rightHandSideParser :: Parser RightHandSide
