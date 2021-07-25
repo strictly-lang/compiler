@@ -1,4 +1,4 @@
-module Parser.Util.Base (rightHandSideFeedParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions, rightHandSideParser, leftHandSideParser) where
+module Parser.Util.Base (feedParser, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideValueParser, sc, indentParserRepeat, indentParser, identityParser, typeParser, mergeOptions, rightHandSideParser, leftHandSideParser) where
 
 import Control.Applicative (Alternative (many), optional, (<|>))
 import Text.Megaparsec (MonadParsec (lookAhead), between, manyTill, sepBy, sepBy1, some)
@@ -199,14 +199,14 @@ rightHandSideValueListParser = do
 
 rightHandSideValueListSourceOrFilterParser :: Parser ListSourceOrFilter
 rightHandSideValueListSourceOrFilterParser = do
-  (ListSource <$> rightHandSideFeedParser) <|> (Filter <$> rightHandSideValueParser)
+  (ListSource <$> feedParser rightHandSideValueParser) <|> (Filter <$> rightHandSideValueParser)
 
-rightHandSideFeedParser :: Parser (LeftHandSide, RightHandSideValue)
-rightHandSideFeedParser = do
+feedParser :: Parser a -> Parser (LeftHandSide, a)
+feedParser parser = do
   _ <- char '\\' <* sc
   leftHandSide <- leftHandSideParser
   _ <- string "<-" <* sc
-  rightHandSide <- rightHandSideValueParser
+  rightHandSide <- parser
   return (leftHandSide, rightHandSide)
 
 rightHandSideValueRecordEntityParser :: Parser (String, RightHandSideValue)

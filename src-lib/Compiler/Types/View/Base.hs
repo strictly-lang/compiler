@@ -3,6 +3,7 @@ module Compiler.Types.View.Base (compileView) where
 import Compiler.Types
 import Compiler.Types.View.Host (compileHost)
 import Compiler.Util (functionToJs, getGetFreshExprId, indent, leftHandSideToJs, propertyChainToString, rightHandSideValueFunctionCallToJs, rightHandSideValueToJs)
+import Data.Char (toUpper)
 import Data.List (intercalate, intersect, intersperse, isPrefixOf, partition)
 import Types
 
@@ -557,6 +558,81 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
               ++ successorUpdateCallbacks
           ),
         RemoveCallbacks successorRemoveCallback
+      )
+compileView ((ViewContext (leftHandSide, contextName) children) : ns) context@(Context (scope, variableStack)) parent predecessors =
+  do
+    exprId <- getGetFreshExprId
+    let contextUpdate = scope ++ [DotNotation ("updateContext" ++ show exprId)]
+    let findParentFunction = "findParent" ++ show exprId
+    let contextResult = scope ++ [DotNotation ("currentValue" ++ show exprId)]
+    let contextValue = contextResult ++ [DotNotation "value"]
+    let (leftHandSideJs, variableStack') = leftHandSideToJs variableStack leftHandSide contextValue
+    (childrenContent, _, UpdateCallbacks childrenUpdateCallbacks, RemoveCallbacks childrenRemoveCallbacks) <- compileView children (Context (scope, variableStack' ++ variableStack)) parent []
+    (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) <- compileView ns context parent predecessors
+    let getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
+    let (contextUpdateChildren, restChildrenUpdateCallbacks) = partition (isPrefixOf contextResult . fst) childrenUpdateCallbacks
+
+    return
+      ( [ Ln (propertyChainToString contextUpdate ++ " = (newContextValue) => {"),
+          Br,
+          Ind
+            ( [ Ln (propertyChainToString contextValue ++ " = newContextValue"),
+                Br
+              ]
+                ++ concatMap snd contextUpdateChildren
+            ),
+          Br,
+          Ln "}",
+          Br,
+          Ln ("const " ++ findParentFunction ++ " = (element) => {"),
+          Br,
+          Ind
+            [ Ln ("if (element.tagName === \"" ++ [toUpper char | char <- contextName] ++ "\") {"),
+              Br,
+              Ind
+                [ Ln ("return element._context(" ++ propertyChainToString contextUpdate ++ ");")
+                ],
+              Br,
+              Ln "}",
+              Br,
+              Ln "if (element.parentNode === null) {",
+              Br,
+              Ind
+                [ Ln "if (element instanceof ShadowRoot) {",
+                  Br,
+                  Ind
+                    [ Ln ("return " ++ findParentFunction ++ "(element.host);")
+                    ],
+                  Br,
+                  Ln "}",
+                  Br,
+                  Ln ("throw new Error(\"Could not find provider \\\"" ++ contextName ++ "\\\"\");")
+                ],
+              Br,
+              Ln "}",
+              Br,
+              Ln ("return " ++ findParentFunction ++ "(element.parentNode);"),
+              Br
+            ],
+          Ln "};",
+          Br,
+          Ln (propertyChainToString contextResult ++ " = " ++ findParentFunction ++ "(" ++ parent ++ ")"),
+          Br
+        ]
+          ++ childrenContent
+          ++ successorContent,
+        predecessors',
+        UpdateCallbacks
+          ( restChildrenUpdateCallbacks
+              ++ successorUpdateCallbacks
+          ),
+        RemoveCallbacks
+          ( [ Ln (propertyChainToString contextResult ++ ".disconnect();"),
+              Br
+            ]
+              ++ childrenRemoveCallbacks
+              ++ successorRemoveCallbacks
+          )
       )
 
 type Index = Int
