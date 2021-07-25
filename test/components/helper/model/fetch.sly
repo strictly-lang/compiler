@@ -1,14 +1,14 @@
 import /vendor/strictly/prelude/src/index.js (fetchText)
 
 model:data{
-	init* = id -> fetchText("/api/${id}")
-	reducer = Pending, Ok(response) -> Result( response )
-	reducer = Pending, error@Error(_) -> error
+	init* = /id -> fetchText("/api/${id}")
+	reducer = /Pending, Ok(response) -> Result( response )
+	reducer = /Pending, error@Error(_) -> error
 }
 
 view
 	#if props.load
-		#model (dataState, _) <- data(props.id)
+		#model \(dataState, _) <- data(props.id)
 			#match dataState
 				#case Pending
 					"Loading..."

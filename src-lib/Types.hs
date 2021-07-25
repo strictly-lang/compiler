@@ -65,7 +65,7 @@ data RightHandSideValue
   deriving (Show)
 
 data ListSourceOrFilter
-  = ListSource LeftHandSide RightHandSideValue
+  = ListSource (LeftHandSide, RightHandSideValue)
   | Filter RightHandSideValue
   deriving (Show)
 
@@ -74,15 +74,12 @@ data RightHandSide
   | FunctionDefinition [LeftHandSide] RightHandSideValue
   deriving (Show)
 
-newtype Expression a = Expression (LeftHandSide, Operator, a)
-  deriving (Show)
-
 data ViewContent
   = Host HostElement (Maybe Import)
   | MixedText [MixedText]
   | Condition RightHandSideValue [ViewContent] [ViewContent]
-  | Each [Expression RightHandSideValue] [ViewContent] [ViewContent]
-  | ViewModel (Expression RightHandSideValue) [ViewContent]
+  | Each (LeftHandSide, RightHandSideValue) [ViewContent] [ViewContent]
+  | ViewModel (LeftHandSide, RightHandSideValue) [ViewContent]
   | Match RightHandSideValue [Case]
   deriving (Show)
 

@@ -2,7 +2,7 @@ module Parser.View.Base (viewParser, viewContentParser) where
 
 import Control.Applicative (optional, (<|>))
 import Data.List
-import Parser.Util.Base (expressionParser, identityParser, indentParser, indentParserRepeat, leftHandSideParser, mergeOptions, mixedTextParser, optionsParser, rightHandSideFunctionParser, rightHandSideParser, rightHandSideValueParser, sc)
+import Parser.Util.Base (identityParser, indentParser, indentParserRepeat, leftHandSideParser, mergeOptions, mixedTextParser, optionsParser, rightHandSideFeedParser, rightHandSideFunctionParser, rightHandSideParser, rightHandSideValueParser, sc)
 import Text.Megaparsec (sepBy1, some)
 import Text.Megaparsec.Char (char, eol, lowerChar, newline, space1, string)
 import Text.Megaparsec.Char.Lexer (charLiteral, indentLevel, symbol)
@@ -73,12 +73,12 @@ elseParser indentationLevel = do
 eachParser :: IndentationLevel -> Parser ViewContent
 eachParser indentationLevel = do
   _ <- string "each" <* space1
-  option <- expressionParser rightHandSideValueParser
+  option <- rightHandSideFeedParser
   _ <- eol
   children <- viewContentParser (indentationLevel + 1)
   elseChildren <- elseParser indentationLevel
 
-  return (Each [option] children elseChildren)
+  return (Each option children elseChildren)
 
 textParser :: Parser ViewContent
 textParser = do MixedText <$> (mixedTextParser <* eol)
@@ -86,7 +86,7 @@ textParser = do MixedText <$> (mixedTextParser <* eol)
 modelParser :: IndentationLevel -> Parser ViewContent
 modelParser indentationLevel = do
   _ <- string "model" <* space1
-  option <- expressionParser rightHandSideValueParser
+  option <- rightHandSideFeedParser
   _ <- eol
   children <- viewContentParser (indentationLevel + 1)
   return (ViewModel option children)

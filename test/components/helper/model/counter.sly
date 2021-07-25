@@ -1,17 +1,17 @@
 model:counter{
-	init = -> 0
-	reducer = state, Increment -> state + 1
-	reducer = state, Decrement -> state - 1
+	init = /-> 0
+	reducer = /state, Increment -> state + 1
+	reducer = /state, Decrement -> state - 1
 }
 
 view
-	#model (counterState, counterDispatch) <- counter()
+	#model \(counterState, counterDispatch) <- counter()
 		button{
-			onclick = _ -> counterDispatch(Decrement)
+			onclick = /_ -> counterDispatch(Decrement)
 		}
 			"Decrement"
 		button{
-			onclick = _ -> counterDispatch(Increment)
+			onclick = /_ -> counterDispatch(Increment)
 		}
 			"Increment"
 		"${counterState}"
