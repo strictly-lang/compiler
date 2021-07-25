@@ -1,0 +1,4 @@
+view
+	div
+		#context valueFromContext <- some-parent-element
+			"${valueFromContext}"
