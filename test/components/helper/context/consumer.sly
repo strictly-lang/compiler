@@ -1,4 +1,7 @@
 view
 	div
-		#context \valueFromContext <- some-parent-element
-			"${valueFromContext}"
+		#if props.foo
+			#context \valueFromContext <- some-parent-element
+				"${valueFromContext}"
+		#else
+			"mep"

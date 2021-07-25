@@ -45,17 +45,34 @@ describe("context handling", () => {
       const element = document.createElement(
         "test-components-helper-context-consumer"
       );
+      element.foo = true;
       parent.appendChild(element);
+      const consumerText = element.shadowRoot.childNodes[0].childNodes[0];
 
       expect(element.shadowRoot.childNodes.length).toBe(1);
       expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
       expect(element.shadowRoot.childNodes[0].textContent).toBe("foo");
+      expect(consumerText.textContent).toBe("foo");
 
       parent.value = "bar";
 
       expect(element.shadowRoot.childNodes.length).toBe(1);
       expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
       expect(element.shadowRoot.childNodes[0].textContent).toBe("bar");
+      expect(consumerText.textContent).toBe("bar");
+
+      element.foo = false;
+
+      expect(element.shadowRoot.childNodes.length).toBe(1);
+      expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+      expect(element.shadowRoot.childNodes[0].textContent).toBe("mep");
+
+      parent.value = "baz";
+
+      expect(element.shadowRoot.childNodes.length).toBe(1);
+      expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+      expect(element.shadowRoot.childNodes[0].textContent).toBe("mep");
+      expect(consumerText.textContent).not.toBe("baz");
     });
 
     xit("consumer without fitting parent should throw exception", () => {

@@ -564,18 +564,19 @@ compileView ((ViewContext (leftHandSide, contextName) children) : ns) context@(C
     exprId <- getGetFreshExprId
     let contextUpdate = scope ++ [DotNotation ("updateContext" ++ show exprId)]
     let findParentFunction = "findParent" ++ show exprId
-    let currentValueVariable = scope ++ [DotNotation ("currentValue" ++ show exprId)]
-    let (leftHandSideJs, variableStack') = leftHandSideToJs variableStack leftHandSide currentValueVariable
+    let contextResult = scope ++ [DotNotation ("currentValue" ++ show exprId)]
+    let contextValue = contextResult ++ [DotNotation "value"]
+    let (leftHandSideJs, variableStack') = leftHandSideToJs variableStack leftHandSide contextValue
     (childrenContent, _, UpdateCallbacks childrenUpdateCallbacks, RemoveCallbacks childrenRemoveCallbacks) <- compileView children (Context (scope, variableStack' ++ variableStack)) parent []
     (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) <- compileView ns context parent predecessors
     let getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
-    let (contextUpdateChildren, restChildrenUpdateCallbacks) = partition (isPrefixOf currentValueVariable . fst) childrenUpdateCallbacks
+    let (contextUpdateChildren, restChildrenUpdateCallbacks) = partition (isPrefixOf contextResult . fst) childrenUpdateCallbacks
 
     return
       ( [ Ln (propertyChainToString contextUpdate ++ " = (newContextValue) => {"),
           Br,
           Ind
-            ( [ Ln (propertyChainToString currentValueVariable ++ " = newContextValue"),
+            ( [ Ln (propertyChainToString contextValue ++ " = newContextValue"),
                 Br
               ]
                 ++ concatMap snd contextUpdateChildren
@@ -615,7 +616,7 @@ compileView ((ViewContext (leftHandSide, contextName) children) : ns) context@(C
             ],
           Ln "};",
           Br,
-          Ln (propertyChainToString currentValueVariable ++ " = " ++ findParentFunction ++ "(" ++ parent ++ ").value"),
+          Ln (propertyChainToString contextResult ++ " = " ++ findParentFunction ++ "(" ++ parent ++ ")"),
           Br
         ]
           ++ childrenContent
@@ -625,7 +626,13 @@ compileView ((ViewContext (leftHandSide, contextName) children) : ns) context@(C
           ( restChildrenUpdateCallbacks
               ++ successorUpdateCallbacks
           ),
-        RemoveCallbacks (childrenRemoveCallbacks ++ successorRemoveCallbacks)
+        RemoveCallbacks
+          ( [ Ln (propertyChainToString contextResult ++ ".disconnect();"),
+              Br
+            ]
+              ++ childrenRemoveCallbacks
+              ++ successorRemoveCallbacks
+          )
       )
 
 type Index = Int
