@@ -25,8 +25,8 @@ module.exports = function (config) {
       },
     ],
     exclude: [
-      "test/components/host/style.sly",
       "test/components/host/namespace.sly",
+      "test/components/example/todo.sly",
       "test/components/helper/model/dependencies.sly",
     ],
     preprocessors: {

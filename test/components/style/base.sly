@@ -1,0 +1,24 @@
+style
+	div{
+		padding = [Px(1)]
+	}
+	.class{
+		background-image = Url("/foo.png")
+	}
+
+	#entity{
+		padding = [Rem(2), Rem(3), Rem(4), Rem(5)]
+	}
+
+	#entity.class{
+		background-image = Initial
+	}
+view
+	div
+	div{
+		id="entity"
+		class="class"
+	}
+	div{
+		class="class"
+	}

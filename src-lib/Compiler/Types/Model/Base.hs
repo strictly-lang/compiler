@@ -1,4 +1,4 @@
-module Compiler.Types.Model (compileModel) where
+module Compiler.Types.Model.Base (compileModel) where
 
 import Compiler.Types
 import Compiler.Util (functionToJs)

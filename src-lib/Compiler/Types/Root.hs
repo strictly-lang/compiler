@@ -1,7 +1,7 @@
 module Compiler.Types.Root (compileRoot) where
 
 import Compiler.Types
-import Compiler.Types.Model (compileModel)
+import Compiler.Types.Model.Base (compileModel)
 import Compiler.Types.View.Base (compileView)
 import Compiler.Util (indent, propertyChainToString, slashToCamelCase, slashToDash)
 import Control.Monad.State
