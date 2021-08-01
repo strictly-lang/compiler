@@ -24,6 +24,7 @@ data Root
   = View [ViewContent]
   | Model Name [MergedOption (Bool, RightHandSide)]
   | RootImport Import
+  | Style [StyleContent]
   deriving (Show)
 
 newtype Import = Import (String, [String])
@@ -82,6 +83,9 @@ data ViewContent
   | ViewModel (LeftHandSide, RightHandSideValue) [ViewContent]
   | Match RightHandSideValue [Case]
   | ViewContext (LeftHandSide, String) [ViewContent]
+  deriving (Show)
+
+newtype StyleContent = StyleContent (String, [Option RightHandSideValue])
   deriving (Show)
 
 newtype HostElement = HostElement (Name, [MergedOption RightHandSide], [ViewContent])

@@ -1,7 +1,8 @@
 module Compiler.Types.Root (compileRoot) where
 
 import Compiler.Types
-import Compiler.Types.Model (compileModel)
+import Compiler.Types.Model.Base (compileModel)
+import Compiler.Types.Style.Base (compileStyle)
 import Compiler.Types.View.Base (compileView)
 import Compiler.Util (indent, propertyChainToString, slashToCamelCase, slashToDash)
 import Control.Monad.State
@@ -11,6 +12,8 @@ import Types
 propertiesScope = [DotNotation "this", DotNotation "properties"]
 
 mountedBool = "this._mounted"
+
+parent = "this.shadowRoot"
 
 startState :: String -> AppState
 startState componentPath = (componentPath, 0, [])
@@ -42,61 +45,58 @@ compileRoot' componentPath ((RootImport (Import (path, imports))) : ns) ast vari
 compileRoot' componentPath ((View children) : ns) ast variableStack = do
   let scope = [DotNotation "this", DotNotation "_el"]
       variableStack' = getModelScopeVariableStack ast ++ variableStack
-  (viewContent, _, UpdateCallbacks updateCallbacks, _) <- compileView children (Context (scope, (["props"], propertiesScope) : variableStack')) "this.shadowRoot" []
+      styleContents = [compileStyle style | Style style <- ast]
+  (viewContent, _, UpdateCallbacks updateCallbacks, _) <- compileView (styleContents ++ children) (Context (scope, (["props"], propertiesScope) : variableStack')) parent []
   next <- compileRoot' componentPath ns ast variableStack
 
   return
-    ( [ Ln "(() => {",
+    ( [ Ln ("class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {"),
         Br,
         Ind
-          [ Ln ("class " ++ slashToCamelCase componentPath ++ " extends HTMLElement {"),
-            Br,
-            Ind
-              ( [ Ln "constructor() {",
+          ( [ Ln "constructor() {",
+              Br,
+              Ind
+                [ Ln "super();",
                   Br,
-                  Ind
-                    [ Ln "super();",
-                      Br,
-                      Ln (mountedBool ++ " = false;"),
-                      Br,
-                      Ln (propertyChainToString propertiesScope ++ " = {};"),
-                      Br
-                    ],
-                  Ln "}",
+                  Ln (mountedBool ++ " = false;"),
                   Br,
+                  Ln (propertyChainToString propertiesScope ++ " = {};"),
                   Br
-                ]
-                  ++ getModelFactories ast variableStack
-                  ++ [ Br,
-                       Ln "connectedCallback() {",
-                       Br,
-                       Ind
-                         ( [ Ln (mountedBool ++ " = true;"),
-                             Br,
-                             Ln (propertyChainToString scope ++ " = {};"),
-                             Br,
-                             Ln "this.attachShadow({mode: 'open'});",
-                             Br
-                           ]
-                             ++ viewContent
-                         ),
-                       Ln "}",
-                       Br,
-                       Br
-                     ]
-                  ++ walkDependencies (UpdateCallbacks (filter (not . ((\value -> value `elem` map snd variableStack') . fst)) updateCallbacks))
-              ),
-            Ln "}",
-            Br,
-            Br,
-            Ln ("customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");"),
-            Br
-          ],
-        Ln "})()"
+                ],
+              Ln "}",
+              Br,
+              Br
+            ]
+              ++ getModelFactories ast variableStack
+              ++ [ Br,
+                   Ln "connectedCallback() {",
+                   Br,
+                   Ind
+                     ( [ Ln (mountedBool ++ " = true;"),
+                         Br,
+                         Ln (propertyChainToString scope ++ " = {};"),
+                         Br,
+                         Ln "this.attachShadow({mode: 'open'});",
+                         Br
+                       ]
+                         ++ viewContent
+                     ),
+                   Ln "}",
+                   Br,
+                   Br
+                 ]
+              ++ walkDependencies (UpdateCallbacks (filter (not . ((\value -> value `elem` map snd variableStack') . fst)) updateCallbacks))
+          ),
+        Ln "}",
+        Br,
+        Br,
+        Ln ("customElements.define(\"" ++ slashToDash componentPath ++ "\", " ++ slashToCamelCase componentPath ++ ");"),
+        Br
       ]
         ++ next
     )
 compileRoot' componentPath ((Model _ _) : ns) ast variableStack = compileRoot' componentPath ns ast variableStack
+compileRoot' componentPath ((Style styleContents) : ns) ast variableStack = do compileRoot' componentPath ns ast variableStack
 
 getModelFactories :: [Root] -> VariableStack -> [Indent]
 getModelFactories [] _ = []

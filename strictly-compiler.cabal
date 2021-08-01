@@ -22,6 +22,7 @@ library
   other-modules:       Types,Parser.Main,
                        Parser.Util.Base,
                        Parser.Model.Base,
+                       Parser.Style.Base,
                        Parser.Import.Base,
                        Parser.Util.Base,
                        Parser.View.Base,
@@ -29,7 +30,8 @@ library
                        Compiler.Util,
                        Compiler.Javascript,
                        Compiler.Types.Root,
-                       Compiler.Types.Model,
+                       Compiler.Types.Model.Base,
+                       Compiler.Types.Style.Base,
                        Compiler.Types.View.Base,
                        Compiler.Types.View.Host
   -- other-extensions:
