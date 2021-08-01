@@ -3,7 +3,7 @@ style
 		padding = [Px(1)]
 	}
 	.class{
-		background-image = Url("/foo.png")
+		background-color = Rgb(100, 200, 300)
 	}
 
 	#entity{
@@ -11,7 +11,7 @@ style
 	}
 
 	#entity.class{
-		background-image = Initial
+		background-color = Initial
 	}
 view
 	div

@@ -1,6 +1,7 @@
 module Parser.Style.Base (styleParser) where
 
 import Control.Applicative (Alternative (some), optional, (<|>))
+import Data.List (intercalate, intersperse)
 import Parser.Util.Base (identityParser, indentParserRepeat, optionsParser, rightHandSideValueParser, sc)
 import Text.Megaparsec (sepBy1)
 import Text.Megaparsec.Char (char, space1, string)
@@ -31,7 +32,8 @@ selectorParser = do
 
 styleOptionParser :: Parser (Option RightHandSideValue)
 styleOptionParser = do
-  attributeName <- identityParser `sepBy1` char '-'
+  let delimiter = '-'
+  attributeName <- identityParser `sepBy1` char delimiter
   _ <- sc *> char '=' <* sc
   rightHandSide <- rightHandSideValueParser
-  return (concat attributeName, rightHandSide)
+  return (intercalate [delimiter] attributeName, rightHandSide)
