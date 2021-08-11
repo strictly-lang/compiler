@@ -124,7 +124,14 @@ compileView ((ViewModel (leftHandSide, sourceValue) children) : ns) context@(Con
           ++ childrenContent
           ++ successorContent,
         predecessors'',
-        UpdateCallbacks ([(modelDependency, []) | modelDependency <- modelDependencies] ++ restUpdateCallbacks),
+        UpdateCallbacks
+          ( [ ( modelDependency,
+                [Ln (propertyChainToString modelScope ++ " = ")] ++ modelValue ++ [Ln ";", Br] ++ concatMap snd modelUpdateCallback
+              )
+              | modelDependency <- modelDependencies
+            ]
+              ++ restUpdateCallbacks
+          ),
         removeCallbacks
       )
 compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
