@@ -48,13 +48,14 @@ describe("model element handling", () => {
   });
 
   it("async model handling", async () => {
-    const fetchSpy = spyOn(window, "fetch").and.callFake(function () {
-      return new Promise((resolve) => {
-        resolve({
-          text: () => Promise.resolve("text response"),
-        });
-      });
-    });
+    const fetchSpy = spyOn(window, "fetch").and.callFake(
+      (requestInfo) =>
+        new Promise((resolve) => {
+          resolve({
+            text: () => Promise.resolve("text response " + requestInfo),
+          });
+        })
+    );
 
     const element = document.createElement(
       "test-components-helper-model-fetch"
@@ -69,6 +70,15 @@ describe("model element handling", () => {
 
     await nextTick(10);
 
-    expect(element.shadowRoot.textContent).toBe("text response");
+    expect(element.shadowRoot.textContent).toBe("text response /api/23");
+
+    element.id = 5;
+
+    expect(fetchSpy).toHaveBeenCalledWith("/api/5");
+    expect(element.shadowRoot.textContent).toBe("Loading...");
+
+    await nextTick(10);
+
+    expect(element.shadowRoot.textContent).toBe("text response /api/5");
   });
 });

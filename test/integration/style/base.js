@@ -30,7 +30,6 @@ describe("style handling", () => {
       element.shadowRoot.childNodes[3]
     );
 
-    debugger;
     expect(styleOfPlainDiv.paddingTop).toBe("1px");
     expect(styleOfPlainDiv.paddingRight).toBe("1px");
     expect(styleOfPlainDiv.paddingBottom).toBe("1px");
