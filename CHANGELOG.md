@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/strictly-lang/compiler/compare/v1.0.0...v1.0.1) (2021-08-15)
+
+
+### Bug Fixes
+
+* **ci:** add file extension to artifact ([07bc9ee](https://github.com/strictly-lang/compiler/commit/07bc9eec43284afd0c31c04faa2fb9f825fed37f))
+
 # 1.0.0 (2021-08-15)
 
 
