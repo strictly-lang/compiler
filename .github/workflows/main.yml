@@ -51,7 +51,7 @@ jobs:
           7z a -mx9 ../${{matrix.ZIP}} ${{matrix.EXE}}
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{matrix.PLATFORM}}
+          name: ${{matrix.PLATFORM}}.zip
           path: ./${{matrix.ZIP}}
   release:
     name: release build
