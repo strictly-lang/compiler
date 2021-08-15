@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/strictly-lang/compiler/compare/v1.0.1...v1.0.2) (2021-08-15)
+
+
+### Bug Fixes
+
+* **ci:** fix release files ([a397913](https://github.com/strictly-lang/compiler/commit/a3979130623ab2a3e8b32cc9e541c240f183805e))
+
 ## [1.0.1](https://github.com/strictly-lang/compiler/compare/v1.0.0...v1.0.1) (2021-08-15)
 
 
