@@ -1,7 +1,7 @@
 {
   "name": "@strictly-lang/compiler",
   "description": "a compiler for the programming language strictly",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "dependencies": {},
   "devDependencies": {
     "@semantic-release/commit-analyzer": "^8.0.1",
