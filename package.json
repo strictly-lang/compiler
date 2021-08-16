@@ -52,7 +52,6 @@
         "@semantic-release/git",
         {
           "assets": [
-            "dist/**/*",
             "CHANGELOG.md",
             "package.json"
           ],
@@ -67,7 +66,7 @@
           "failTitle": false,
           "assets": [
             {
-              "path": "dist/*"
+              "path": "dist/**/*"
             }
           ]
         }
