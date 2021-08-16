@@ -1,7 +1,7 @@
 {
   "name": "@strictly-lang/compiler",
   "description": "a compiler for the programming language strictly",
-  "version": "0.1.0",
+  "version": "1.0.3",
   "dependencies": {},
   "devDependencies": {
     "@semantic-release/changelog": "^5.0.1",
@@ -49,16 +49,6 @@
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
       [
-        "@semantic-release/git",
-        {
-          "assets": [
-            "CHANGELOG.md",
-            "package.json"
-          ],
-          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
-        }
-      ],
-      [
         "@semantic-release/github",
         {
           "successComment": false,
@@ -69,6 +59,17 @@
               "path": "dist/**/*"
             }
           ]
+        }
+      ],
+      "@semantic-release/npm",
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "CHANGELOG.md",
+            "package.json"
+          ],
+          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
         }
       ]
     ]
