@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/strictly-lang/compiler/compare/v1.0.3...v1.0.4) (2021-08-16)
+
+
+### Bug Fixes
+
+* **npm:** fix keywords ([392b5f1](https://github.com/strictly-lang/compiler/commit/392b5f19134fb06c4a4044f7aebd0f305d6b106c))
+
 ## [1.0.3](https://github.com/strictly-lang/compiler/compare/v1.0.2...v1.0.3) (2021-08-16)
 
 
