@@ -42,8 +42,8 @@ jobs:
         run: yarn run test
 
       - name: Build
-        run: |
-          cabal install exe:strictly --disable-executable-dynamic --ghc-option=-optl=-static --ghc-option=-optl=-pthread --install-method=copy --overwrite-policy=always --installdir=dist
+        run: cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist
+
       - uses: actions/upload-artifact@v2
         with:
           name: ${{matrix.PLATFORM}}
