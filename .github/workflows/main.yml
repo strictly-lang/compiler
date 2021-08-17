@@ -16,15 +16,15 @@ jobs:
         include:
         - os: ubuntu-latest
           EXE: strictly
-          ZIP: strictly-linux-x64.zip
+          TARGET: strictly-linux-x64
           PLATFORM: linux-x64
         - os: macos-latest
           EXE: strictly
-          ZIP: strictly-macos-x64.zip
+          TARGET: strictly-macos-x64
           PLATFORM: macos-x64
         # - os: windows-latest
         #   EXE: strictly.exe
-        #   ZIP: strictly-windows-x64.zip
+        #   TARGET: strictly-windows-x64
         #   PLATFORM: windows-x64
     runs-on: ${{ matrix.os }}
 
@@ -47,12 +47,11 @@ jobs:
       - name: Build
         run: |
           cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist 
-          cd dist
-          7z a -mx9 ../${{matrix.ZIP}} ${{matrix.EXE}}
+          mv dist/${{matrix.EXE}} dist/${{matrix.TARGET}}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{matrix.PLATFORM}}
-          path: ./${{matrix.ZIP}}
+          path: ./${{matrix.TARGET}}
   release:
     name: release build
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
