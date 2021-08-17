@@ -43,7 +43,7 @@ jobs:
 
       - name: Build
         run: |
-          cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist 
+          cabal install exe:strictly --enable-executable-stripping --enable-executable-static --install-method=copy --overwrite-policy=always --installdir=dist
       - uses: actions/upload-artifact@v2
         with:
           name: ${{matrix.PLATFORM}}
