@@ -6,10 +6,10 @@ module.exports = async function ({ cwd, filePath }) {
     let binary;
     switch (os.platform()) {
         case "darwin":
-            binary = "strictly-macos-x64";
+            binary = "macos-x64/strictly";
             break;
         case "linux":
-            binary = "strictly-linux-x64";
+            binary = "linux-x64/strictly";
             break;
 
         default:
