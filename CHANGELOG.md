@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/strictly-lang/compiler/compare/v1.0.4...v1.1.0) (2021-08-17)
+
+
+### Features
+
+* **node:** add node.js module ([cd059f6](https://github.com/strictly-lang/compiler/commit/cd059f6031a345f6c49d84cbbbc6c876f759086f))
+
 ## [1.0.4](https://github.com/strictly-lang/compiler/compare/v1.0.3...v1.0.4) (2021-08-16)
 
 
