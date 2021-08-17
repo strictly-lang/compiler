@@ -1,7 +1,7 @@
 {
   "name": "@strictly-lang/compiler",
   "description": "a compiler for the programming language strictly",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "dependencies": {},
   "devDependencies": {
     "@semantic-release/changelog": "^5.0.1",
@@ -54,8 +54,7 @@
           "successComment": false,
           "failComment": false,
           "failTitle": false,
-          "assets": [
-          ]
+          "assets": []
         }
       ],
       "@semantic-release/npm",

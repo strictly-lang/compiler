@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/strictly-lang/compiler/compare/v1.1.1...v1.1.2) (2021-08-17)
+
+
+### Bug Fixes
+
+* **ci:** remove assets from github-release ([7a2e9c4](https://github.com/strictly-lang/compiler/commit/7a2e9c4b18732ed9bc0708e6a489c4499b892a28))
+
 ## [1.1.1](https://github.com/strictly-lang/compiler/compare/v1.1.0...v1.1.1) (2021-08-17)
 
 
