@@ -1,3 +1,11 @@
+## [1.1.5](https://github.com/strictly-lang/compiler/compare/v1.1.4...v1.1.5) (2021-08-17)
+
+
+### Bug Fixes
+
+* **ci:** revert static linking ([2f904d8](https://github.com/strictly-lang/compiler/commit/2f904d893afe6b8d053ce7c605a5af89532a2cf6))
+* **ci:** static linking ([30c28d7](https://github.com/strictly-lang/compiler/commit/30c28d7d944e8473af8274b96307766222b11c13))
+
 ## [1.1.4](https://github.com/strictly-lang/compiler/compare/v1.1.3...v1.1.4) (2021-08-17)
 
 
