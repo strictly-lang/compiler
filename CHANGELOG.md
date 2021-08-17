@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/strictly-lang/compiler/compare/v1.1.2...v1.1.3) (2021-08-17)
+
+
+### Bug Fixes
+
+* **ci:** add right to execute ([5f503f4](https://github.com/strictly-lang/compiler/commit/5f503f40da568c6c3032db4873f6122d1df413f0))
+
 ## [1.1.2](https://github.com/strictly-lang/compiler/compare/v1.1.1...v1.1.2) (2021-08-17)
 
 
