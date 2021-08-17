@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/strictly-lang/compiler/compare/v1.1.3...v1.1.4) (2021-08-17)
+
+
+### Bug Fixes
+
+* **ci:** static compiling ([dec80a8](https://github.com/strictly-lang/compiler/commit/dec80a883bf0566a202312e475e4b39be8d9aadb))
+
 ## [1.1.3](https://github.com/strictly-lang/compiler/compare/v1.1.2...v1.1.3) (2021-08-17)
 
 
