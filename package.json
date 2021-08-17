@@ -55,9 +55,6 @@
           "failComment": false,
           "failTitle": false,
           "assets": [
-            {
-              "path": "dist/**/*"
-            }
           ]
         }
       ],
