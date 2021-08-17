@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/strictly-lang/compiler/compare/v1.1.0...v1.1.1) (2021-08-17)
+
+
+### Bug Fixes
+
+* **node:** fix wrong paths ([86527ae](https://github.com/strictly-lang/compiler/commit/86527ae9a712c7def76d130e4a1f2861a347fc08))
+
 # [1.1.0](https://github.com/strictly-lang/compiler/compare/v1.0.4...v1.1.0) (2021-08-17)
 
 
