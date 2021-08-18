@@ -2,8 +2,8 @@ const os = require("os");
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);
 
-module.exports = async function ({ cwd }) {
-    return function ({ filePath }) {
+module.exports = function ({ cwd }) {
+    return async function ({ filePath }) {
         let binary;
         switch (os.platform()) {
             case "darwin":
