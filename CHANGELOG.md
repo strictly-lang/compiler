@@ -1,3 +1,10 @@
+## [1.1.6](https://github.com/strictly-lang/compiler/compare/v1.1.5...v1.1.6) (2021-08-18)
+
+
+### Bug Fixes
+
+* **node:** change node api to be more flexible ([cefba05](https://github.com/strictly-lang/compiler/commit/cefba05e7262009a3b4e37ede3524f381d98f586))
+
 ## [1.1.5](https://github.com/strictly-lang/compiler/compare/v1.1.4...v1.1.5) (2021-08-17)
 
 
