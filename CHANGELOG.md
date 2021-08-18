@@ -1,3 +1,10 @@
+## [1.1.7](https://github.com/strictly-lang/compiler/compare/v1.1.6...v1.1.7) (2021-08-18)
+
+
+### Bug Fixes
+
+* **node:** move async keyword ([b7347b1](https://github.com/strictly-lang/compiler/commit/b7347b1ba451d269fbb5a19a600303c5efa1d958))
+
 ## [1.1.6](https://github.com/strictly-lang/compiler/compare/v1.1.5...v1.1.6) (2021-08-18)
 
 
