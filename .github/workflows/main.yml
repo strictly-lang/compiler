@@ -42,7 +42,7 @@ jobs:
         run: yarn run test
 
       - name: Build
-        run: cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist
+        run: cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist --ghc-options="-optl-static -fPIC"
 
       - uses: actions/upload-artifact@v2
         with:
