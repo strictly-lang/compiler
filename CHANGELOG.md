@@ -1,3 +1,17 @@
+## [1.1.8](https://github.com/strictly-lang/compiler/compare/v1.1.7...v1.1.8) (2021-08-20)
+
+
+### Bug Fixes
+
+* **ci:** add ld-options ([8cd812b](https://github.com/strictly-lang/compiler/commit/8cd812ba7b9e89d67b46ce1effc6e1e02018734e))
+* **ci:** add missing dash ([bd5e2c8](https://github.com/strictly-lang/compiler/commit/bd5e2c876c7f905557198571c465bf2821380fb6))
+* **ci:** add missing dependencies ([a6b985f](https://github.com/strictly-lang/compiler/commit/a6b985f1bd98f281b8978b9a681ba941db56705b))
+* **ci:** add static compiling with fPIC ([4a3d8bf](https://github.com/strictly-lang/compiler/commit/4a3d8bfe323f27a705942b2fddaf20a44f763f82))
+* **ci:** crtbegin hack for -fPIC ([69b741f](https://github.com/strictly-lang/compiler/commit/69b741f48e170a33fe6c02b4b27356a99fa46729))
+* **ci:** fix yaml for workflow ([b57e3d1](https://github.com/strictly-lang/compiler/commit/b57e3d174fca406bb453cc1652a47db2e12f4b12))
+* **ci:** remove static linking ([f2dddb8](https://github.com/strictly-lang/compiler/commit/f2dddb873d0b2e25fd9952720923aef29450b404))
+* **ci:** remove unneeded log ([0f58dd6](https://github.com/strictly-lang/compiler/commit/0f58dd61481664194efb0436f7bb9f25663496dd))
+
 ## [1.1.7](https://github.com/strictly-lang/compiler/compare/v1.1.6...v1.1.7) (2021-08-18)
 
 
