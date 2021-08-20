@@ -41,8 +41,17 @@ jobs:
       - name: Test
         run: yarn run test
 
-      - name: Build
-        run: cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist --ghc-options="-optl-static -fPIC"
+      - if: matrix.os == 'macos-latest'
+        - name: Build
+          run: cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist --ghc-options="-optl-static"
+
+
+      - if: matrix.os == 'ubuntu-latest'
+        - name: crtbegin hack
+          run: /usr/lib/gcc/x86_64-linux-gnu/9/crtbeginS.o /usr/lib/gcc/x86_64-linux-gnu/9/crtbeginT.o
+
+        - name: Build
+          run: cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist --ghc-options="-optl-static -fPIC"
 
       - uses: actions/upload-artifact@v2
         with:
