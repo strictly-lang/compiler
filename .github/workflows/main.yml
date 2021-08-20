@@ -45,18 +45,16 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist --ghc-options="-optl-static"
 
-
       - name: build linux
         if: matrix.os == 'ubuntu-latest'
-        run: |
-          /usr/lib/gcc/x86_64-linux-gnu/9/crtbeginS.o /usr/lib/gcc/x86_64-linux-gnu/9/crtbeginT.o
-          cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist --ghc-options="-optl-static -fPIC"
+        run: cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist -enable-static --disable-executable-dynamic --ld-options=-static
 
       - uses: actions/upload-artifact@v2
         with:
           name: ${{matrix.PLATFORM}}
           path: ./dist/${{matrix.TARGET}}
           if-no-files-found: error
+
   release:
     name: release build
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
