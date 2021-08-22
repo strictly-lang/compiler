@@ -1,3 +1,10 @@
+## [1.1.9](https://github.com/strictly-lang/compiler/compare/v1.1.8...v1.1.9) (2021-08-22)
+
+
+### Bug Fixes
+
+* **properties:** fix property handling for custom elements [#28](https://github.com/strictly-lang/compiler/issues/28) ([0dbf2c1](https://github.com/strictly-lang/compiler/commit/0dbf2c1ed94a149bf9b751ba65a79796008417b8))
+
 ## [1.1.8](https://github.com/strictly-lang/compiler/compare/v1.1.7...v1.1.8) (2021-08-20)
 
 
