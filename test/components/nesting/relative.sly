@@ -1,2 +1,4 @@
 view
-	.-deep-index
+	.-deep-index{
+		foo = props.foo
+	}
