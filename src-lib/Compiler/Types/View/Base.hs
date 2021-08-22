@@ -67,13 +67,17 @@ compileView ((Host host importPath) : ns) context@(Context (scope, variableStack
     (childrenContent, _, UpdateCallbacks childrenUpdateCallbacks, _) <- compileView children context elementVariable []
     (successorContent, predecessors', UpdateCallbacks successorUpdateCallbacks, RemoveCallbacks successorRemoveCallbacks) <- compileView ns context parent (Predecessor elementVariable : predecessors)
     let getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
-
+    let isCustomElement = '-' `elem` nodeName
     return
       ( [Ln (elementVariable ++ " = document.createElement(\"" ++ nodeName ++ "\");"), Br]
           ++ concat
             [ if "on" `isPrefixOf` attributeKey
                 then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ fst (functionToJs variableStack attributeRightHandSide) ++ [Ln ");", Br]
-                else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : concatMap fst (getAttributeValue attributeRightHandSide) ++ [Ln ");", Br]
+                else
+                  let value = concatMap fst (getAttributeValue attributeRightHandSide)
+                   in if isCustomElement -- strictly custom-elements expect properties instead of attributes
+                        then Ln (elementVariable ++ "." ++ attributeKey ++ " = ") : value ++ [Ln ";", Br]
+                        else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : value ++ [Ln ");", Br]
               | (attributeKey, attributeRightHandSide) <- options
             ]
           ++ [ Ln (appendChild parent predecessors elementVariable),
@@ -86,7 +90,9 @@ compileView ((Host host importPath) : ns) context@(Context (scope, variableStack
         UpdateCallbacks
           ( hostSpecificUpdateCallbacks
               ++ [ ( dependency,
-                     Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : attributeJs ++ [Ln ");", Br]
+                     if isCustomElement -- strictly custom-elements expect properties instead of attributes
+                       then Ln (elementVariable ++ "." ++ attributeKey ++ " = ") : attributeJs ++ [Ln ";", Br]
+                       else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : attributeJs ++ [Ln ");", Br]
                    )
                    | (attributeKey, attributeRightHandSide) <- options,
                      (attributeJs, dependencies) <- getAttributeValue attributeRightHandSide,

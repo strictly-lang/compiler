@@ -1,2 +1,4 @@
 view
-	test-components-nesting-deep-index
+	test-components-nesting-deep-index{
+		foo = props.foo
+	}
