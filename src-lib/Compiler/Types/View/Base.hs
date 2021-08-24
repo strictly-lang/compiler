@@ -345,6 +345,7 @@ compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChild
 compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
   do
     exprId <- getGetFreshExprId
+    let localConditionVariable = "condition" ++ show exprId
     let conditionVariable = propertyChainToString scope ++ ".condition" ++ show exprId
     (positiveChildrenContent, positiveSuccessor, UpdateCallbacks positiveChildrenUpdateCallbacks, RemoveCallbacks positiveRemoveCallbacks) <- compileView positiveChildren context parent predecessors
     (negativeChildrenContent, negativeSuccessor, UpdateCallbacks negativeChildrenUpdateCallbacks, RemoveCallbacks negativeRemoveCallbacks) <- compileView negativeChildren context parent predecessors
@@ -368,23 +369,40 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
           Ind negativeChildrenContent,
           Ln "}",
           Br,
-          Ln ("const " ++ createCallback ++ " = () => {"),
+          Ln (updateCallback ++ " = () => {"),
           Br,
           Ind
-            ( [Ln (conditionVariable ++ " = ")]
+            ( [Ln ("const " ++ localConditionVariable ++ " = ")]
                 ++ internalConditionValue
                 ++ [ Ln ";",
                      Br,
-                     Ln ("if (" ++ conditionVariable ++ ") {"),
+                     Ln ("if (" ++ localConditionVariable ++ " !== " ++ conditionVariable ++ ") {"),
                      Br,
                      Ind
-                       [ Ln (createPositiveCallback ++ "();")
-                       ],
-                     Br,
-                     Ln "} else {",
-                     Br,
-                     Ind
-                       [ Ln (createNegativeCallback ++ "();")
+                       [ Ln ("if (" ++ conditionVariable ++ " !== undefined) {"),
+                         Ind
+                           [ Br,
+                             Ln (removeCallback ++ "()"),
+                             Br
+                           ],
+                         Br,
+                         Ln "}",
+                         Br,
+                         Ln (conditionVariable ++ " = " ++ localConditionVariable ++ ";"),
+                         Br,
+                         Ln ("if (" ++ conditionVariable ++ ") {"),
+                         Br,
+                         Ind
+                           [ Ln (createPositiveCallback ++ "();")
+                           ],
+                         Br,
+                         Ln "} else {",
+                         Br,
+                         Ind
+                           [ Ln (createNegativeCallback ++ "();")
+                           ],
+                         Br,
+                         Ln "}"
                        ],
                      Br,
                      Ln "}",
@@ -393,23 +411,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
             ),
           Ln "};",
           Br,
-          Ln (createCallback ++ "();"),
-          Br,
-          Ln (updateCallback ++ " = () => {"),
-          Br,
-          Ind
-            ( [ Ln (removeCallback ++ "();"),
-                Br,
-                Ln (conditionVariable ++ " = ")
-              ]
-                ++ internalConditionValue
-                ++ [ Ln ";",
-                     Br,
-                     Ln (createCallback ++ "();"),
-                     Br
-                   ]
-            ),
-          Ln "};",
+          Ln (updateCallback ++ "();"),
           Br,
           Ln (removeCallback ++ " = () => {"),
           Br,
