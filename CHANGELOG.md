@@ -1,3 +1,10 @@
+## [1.1.11](https://github.com/strictly-lang/compiler/compare/v1.1.10...v1.1.11) (2021-08-24)
+
+
+### Bug Fixes
+
+* **condition:** fix updatehandling of if-helper during same condition [#35](https://github.com/strictly-lang/compiler/issues/35) ([206a69e](https://github.com/strictly-lang/compiler/commit/206a69eaced0c057b20d443420a78a1ed59ecc5a))
+
 ## [1.1.10](https://github.com/strictly-lang/compiler/compare/v1.1.9...v1.1.10) (2021-08-24)
 
 
