@@ -300,7 +300,7 @@ compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChild
           ( [(dependency, [Ln (updateCallback ++ "();"), Br]) | dependency <- sourceValueDependencies]
               ++ [ ( dependency,
                      [Ln ("let " ++ indexVariable ++ " = 0;"), Br, Ln ("for (const " ++ entityVariable ++ " of ")] ++ internalEntitiesVariable
-                       ++ [Ln ") {", Br, Ind (restEntityUpdateCallback ++ [Ln (indexVariable ++ "++;"), Br]), Ln "}", Br]
+                       ++ [Ln ") {", Br, Ind (restEntityUpdateCallback ++ [Br, Ln (indexVariable ++ "++;"), Br]), Ln "}", Br]
                    )
                    | (dependency, restEntityUpdateCallback) <- restEntityUpdateCallbacks
                  ]
@@ -315,7 +315,32 @@ compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChild
                    | (dependency, negativepdateCallback) <- negativeChildrenUpdateCallbacks
                  ]
           ),
-        RemoveCallbacks []
+        RemoveCallbacks
+          ( Ln "if (" :
+            internalEntitiesVariable
+              ++ [ Ln ".length === 0) {",
+                   Br,
+                   Ind negativeRemoveCallbacks,
+                   Br,
+                   Ln "} else {",
+                   Br,
+                   Ind
+                     ( [Ln ("let " ++ indexVariable ++ " = 0;"), Br, Ln ("for (const " ++ entityVariable ++ " of ")] ++ internalEntitiesVariable
+                         ++ [ Ln ") {",
+                              Br,
+                              Ind
+                                ( positiveRemoveCallbacks
+                                    ++ [Br, Ln (indexVariable ++ "++;"), Br]
+                                ),
+                              Br,
+                              Ln "}"
+                            ]
+                     ),
+                   Br,
+                   Ln "}",
+                   Br
+                 ]
+          )
       )
 compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
   do

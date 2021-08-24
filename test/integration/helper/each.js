@@ -12,6 +12,7 @@ describe("each loop handling", () => {
 
   it("with filled array", () => {
     const element = document.createElement("test-components-helper-each-base");
+    element.baz = true;
     element.foo = ["foo", "bar", "baz"];
     element.bar = "mep";
 
@@ -38,6 +39,7 @@ describe("each loop handling", () => {
 
   it("with growing array", () => {
     const element = document.createElement("test-components-helper-each-base");
+    element.baz = true;
     element.foo = [];
     element.bar = "alice";
 
@@ -82,6 +84,7 @@ describe("each loop handling", () => {
 
   it("with shrinking array", () => {
     const element = document.createElement("test-components-helper-each-base");
+    element.baz = true;
     element.foo = ["foo", "bar", "baz"];
     element.bar = "alice";
 
@@ -132,7 +135,7 @@ describe("each loop handling", () => {
 
   it("with resetting empty array", () => {
     const element = document.createElement("test-components-helper-each-base");
-
+    element.baz = true;
     element.foo = [];
     element.bar = "alice";
 
@@ -162,6 +165,54 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
     expect(element.shadowRoot.childNodes[1].textContent).toBe("Empty list bob");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+  });
+
+  it("removing each in filled-case", () => {
+    const element = document.createElement("test-components-helper-each-base");
+    element.baz = true;
+    element.foo = ["foo", "bar", "baz"];
+    element.bar = "alice";
+
+    container.appendChild(element);
+
+    expect(element.shadowRoot.childNodes.length).toBe(5);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).toBe("0-foo-alice");
+    expect(element.shadowRoot.childNodes[2].textContent).toBe("1-bar-alice");
+    expect(element.shadowRoot.childNodes[3].textContent).toBe("2-baz-alice");
+    expect(element.shadowRoot.childNodes[4].tagName).toBe("FOOTER");
+
+    element.baz = false;
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("SECTION");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+  });
+
+  it("removing each in empty-case", () => {
+    const element = document.createElement("test-components-helper-each-base");
+    element.baz = true;
+    element.foo = [];
+    element.bar = "alice";
+
+    container.appendChild(element);
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[1].textContent).toBe(
+      "Empty list alice"
+    );
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+
+    element.baz = false;
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("SECTION");
     expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
   });
 });
