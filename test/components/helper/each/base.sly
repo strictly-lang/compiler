@@ -2,10 +2,13 @@ import /vendor/strictly/prelude/src/index.js (zipWithIndex)
 
 view
 	header
-	#each \(value, index) <- zipWithIndex(props.foo)
-		div
-			"${index}-${value}-${props.bar}"
+	#if props.baz
+		#each \(value, index) <- zipWithIndex(props.foo)
+			div
+				"${index}-${value}-${props.bar}"
+		#else
+			span
+				"Empty list ${props.bar}"
 	#else
-		span
-			"Empty list ${props.bar}"
+		section
 	footer
