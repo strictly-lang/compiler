@@ -1,5 +1,5 @@
 import "/test/components/helper/if/base.sly";
-import "/test/components/helper/if/nested.sly";
+import "/test/components/helper/if/remove.sly";
 
 describe("if condition handling", () => {
   let container;
@@ -143,8 +143,8 @@ describe("if condition handling", () => {
     expect(element.shadowRoot.childNodes[1]).toBe(conditionContent);
   });
 
-  it("nested if", () => {
-    const element = document.createElement("test-components-helper-if-nested");
+  it("remove if", () => {
+    const element = document.createElement("test-components-helper-if-remove");
     element.foo = true;
     element.bar = true;
     container.appendChild(element);
