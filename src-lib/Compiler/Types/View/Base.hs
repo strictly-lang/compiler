@@ -144,7 +144,11 @@ compileView ((ViewModel (leftHandSide, sourceValue) children) : ns) context@(Con
                 | modelDependency <- modelDependencies
               ]
                 ++ restUpdateCallbacks,
-            compileRemove = compileRemove childrenResult
+            compileRemove =
+              [ Ln ("delete " ++ propertyChainToString modelScope ++ ";"),
+                Br
+              ]
+                ++ compileRemove childrenResult
           }
       )
 compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
@@ -700,6 +704,8 @@ compileView ((ViewContext (leftHandSide, contextName) children) : ns) context@(C
                 ++ compileUpdate successor,
             compileRemove =
               [ Ln (propertyChainToString contextResult ++ ".disconnect();"),
+                Br,
+                Ln ("delete " ++ propertyChainToString contextResult ++ ";"),
                 Br
               ]
                 ++ compileRemove childrenResult
