@@ -53,7 +53,7 @@ describe("if condition handling", () => {
     expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
   });
 
-  fit("condition should render the correct result, false first", () => {
+  it("condition should render the correct result, false first", () => {
     const element = document.createElement("test-components-helper-if-base");
     element.foo = false;
     element.bar = "baz";
