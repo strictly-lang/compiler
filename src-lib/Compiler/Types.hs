@@ -16,7 +16,12 @@ newtype Context = Context (InternalVariableName, VariableStack)
 
 type UpdateCallbacks = [(InternalVariableName, [Indent])]
 
-data CompileResult = CompileResult {compileCreate :: [Indent], compilePredecessors :: [Predecessor], compileUpdate :: UpdateCallbacks, compileRemove :: [Indent]}
+data CompileResult = CompileResult
+  { compileCreate :: [Indent],
+    compilePredecessors :: [Predecessor],
+    compileUpdate :: UpdateCallbacks,
+    compileRemove :: [Indent]
+  }
 
 newtype Predecessor = Predecessor String
 

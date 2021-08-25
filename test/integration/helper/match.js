@@ -2,6 +2,7 @@ import "/test/components/helper/match/base.sly";
 import "/test/components/helper/match/siblings.sly";
 import "/test/components/helper/match/nested.sly";
 import "/test/components/helper/match/update.sly";
+import "/test/components/helper/match/remove.sly";
 
 describe("match case handling", () => {
   let container;
@@ -161,5 +162,33 @@ describe("match case handling", () => {
       "second: 8 mep"
     );
     expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+  });
+
+  it("with removing", () => {
+    const element = document.createElement(
+      "test-components-helper-match-remove"
+    );
+    element.foo = true;
+
+    container.appendChild(element);
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+
+    element.foo = false;
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("SECTION");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+
+    element.foo = true;
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
   });
 });

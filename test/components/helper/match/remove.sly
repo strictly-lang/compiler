@@ -1,0 +1,17 @@
+model:data{
+	init = /-> First
+	reducer = /_, action -> action
+}
+
+view
+	header
+	#model \(dataState, dataDispatch) <- data()
+		#if props.foo
+			#match dataState
+				#case First
+					div{
+						onclick = /_ -> dataDispatch(Second)
+					}
+		#else
+			section
+	footer

@@ -7,8 +7,6 @@ import Data.Char (toUpper)
 import Data.List (intercalate, intersect, intersperse, isPrefixOf, partition)
 import Types
 
-type Successor = String
-
 type Parent = String
 
 compileView :: [ViewContent] -> Context -> Parent -> [Predecessor] -> AppStateMonad CompileResult
@@ -485,6 +483,7 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
     let currentValueVariable = scope ++ [DotNotation ("currentValue" ++ show exprId)]
         currentCaseVariable = propertyChainToString scope ++ ".currentCase" ++ show exprId
         updateCallback = propertyChainToString scope ++ ".updateCallback" ++ show exprId
+        removeCallback = propertyChainToString scope ++ ".removeCallback" ++ show exprId
         (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
     patterns <- getMatchPatterns cases currentValueVariable context parent predecessors
     let updateCases = map (partition (isPrefixOf currentValueVariable . fst) . (\(_, caseResult) -> compileUpdate caseResult)) patterns
@@ -536,11 +535,7 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
     return
       ( CompileResult
           { compileCreate =
-              [ Ln (propertyChainToString currentValueVariable ++ " = undefined;"),
-                Br,
-                Ln (currentCaseVariable ++ " = undefined;"),
-                Br,
-                Ln (updateCallback ++ " = () => {"),
+              [ Ln (updateCallback ++ " = () => {"),
                 Br,
                 Ind
                   ( [ Ln ("const previousCase = " ++ currentCaseVariable ++ ";"),
@@ -565,20 +560,8 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
                              ( [ Ln "if (previousCase !== undefined) {",
                                  Br,
                                  Ind
-                                   ( intercalate
-                                       [Br]
-                                       [ [ if index == 0
-                                             then Ln ""
-                                             else Ln " else ",
-                                           Ln ("if (previousCase === " ++ show index ++ ") {"),
-                                           Br,
-                                           Ind (compileRemove patternResult),
-                                           Br,
-                                           Ln "}"
-                                         ]
-                                         | ((_, patternResult), index) <- zip patterns [0 ..]
-                                       ]
-                                   ),
+                                   [ Ln (removeCallback ++ "(previousCase);")
+                                   ],
                                  Br,
                                  Ln "}",
                                  Br
@@ -606,6 +589,26 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
                 Ln "}",
                 Br,
                 Ln (updateCallback ++ "();"),
+                Br,
+                Ln (removeCallback ++ "= (previousCase) => {"),
+                Br,
+                Ind
+                  ( intercalate
+                      [Br]
+                      [ [ if index == 0
+                            then Ln ""
+                            else Ln " else ",
+                          Ln ("if (previousCase === " ++ show index ++ ") {"),
+                          Br,
+                          Ind (compileRemove patternResult),
+                          Br,
+                          Ln "}"
+                        ]
+                        | ((_, patternResult), index) <- zip patterns [0 ..]
+                      ]
+                  ),
+                Br,
+                Ln "};",
                 Br
               ]
                 ++ compileCreate successor,
@@ -616,7 +619,15 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
               ]
                 ++ concat restUpdates
                 ++ compileUpdate successor,
-            compileRemove = compileRemove successor -- TODO add removehandling for local state and children
+            compileRemove =
+              [ Ln (removeCallback ++ ("(" ++ currentCaseVariable ++ ");")),
+                Br,
+                Ln ("delete " ++ currentCaseVariable ++ ";"),
+                Br,
+                Ln ("delete " ++ propertyChainToString currentValueVariable ++ ";"),
+                Br
+              ]
+                ++ compileRemove successor
           }
       )
 compileView ((ViewContext (leftHandSide, contextName) children) : ns) context@(Context (scope, variableStack)) parent predecessors =
