@@ -1,3 +1,10 @@
+## [1.1.13](https://github.com/strictly-lang/compiler/compare/v1.1.12...v1.1.13) (2021-08-25)
+
+
+### Bug Fixes
+
+* **match-remove:** implement removal of match-helper [#38](https://github.com/strictly-lang/compiler/issues/38) ([e1ea36f](https://github.com/strictly-lang/compiler/commit/e1ea36fc7ab73c33f1f87fcdd5f2e9e58b4006ae))
+
 ## [1.1.12](https://github.com/strictly-lang/compiler/compare/v1.1.11...v1.1.12) (2021-08-25)
 
 
