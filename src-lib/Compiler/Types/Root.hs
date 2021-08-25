@@ -46,7 +46,7 @@ compileRoot' componentPath ((View children) : ns) ast variableStack = do
   let scope = [DotNotation "this", DotNotation "_el"]
       variableStack' = getModelScopeVariableStack ast ++ variableStack
       styleContents = [compileStyle style | Style style <- ast]
-  (viewContent, _, UpdateCallbacks updateCallbacks, _) <- compileView (styleContents ++ children) (Context (scope, (["props"], propertiesScope) : variableStack')) parent []
+  childrenResult <- compileView (styleContents ++ children) (Context (scope, (["props"], propertiesScope) : variableStack')) parent []
   next <- compileRoot' componentPath ns ast variableStack
 
   return
@@ -79,13 +79,13 @@ compileRoot' componentPath ((View children) : ns) ast variableStack = do
                          Ln "this.attachShadow({mode: 'open'});",
                          Br
                        ]
-                         ++ viewContent
+                         ++ compileCreate childrenResult
                      ),
                    Ln "}",
                    Br,
                    Br
                  ]
-              ++ walkDependencies (UpdateCallbacks (filter (not . ((\value -> value `elem` map snd variableStack') . fst)) updateCallbacks))
+              ++ walkDependencies (filter (not . ((\value -> value `elem` map snd variableStack') . fst)) (compileUpdate childrenResult))
           ),
         Ln "}",
         Br,
@@ -116,12 +116,12 @@ getModelScopeVariableStack ((Model name _) : restRoot) = ([name], [DotNotation "
 getModelScopeVariableStack (currentRoot : restRoot) = getModelScopeVariableStack restRoot
 
 walkDependencies :: UpdateCallbacks -> [Indent]
-walkDependencies (UpdateCallbacks []) = []
-walkDependencies (UpdateCallbacks ((internalName, updateCallback) : updateCallbacks))
+walkDependencies [] = []
+walkDependencies (((internalName, updateCallback) : updateCallbacks))
   | isProps =
     let setterName = internalNameToSetterName internalName
         (matchedUpdateCallbacks, unmatchedUpdateCallbacks) = partition ((setterName ==) . internalNameToSetterName . fst) updateCallbacks
-     in getSetter setterName (updateCallback : map snd matchedUpdateCallbacks) ++ walkDependencies (UpdateCallbacks unmatchedUpdateCallbacks)
+     in getSetter setterName (updateCallback : map snd matchedUpdateCallbacks) ++ walkDependencies unmatchedUpdateCallbacks
   | otherwise = error ("There is an observer missing for " ++ propertyChainToString internalName)
   where
     isProps = propertiesScope `isPrefixOf` internalName

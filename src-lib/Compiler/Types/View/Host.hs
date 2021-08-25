@@ -56,34 +56,32 @@ compileHost (Context (scope, variableStack)) elementVariable (HostElement ("inpu
                Ln "});",
                Br
              ],
-        UpdateCallbacks
-          ( [ ( dependency,
-                [ Ln (valueChanged ++ " = true;"),
-                  Br,
-                  Ln (valueVariable ++ " = ")
-                ]
-                  ++ valueJs
-                  ++ [ Ln ";",
-                       Br,
-                       Ln (elementVariable ++ "." ++ valueAttribute ++ " = " ++ valueVariable ++ ";"),
-                       Br
-                     ]
-              )
-              | dependency <- dependencies
+        [ ( dependency,
+            [ Ln (valueChanged ++ " = true;"),
+              Br,
+              Ln (valueVariable ++ " = ")
             ]
-              ++ [(functionDependency, []) | functionDependency <- functionDependencies]
+              ++ valueJs
+              ++ [ Ln ";",
+                   Br,
+                   Ln (elementVariable ++ "." ++ valueAttribute ++ " = " ++ valueVariable ++ ";"),
+                   Br
+                 ]
           )
+          | dependency <- dependencies
+        ]
+          ++ [(functionDependency, []) | functionDependency <- functionDependencies]
       )
 compileHost context elementVariable host@(HostElement (hostElementName, mergedOptions, children)) (Just importPath@(Import ('.' : '/' : _, []))) =
   do
     _ <- addImport importPath
     (currentComponentPath, _, _) <- get
-    return (HostElement (getRelativeComponentName currentComponentPath hostElementName, mergedOptions, children), [], UpdateCallbacks [])
+    return (HostElement (getRelativeComponentName currentComponentPath hostElementName, mergedOptions, children), [], [])
 compileHost context elementVariable host@(HostElement hostElementName) (Just importPath) =
   do
     _ <- addImport importPath
-    return (host, [], UpdateCallbacks [])
-compileHost context elementVariable host importPath = do return (host, [], UpdateCallbacks [])
+    return (host, [], [])
+compileHost context elementVariable host importPath = do return (host, [], [])
 
 getTypeAndValue :: VariableStack -> RightHandSide -> (String, [Indent], [InternalVariableName])
 getTypeAndValue variableStack (RightHandSideValue (RightHandSideType typeName [rightHandSideValue])) =
