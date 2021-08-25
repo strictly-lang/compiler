@@ -1,3 +1,10 @@
+## [1.1.12](https://github.com/strictly-lang/compiler/compare/v1.1.11...v1.1.12) (2021-08-25)
+
+
+### Bug Fixes
+
+* **condition:** add remove-handler for conditions [#37](https://github.com/strictly-lang/compiler/issues/37) ([a9f56dc](https://github.com/strictly-lang/compiler/commit/a9f56dc9e364ebde55ec9a95a2f990654ab03e05))
+
 ## [1.1.11](https://github.com/strictly-lang/compiler/compare/v1.1.10...v1.1.11) (2021-08-24)
 
 
