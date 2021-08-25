@@ -305,7 +305,7 @@ compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChild
                    | (dependency, restEntityUpdateCallback) <- restEntityUpdateCallbacks
                  ]
               ++ [ ( dependency,
-                     [ Ln ("if( " ++ propertyChainToString entitiesScope ++ ".length === 0 ) {"),
+                     [ Ln ("if (" ++ propertyChainToString entitiesScope ++ ".length === 0) {"),
                        Br,
                        Ind negativepdateCallback,
                        Ln "}",
@@ -362,12 +362,12 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
       ( [ Ln (createPositiveCallback ++ " = () => {"),
           Br,
           Ind positiveChildrenContent,
-          Ln "}",
+          Ln "};",
           Br,
           Ln (createNegativeCallback ++ " = () => {"),
           Br,
           Ind negativeChildrenContent,
-          Ln "}",
+          Ln "};",
           Br,
           Ln (updateCallback ++ " = () => {"),
           Br,
@@ -382,7 +382,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
                        [ Ln ("if (" ++ conditionVariable ++ " !== undefined) {"),
                          Ind
                            [ Br,
-                             Ln (removeCallback ++ "()"),
+                             Ln (removeCallback ++ "();"),
                              Br
                            ],
                          Br,
@@ -416,7 +416,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
           Ln (removeCallback ++ " = () => {"),
           Br,
           Ind
-            [ Ln ("if( " ++ conditionVariable ++ " ) {"),
+            [ Ln ("if (" ++ conditionVariable ++ ") {"),
               Br,
               Ind positiveRemoveCallbacks,
               Br,
@@ -427,7 +427,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
               Ln "}",
               Br
             ],
-          Ln "}",
+          Ln "};",
           Br
         ]
           ++ successorContent,
