@@ -14,9 +14,9 @@ type VariableStack = [([PublicVariableName], InternalVariableName)]
 
 newtype Context = Context (InternalVariableName, VariableStack)
 
-newtype UpdateCallbacks = UpdateCallbacks [(InternalVariableName, [Indent])]
+type UpdateCallbacks = [(InternalVariableName, [Indent])]
 
-newtype RemoveCallbacks = RemoveCallbacks [Indent]
+data CompileResult = CompileResult {compileCreate :: [Indent], compilePredecessors :: [Predecessor], compileUpdate :: UpdateCallbacks, compileRemove :: [Indent]}
 
 newtype Predecessor = Predecessor String
 
