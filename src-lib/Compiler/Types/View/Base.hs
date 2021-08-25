@@ -462,7 +462,7 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
         RemoveCallbacks
           ( [ Ln (removeCallback ++ "();"),
               Br,
-              Ln ("delete " ++ conditionVariable),
+              Ln ("delete " ++ conditionVariable ++ ";"),
               Br
             ]
               ++ successorRemoveCallbacks
