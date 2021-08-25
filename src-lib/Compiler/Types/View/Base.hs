@@ -459,7 +459,14 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
                  ]
               ++ successorUpdateCallbacks
           ),
-        RemoveCallbacks successorRemoveCallbacks -- TODO add self removage
+        RemoveCallbacks
+          ( [ Ln (removeCallback ++ "();"),
+              Br,
+              Ln ("delete " ++ conditionVariable),
+              Br
+            ]
+              ++ successorRemoveCallbacks
+          )
       )
 compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variableStack)) parent predecessors =
   do

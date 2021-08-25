@@ -1,4 +1,5 @@
 import "/test/components/helper/if/base.sly";
+import "/test/components/helper/if/nested.sly";
 
 describe("if condition handling", () => {
   let container;
@@ -140,5 +141,31 @@ describe("if condition handling", () => {
     expect(element.shadowRoot.childNodes[1].textContent).toBe("not-foo-baz");
     expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
     expect(element.shadowRoot.childNodes[1]).toBe(conditionContent);
+  });
+
+  it("nested if", () => {
+    const element = document.createElement("test-components-helper-if-nested");
+    element.foo = true;
+    element.bar = true;
+    container.appendChild(element);
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+
+    element.foo = false;
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("SECTION");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+
+    element.foo = true;
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
   });
 });

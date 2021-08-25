@@ -1,0 +1,10 @@
+view
+	header
+	#if props.foo
+		#if props.bar
+			div
+		#else
+			span
+	#else
+		section
+	footer
