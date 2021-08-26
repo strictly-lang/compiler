@@ -1,4 +1,6 @@
 import "/test/components/helper/each/base.sly";
+import "/test/components/helper/each/constraint.sly";
+import "/test/components/helper/each/neverconstraint.sly";
 
 describe("each loop handling", () => {
   let container;
@@ -213,6 +215,36 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes.length).toBe(3);
     expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).toBe("SECTION");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+  });
+
+  it("entity needs to be skipped when constraint is not matched", () => {
+    const element = document.createElement(
+      "test-components-helper-each-constraint"
+    );
+
+    container.appendChild(element);
+
+    expect(element.shadowRoot.childNodes.length).toBe(4);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).toBe("0");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[2].textContent).toBe("2");
+    expect(element.shadowRoot.childNodes[3].tagName).toBe("FOOTER");
+  });
+
+  it("when constraints are never matched, else is rendered", () => {
+    const element = document.createElement(
+      "test-components-helper-each-neverconstraint"
+    );
+
+    container.appendChild(element);
+
+    expect(element.shadowRoot.childNodes.length).toBe(3);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[1].textContent).toBe("else");
     expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
   });
 });
