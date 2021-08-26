@@ -134,10 +134,10 @@ rightHandSideValueToJs variableStack (MixedTextValue ((DynamicText rightHandSide
     (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
 rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideValues) =
   let rightHandSidesJs = map (rightHandSideValueToJs variableStack) rightHandSideValues
-   in ( [ Ln ("{ _type: \"" ++ typeName ++ "\",")
+   in ( [ Ln ("{ _type: \"" ++ typeName ++ "\", ") -- TODO replace "_type" with Symbol("ADT")
         ]
           ++ ( intercalate
-                 [Ln ","]
+                 [Ln ", "]
                  [ Ln ("[" ++ show index ++ "]: ") : rightHandSideJs
                    | ((rightHandSideJs, _), index) <-
                        zip rightHandSidesJs [0 ..]
