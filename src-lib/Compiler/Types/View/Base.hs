@@ -155,170 +155,182 @@ compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChild
   do
     exprId <- getGetFreshExprId
     let indexVariable = "index" ++ show exprId
-        entitiesScope = scope ++ [DotNotation ("entities" ++ show exprId)]
+        entitiesVariable = scope ++ [DotNotation ("entities" ++ show exprId)]
+        entityVariable = entitiesVariable ++ [BracketNotation indexVariable]
+        (conditions, entityStack) = leftHandSideToJs variableStack leftHandSideValue entityVariable
+        entitiesScope = scope ++ [DotNotation ("nestedEntities" ++ show exprId)]
         entityScope = entitiesScope ++ [BracketNotation indexVariable]
-        entityValue = entityScope ++ [DotNotation "value"]
-        updateCallback = propertyChainToString scope ++ ".updateCallback" ++ show exprId
-        (internalEntitiesVariable, sourceValueDependencies) = rightHandSideValueToJs variableStack sourceValue
-        createEntityCallback = propertyChainToString scope ++ ".createEach" ++ show exprId
-        createElseCallback = propertyChainToString scope ++ ".createElse" ++ show exprId
-        predecessorOf = propertyChainToString scope ++ ".getPredecessorOf" ++ show exprId
-        successor = predecessorOf ++ "(" ++ propertyChainToString entitiesScope ++ ".length - 1)"
-        entityPredecessor = predecessorOf ++ "(" ++ indexVariable ++ " - 1)"
-        entityVariable = "entity" ++ show exprId
-        (_conditions, entityStack) = leftHandSideToJs variableStack leftHandSideValue entityValue
-    entityResult <- compileView entityChildren (Context (entityScope, entityStack ++ variableStack)) parent (Predecessor entityPredecessor : predecessors)
+        getPredecessorOf = scope ++ [DotNotation ("getPredecessorOf" ++ show exprId)]
+        lastIndex = scope ++ [DotNotation ("lastIndex" ++ show exprId)]
+        removeCallback = scope ++ [DotNotation ("remove" ++ show exprId)]
+        updateCallback = scope ++ [DotNotation ("update" ++ show exprId)]
+        previousLength = "previousLength" ++ show exprId
+    entityResult <- compileView entityChildren (Context (entityScope, entityStack ++ variableStack)) parent (Predecessor (propertyChainToString getPredecessorOf ++ "(" ++ indexVariable ++ ")") : predecessors)
     elseResult <- compileView negativeChildren context parent predecessors
-    successor <- compileView ns context parent [Predecessor successor]
-    let (entityUpdateCallback, restEntityUpdateCallbacks) = partition (isPrefixOf entityValue . fst) (compileUpdate entityResult)
+    successor <- compileView ns context parent (Predecessor (propertyChainToString getPredecessorOf ++ "(" ++ propertyChainToString entitiesVariable ++ ".length)") : predecessors)
+    let (entityUpdateCallback, restEntityUpdateCallbacks) = partition (isPrefixOf entityVariable . fst) (compileUpdate entityResult)
+        (entitiesValue, entitiesDependencies) = rightHandSideValueToJs variableStack sourceValue
 
     return
       ( CompileResult
           { compileCreate =
-              [ Ln (propertyChainToString entitiesScope ++ " = [];"),
+              [ Ln (propertyChainToString entitiesScope ++ " = {};"),
                 Br,
-                Ln (predecessorOf ++ " = (" ++ indexVariable ++ ") => {"),
+                Ln (propertyChainToString getPredecessorOf ++ " = (" ++ indexVariable ++ ") => {"),
                 Br,
                 Ind
-                  [ Ln ("if (" ++ propertyChainToString entitiesScope ++ ".length === 0) {"),
+                  [ Ln ("if(Object.keys(" ++ propertyChainToString entitiesScope ++ ").length === 0) {"),
                     Br,
                     Ind
-                      [ Ln ("return " ++ predecessorChain (compilePredecessors elseResult)),
-                        Br
+                      [ Ln ("return " ++ predecessorChain (compilePredecessors elseResult) ++ ";")
                       ],
                     Br,
-                    Ln ("} else if (" ++ indexVariable ++ " < 0) {"),
-                    Br,
-                    Ind
-                      [ Ln ("return " ++ predecessorChain predecessors),
-                        Br
-                      ],
-                    Ln "} else {",
+                    Ln ("} else if (" ++ indexVariable ++ " === 0) {"),
                     Br,
                     Ind
-                      [ Ln ("return " ++ predecessorChain (compilePredecessors entityResult)),
-                        Br
+                      [ Ln ("return " ++ predecessorChain predecessors ++ ";")
                       ],
+                    Br,
+                    Ln ("} else if (" ++ indexVariable ++ "- 1 in " ++ propertyChainToString entitiesScope ++ ") {"),
+                    Br,
+                    Ind
+                      [ Ln ("var " ++ indexVariable ++ " = " ++ indexVariable ++ " - 1;"), --TODO remove ugly *var*
+                        Ln ("return " ++ predecessorChain (compilePredecessors entityResult) ++ ";")
+                      ],
+                    Br,
                     Ln "}",
-                    Br
+                    Br,
+                    Ln ("return " ++ propertyChainToString getPredecessorOf ++ "(" ++ indexVariable ++ " - 1);")
                   ],
-                Ln "}",
-                Br,
-                Ln (createEntityCallback ++ " = (" ++ indexVariable ++ ") => {"),
-                Br,
-                Ind (compileCreate entityResult),
                 Br,
                 Ln "}",
                 Br,
-                Ln (createElseCallback ++ " = () => {"),
+                Ln (propertyChainToString removeCallback ++ " = (" ++ indexVariable ++ ") => {"),
                 Br,
-                Ind (compileCreate elseResult),
-                Br,
-                Ln "}",
-                Br,
-                Ln ("let " ++ indexVariable ++ " = 0;"),
-                Br,
-                Ln ("for (const " ++ entityVariable ++ " of ")
-              ]
-                ++ internalEntitiesVariable
-                ++ [ Ln ") {",
-                     Br,
-                     Ind
-                       [ Ln (propertyChainToString entitiesScope ++ ".push({value : " ++ entityVariable ++ "});"),
-                         Br,
-                         Ln (createEntityCallback ++ "(" ++ indexVariable ++ ");"),
-                         Br,
-                         Ln (indexVariable ++ "++;"),
-                         Br
-                       ],
-                     Ln "}",
-                     Br,
-                     Ln ("if (" ++ indexVariable ++ " === 0) {"),
-                     Br,
-                     Ind
-                       [ Ln (createElseCallback ++ "();")
-                       ],
-                     Br,
-                     Ln "}",
-                     Br,
-                     Ln (updateCallback ++ "= () => {"),
-                     Br,
-                     Ind
-                       ( [ Ln ("let " ++ indexVariable ++ " = 0;"),
-                           Br,
-                           Ln ("const previousLength = " ++ propertyChainToString entitiesScope ++ ".length"),
-                           Br,
-                           Ln ("for (const " ++ entityVariable ++ " of ")
+                Ind
+                  ( compileRemove entityResult
+                      ++ [ Br,
+                           Ln ("delete " ++ propertyChainToString entityScope ++ ";")
                          ]
-                           ++ internalEntitiesVariable
-                           ++ [ Ln ") {",
-                                Br,
-                                Ind
-                                  [ Ln ("if (" ++ indexVariable ++ " === 0 && previousLength === 0) {"),
-                                    Br,
-                                    Ind (compileRemove elseResult),
-                                    Br,
-                                    Ln "}",
-                                    Br,
-                                    Ln ("if (" ++ indexVariable ++ " < " ++ propertyChainToString entitiesScope ++ ".length) {"),
-                                    Br,
-                                    Ind
-                                      ( Ln (propertyChainToString entityValue ++ " = " ++ entityVariable ++ ";") :
-                                        Br :
-                                        concatMap
-                                          snd
-                                          entityUpdateCallback
-                                      ),
-                                    Ln "} else {",
-                                    Br,
-                                    Ind
-                                      [ Ln (propertyChainToString entitiesScope ++ ".push({value : " ++ entityVariable ++ "});"),
-                                        Br,
-                                        Ln (createEntityCallback ++ "(" ++ indexVariable ++ ")"),
-                                        Br
-                                      ],
-                                    Ln "}",
-                                    Br,
-                                    Ln (indexVariable ++ "++;"),
-                                    Br
-                                  ],
-                                Ln "}",
-                                Br,
-                                Ln ("let newCount = " ++ indexVariable ++ ";"),
-                                Br,
-                                Ln ("for (let " ++ indexVariable ++ " = " ++ propertyChainToString entitiesScope ++ ".length - 1; " ++ indexVariable ++ " >= newCount; " ++ indexVariable ++ "--) {"),
-                                Br,
-                                Ind
-                                  ( concatMap (\positiveRemoveCallback -> positiveRemoveCallback : [Br]) (compileRemove entityResult)
-                                      ++ [Ln (propertyChainToString entitiesScope ++ ".pop();"), Br]
-                                  ),
-                                Ln "}",
-                                Br,
-                                Ln "if (newCount === 0 && previousLength !== 0) {",
-                                Br,
-                                Ind
-                                  [ Ln (createElseCallback ++ "();")
-                                  ],
-                                Br,
-                                Ln "}",
-                                Br
-                              ]
-                       ),
-                     Ln "}",
-                     Br
-                   ]
+                  ),
+                Br,
+                Ln "};",
+                Br,
+                Ln (propertyChainToString updateCallback ++ " = () => {"),
+                Br,
+                Ind
+                  ( [ Ln ("let " ++ previousLength ++ " = " ++ propertyChainToString entitiesVariable ++ "?.length;"),
+                      Br,
+                      Ln (propertyChainToString entitiesVariable ++ " = ")
+                    ]
+                      ++ entitiesValue
+                      ++ [ Ln ";",
+                           Br,
+                           Ln
+                             ("for (let " ++ indexVariable ++ " = 0; " ++ indexVariable ++ " < " ++ propertyChainToString entitiesVariable ++ ".length; " ++ indexVariable ++ "++) {"),
+                           Br,
+                           Ind
+                             ( if null conditions
+                                 then
+                                   [ Ln ("if (" ++ indexVariable ++ " in " ++ propertyChainToString entitiesScope ++ ") {"),
+                                     Br,
+                                     Ind (concatMap snd entityUpdateCallback),
+                                     Br,
+                                     Ln "} else {",
+                                     Br,
+                                     Ind
+                                       ( [ Ln (propertyChainToString entityScope ++ " = {}"),
+                                           Br
+                                         ]
+                                           ++ compileCreate entityResult
+                                       ),
+                                     Br,
+                                     Ln "}",
+                                     Br
+                                   ]
+                                 else
+                                   Ln "if (" :
+                                   conditions
+                                     ++ [ Ln ") {",
+                                          Br,
+                                          Ind
+                                            [ Ln ("if (" ++ indexVariable ++ " in " ++ propertyChainToString entitiesScope ++ ") {"),
+                                              Br,
+                                              Ind (concatMap snd entityUpdateCallback),
+                                              Br,
+                                              Ln "} else {",
+                                              Br,
+                                              Ind
+                                                ( [ Ln (propertyChainToString entityScope ++ " = {}"),
+                                                    Br
+                                                  ]
+                                                    ++ compileCreate entityResult
+                                                ),
+                                              Br,
+                                              Ln "}",
+                                              Br
+                                            ],
+                                          Ln ("} else if (" ++ indexVariable ++ " in " ++ propertyChainToString entitiesScope ++ ") {"),
+                                          Br,
+                                          Ind
+                                            [ Ln (propertyChainToString removeCallback ++ "(" ++ indexVariable ++ ");")
+                                            ],
+                                          Br,
+                                          Ln "}",
+                                          Br
+                                        ]
+                             ),
+                           Br,
+                           Ln "}",
+                           Br,
+                           Ln ("for (let " ++ indexVariable ++ " = " ++ previousLength ++ " - 1; " ++ indexVariable ++ " >= " ++ propertyChainToString entitiesVariable ++ ".length; " ++ indexVariable ++ "--) {"),
+                           Br,
+                           Ind
+                             [ Ln (propertyChainToString removeCallback ++ "(" ++ indexVariable ++ ");")
+                             ],
+                           Br,
+                           Ln "}",
+                           Br,
+                           Ln ("if (Object.keys(" ++ propertyChainToString entitiesScope ++ ").length === 0 && " ++ previousLength ++ " !== 0) {"),
+                           Br,
+                           Ind (compileCreate elseResult),
+                           Ln ("} else if (Object.keys(" ++ propertyChainToString entitiesScope ++ ").length !== 0 && " ++ previousLength ++ " === 0) {"),
+                           Br,
+                           Ind (compileRemove elseResult),
+                           Ln "}",
+                           Br
+                         ]
+                  ),
+                Br,
+                Ln "}",
+                Br,
+                Ln (propertyChainToString updateCallback ++ "();"),
+                Br
+              ]
                 ++ compileCreate successor,
             compilePredecessors = compilePredecessors successor,
             compileUpdate =
-              [(dependency, [Ln (updateCallback ++ "();"), Br]) | dependency <- sourceValueDependencies]
+              [(dependency, [Ln (propertyChainToString updateCallback ++ "();"), Br]) | dependency <- entitiesDependencies]
                 ++ [ ( dependency,
-                       [Ln ("let " ++ indexVariable ++ " = 0;"), Br, Ln ("for (const " ++ entityVariable ++ " of ")] ++ internalEntitiesVariable
-                         ++ [Ln ") {", Br, Ind (restEntityUpdateCallback ++ [Br, Ln (indexVariable ++ "++;"), Br]), Ln "}", Br]
+                       [ Ln ("for (let " ++ indexVariable ++ " = 0; " ++ indexVariable ++ " < " ++ propertyChainToString entitiesVariable ++ ".length; " ++ indexVariable ++ "++) {"),
+                         Br,
+                         Ind
+                           [ Ln ("if (" ++ indexVariable ++ " in " ++ propertyChainToString entitiesScope ++ ") {"),
+                             Br,
+                             Ind restEntityUpdateCallback,
+                             Br,
+                             Ln "}",
+                             Br
+                           ],
+                         Br,
+                         Ln "}",
+                         Br
+                       ]
                      )
                      | (dependency, restEntityUpdateCallback) <- restEntityUpdateCallbacks
                    ]
                 ++ [ ( dependency,
-                       [ Ln ("if (" ++ propertyChainToString entitiesScope ++ ".length === 0) {"),
+                       [ Ln ("if (" ++ propertyChainToString entitiesVariable ++ ".length === 0) {"),
                          Br,
                          Ind negativepdateCallback,
                          Ln "}",
@@ -328,30 +340,31 @@ compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChild
                      | (dependency, negativepdateCallback) <- compileUpdate elseResult
                    ],
             compileRemove =
-              Ln "if (" :
-              internalEntitiesVariable
-                ++ [ Ln ".length === 0) {",
-                     Br,
-                     Ind (compileRemove elseResult),
-                     Br,
-                     Ln "} else {",
-                     Br,
-                     Ind
-                       ( [Ln ("let " ++ indexVariable ++ " = 0;"), Br, Ln ("for (const " ++ entityVariable ++ " of ")] ++ internalEntitiesVariable
-                           ++ [ Ln ") {",
-                                Br,
-                                Ind
-                                  ( compileRemove entityResult
-                                      ++ [Br, Ln (indexVariable ++ "++;"), Br]
-                                  ),
-                                Br,
-                                Ln "}"
-                              ]
-                       ),
-                     Br,
-                     Ln "}",
-                     Br
-                   ]
+              [ Ln ("if (" ++ propertyChainToString entitiesVariable ++ ".length === 0) {"),
+                Br,
+                Ind (compileRemove elseResult),
+                Br,
+                Ln "} else {",
+                Br,
+                Ind
+                  [ Ln ("for (let " ++ indexVariable ++ " = 0; " ++ indexVariable ++ " < " ++ propertyChainToString entitiesVariable ++ ".length; " ++ indexVariable ++ "++) {"),
+                    Br,
+                    Ind
+                      [ Ln ("if (" ++ indexVariable ++ " in " ++ propertyChainToString entitiesScope ++ ") {"),
+                        Br,
+                        Ind [Ln (propertyChainToString removeCallback ++ "(" ++ indexVariable ++ ")")],
+                        Br,
+                        Ln "}",
+                        Br
+                      ],
+                    Br,
+                    Ln "}",
+                    Br
+                  ],
+                Br,
+                Ln "}",
+                Br
+              ]
           }
       )
 compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) context@(Context (scope, variableStack)) parent predecessors =
@@ -486,6 +499,7 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
     exprId <- getGetFreshExprId
     let currentValueVariable = scope ++ [DotNotation ("currentValue" ++ show exprId)]
         currentCaseVariable = propertyChainToString scope ++ ".currentCase" ++ show exprId
+        previousCaseVariable = "previousCase" ++ show exprId
         updateCallback = propertyChainToString scope ++ ".updateCallback" ++ show exprId
         removeCallback = propertyChainToString scope ++ ".removeCallback" ++ show exprId
         (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
@@ -542,7 +556,7 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
               [ Ln (updateCallback ++ " = () => {"),
                 Br,
                 Ind
-                  ( [ Ln ("const previousCase = " ++ currentCaseVariable ++ ";"),
+                  ( [ Ln ("const " ++ previousCaseVariable ++ " = " ++ currentCaseVariable ++ ";"),
                       Br,
                       Ln (propertyChainToString currentValueVariable ++ " = ")
                     ]
@@ -553,7 +567,7 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
                            Br,
                            Ind (getCaseCondition 0 (map fst patterns)),
                            Br,
-                           Ln ("if (previousCase === " ++ currentCaseVariable ++ ") {"),
+                           Ln ("if (" ++ previousCaseVariable ++ " === " ++ currentCaseVariable ++ ") {"),
                            Br,
                            Ind
                              (concat (concat activeUpdates)),
@@ -561,10 +575,10 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
                            Ln "} else {",
                            Br,
                            Ind
-                             ( [ Ln "if (previousCase !== undefined) {",
+                             ( [ Ln ("if (" ++ previousCaseVariable ++ " !== undefined) {"),
                                  Br,
                                  Ind
-                                   [ Ln (removeCallback ++ "(previousCase);")
+                                   [ Ln (removeCallback ++ "(" ++ previousCaseVariable ++ ");")
                                    ],
                                  Br,
                                  Ln "}",
