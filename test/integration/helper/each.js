@@ -232,6 +232,16 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[2].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).toBe("2");
     expect(element.shadowRoot.childNodes[3].tagName).toBe("FOOTER");
+
+    element.shadowRoot.childNodes[0].dispatchEvent(new Event("click"));
+
+    expect(element.shadowRoot.childNodes.length).toBe(4);
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).toBe("1");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[2].textContent).toBe("2");
+    expect(element.shadowRoot.childNodes[3].tagName).toBe("FOOTER");
   });
 
   it("when constraints are never matched, else is rendered", () => {
