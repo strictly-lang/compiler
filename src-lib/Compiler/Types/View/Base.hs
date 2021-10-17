@@ -36,7 +36,7 @@ compileView (((MixedText (DynamicText rightHandSideValue : nextTexts)) : ns)) co
   do
     exprId <- getGetFreshExprId
     let elementVariable = propertyChainToString scope ++ ".el" ++ show exprId
-        (rightHandValueJs, rightHandDependencies) = rightHandSideValueToJs variableStack rightHandSideValue
+    (rightHandValueJs, rightHandDependencies) <- rightHandSideValueToJs variableStack rightHandSideValue
 
     successor <- compileView (MixedText nextTexts : ns) context parent (Predecessor elementVariable : predecessors)
 
@@ -71,20 +71,71 @@ compileView ((Host host importPath) : ns) context@(Context (scope, variableStack
     successor <- compileView ns context parent (Predecessor elementVariable : predecessors)
     let getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
     let isCustomElement = '-' `elem` nodeName
+
+    optionCreate <-
+      mapM
+        ( \(attributeKey, attributeRightHandSide) ->
+            do
+              if "on" `isPrefixOf` attributeKey
+                then do
+                  eventListener <- functionToJs variableStack attributeRightHandSide
+
+                  return ([Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ fst eventListener ++ [Ln ");", Br])
+                else do
+                  attributeValues <-
+                    mapM
+                      ( \attributeValue ->
+                          do fst <$> attributeValue
+                      )
+                      (getAttributeValue attributeRightHandSide)
+
+                  return
+                    ( if isCustomElement -- strictly custom-elements expect properties instead of attributes
+                        then Ln (elementVariable ++ "." ++ attributeKey ++ " = ") : concat attributeValues ++ [Ln ";", Br]
+                        else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : concat attributeValues ++ [Ln ");", Br]
+                    )
+        )
+        options
+
+    optionUpdates <-
+      mapM
+        ( \(attributeKey, attributeRightHandSide) ->
+            do
+              mapM
+                ( \attributeValue ->
+                    do
+                      (attributeJs, dependencies) <- attributeValue
+                      return
+                        [ ( dependency,
+                            if isCustomElement
+                              then
+                                Ln (elementVariable ++ "." ++ attributeKey ++ " = ") :
+                                attributeJs ++ [Ln ";", Br]
+                              else
+                                Ln
+                                  (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") :
+                                attributeJs ++ [Ln ");", Br]
+                          )
+                          | dependency <- dependencies
+                        ]
+                )
+                (getAttributeValue attributeRightHandSide)
+        )
+        options
+    optionUpdateCallbacks <-
+      mapM
+        ( \(attributeKey, attributeRightHandSide) -> do
+            (_, dependencies) <- functionToJs variableStack attributeRightHandSide
+            return [(dependency, [Ln ""]) | dependency <- dependencies]
+        )
+        [option | option@(attributeKey, _) <- options, attributeKey `isPrefixOf` "on"]
+
     return
       ( CompileResult
           { compileCreate =
               [Ln (elementVariable ++ " = document.createElement(\"" ++ nodeName ++ "\");"), Br]
                 ++ concat
-                  [ if "on" `isPrefixOf` attributeKey
-                      then [Ln (elementVariable ++ ".addEventListener(\"" ++ drop 2 attributeKey ++ "\", ")] ++ fst (functionToJs variableStack attributeRightHandSide) ++ [Ln ");", Br]
-                      else
-                        let value = concatMap fst (getAttributeValue attributeRightHandSide)
-                         in if isCustomElement -- strictly custom-elements expect properties instead of attributes
-                              then Ln (elementVariable ++ "." ++ attributeKey ++ " = ") : value ++ [Ln ";", Br]
-                              else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : value ++ [Ln ");", Br]
-                    | (attributeKey, attributeRightHandSide) <- options
-                  ]
+                  optionCreate
                 ++ [ Ln (appendChild parent predecessors elementVariable),
                      Br
                    ]
@@ -94,20 +145,8 @@ compileView ((Host host importPath) : ns) context@(Context (scope, variableStack
             compilePredecessors = compilePredecessors successor,
             compileUpdate =
               hostSpecificUpdateCallbacks
-                ++ [ ( dependency,
-                       if isCustomElement -- strictly custom-elements expect properties instead of attributes
-                         then Ln (elementVariable ++ "." ++ attributeKey ++ " = ") : attributeJs ++ [Ln ";", Br]
-                         else Ln (elementVariable ++ ".setAttribute(\"" ++ attributeKey ++ "\", ") : attributeJs ++ [Ln ");", Br]
-                     )
-                     | (attributeKey, attributeRightHandSide) <- options,
-                       (attributeJs, dependencies) <- getAttributeValue attributeRightHandSide,
-                       dependency <- dependencies
-                   ]
-                ++ [ (dependency, [])
-                     | (attributeKey, attributeRightHandSide) <- options,
-                       attributeKey `isPrefixOf` "on",
-                       dependency <- snd (functionToJs variableStack attributeRightHandSide)
-                   ]
+                ++ concat (concat optionUpdates)
+                ++ concat optionUpdateCallbacks
                 ++ compileUpdate childrenResult
                 ++ compileUpdate successor,
             compileRemove = Ln (elementVariable ++ ".remove();") : compileRemove successor
@@ -127,7 +166,7 @@ compileView ((ViewModel (leftHandSide, sourceValue) children) : ns) context@(Con
             Br,
             Ln "}"
           ]
-        (modelValue, modelDependencies) = rightHandSideValueFunctionCallToJs [modelUpdateCallbackJs] variableStack sourceValue
+    (modelValue, modelDependencies) <- rightHandSideValueFunctionCallToJs [modelUpdateCallbackJs] variableStack sourceValue
     successor <- compileView ns context parent (compilePredecessors childrenResult)
 
     return
@@ -169,7 +208,7 @@ compileView ((Each (leftHandSideValue, sourceValue) entityChildren negativeChild
     elseResult <- compileView negativeChildren context parent predecessors
     successor <- compileView ns context parent (Predecessor (propertyChainToString getPredecessorOf ++ "(" ++ propertyChainToString entitiesVariable ++ ".length)") : predecessors)
     let (entityUpdateCallback, restEntityUpdateCallbacks) = partition (isPrefixOf entityVariable . fst) (compileUpdate entityResult)
-        (entitiesValue, entitiesDependencies) = rightHandSideValueToJs variableStack sourceValue
+    (entitiesValue, entitiesDependencies) <- rightHandSideValueToJs variableStack sourceValue
 
     return
       ( CompileResult
@@ -375,8 +414,8 @@ compileView ((Condition conditionValue positiveChildren negativeChildren) : ns) 
     positiveChildrenResult <- compileView positiveChildren context parent predecessors
     negativeChildrenResult <- compileView negativeChildren context parent predecessors
     let successor = "(" ++ conditionVariable ++ " ? " ++ predecessorChain (compilePredecessors positiveChildrenResult) ++ " : " ++ predecessorChain (compilePredecessors negativeChildrenResult) ++ ")"
-        (internalConditionValue, conditionValueDependencies) = rightHandSideValueToJs variableStack conditionValue
-        createPositiveCallback = propertyChainToString scope ++ ".createPositive" ++ show exprId
+    (internalConditionValue, conditionValueDependencies) <- rightHandSideValueToJs variableStack conditionValue
+    let createPositiveCallback = propertyChainToString scope ++ ".createPositive" ++ show exprId
         createNegativeCallback = propertyChainToString scope ++ ".createNegative" ++ show exprId
         removeCallback = propertyChainToString scope ++ ".removeCallback" ++ show exprId
         createCallback = "createCondition" ++ show exprId
@@ -502,7 +541,7 @@ compileView ((Match rightHandValue cases : ns)) context@(Context (scope, variabl
         previousCaseVariable = "previousCase" ++ show exprId
         updateCallback = propertyChainToString scope ++ ".updateCallback" ++ show exprId
         removeCallback = propertyChainToString scope ++ ".removeCallback" ++ show exprId
-        (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack rightHandValue
+    (rightHandValueJs, dependencies) <- rightHandSideValueToJs variableStack rightHandValue
     patterns <- getMatchPatterns cases currentValueVariable context parent predecessors
     let updateCases = map (partition (isPrefixOf currentValueVariable . fst) . (\(_, caseResult) -> compileUpdate caseResult)) patterns
         activeUpdates =
@@ -658,7 +697,7 @@ compileView ((ViewContext (leftHandSide, contextName) children) : ns) context@(C
     let (leftHandSideJs, variableStack') = leftHandSideToJs variableStack leftHandSide contextValue
     childrenResult <- compileView children (Context (scope, variableStack' ++ variableStack)) parent []
     successor <- compileView ns context parent predecessors
-    let getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
+    -- let getAttributeValue = \attributeRightHandSide -> ([rightHandSideValueToJs variableStack singleAttributeRightHandSide | RightHandSideValue singleAttributeRightHandSide <- attributeRightHandSide])
     let (contextUpdateChildren, restChildrenUpdateCallbacks) = partition (isPrefixOf contextResult . fst) (compileUpdate childrenResult)
 
     return

@@ -46,6 +46,7 @@ compileRoot' componentPath ((View children) : ns) ast variableStack = do
   let scope = [DotNotation "this", DotNotation "_el"]
       variableStack' = getModelScopeVariableStack ast ++ variableStack
       styleContents = [compileStyle style | Style style <- ast]
+  modelJs <- getModelFactories ast variableStack
   childrenResult <- compileView (styleContents ++ children) (Context (scope, (["props"], propertiesScope) : variableStack')) parent []
   next <- compileRoot' componentPath ns ast variableStack
 
@@ -67,7 +68,7 @@ compileRoot' componentPath ((View children) : ns) ast variableStack = do
               Br,
               Br
             ]
-              ++ getModelFactories ast variableStack
+              ++ modelJs
               ++ [ Br,
                    Ln "connectedCallback() {",
                    Br,
@@ -98,9 +99,12 @@ compileRoot' componentPath ((View children) : ns) ast variableStack = do
 compileRoot' componentPath ((Model _ _) : ns) ast variableStack = compileRoot' componentPath ns ast variableStack
 compileRoot' componentPath ((Style styleContents) : ns) ast variableStack = do compileRoot' componentPath ns ast variableStack
 
-getModelFactories :: [Root] -> VariableStack -> [Indent]
-getModelFactories [] _ = []
-getModelFactories (model@(Model _ _) : rest) variableStack = compileModel model variableStack ++ getModelFactories rest variableStack
+getModelFactories :: [Root] -> VariableStack -> AppStateMonad [Indent]
+getModelFactories [] _ = do return []
+getModelFactories (model@(Model _ _) : rest) variableStack = do
+  result <- compileModel model variableStack
+  nextResult <- getModelFactories rest variableStack
+  return (result ++ nextResult)
 getModelFactories (_ : rest) variableStack = getModelFactories rest variableStack
 
 splitBy :: (Foldable t, Eq a) => a -> t a -> [[a]]

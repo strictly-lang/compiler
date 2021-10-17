@@ -13,11 +13,11 @@ compileHost (Context (scope, variableStack)) elementVariable (HostElement ("inpu
     exprId <- getGetFreshExprId
     let ([("value", [value])], options') = partition ((== "value") . fst) options
         ([oninput], options'') = partition ((== "oninput") . fst) options'
-        (typeName, valueJs, dependencies) = getTypeAndValue variableStack value
-        valueAttribute = getValueAttributeOfType typeName
+    (typeName, valueJs, dependencies) <- getTypeAndValue variableStack value
+    let valueAttribute = getValueAttributeOfType typeName
         valueVariable = propertyChainToString scope ++ ".valueContainer" ++ show exprId
         valueChanged = propertyChainToString scope ++ ".valueChanged" ++ show exprId
-        (functionJs, functionDependencies) = functionToJs variableStack (snd oninput)
+    (functionJs, functionDependencies) <- functionToJs variableStack (snd oninput)
     return
       ( HostElement ("input", options'', children),
         [ Ln (elementVariable ++ ".setAttribute(\"type\", \"" ++ toLowerCase typeName ++ "\");"),
@@ -83,10 +83,10 @@ compileHost context elementVariable host@(HostElement hostElementName) (Just imp
     return (host, [], [])
 compileHost context elementVariable host importPath = do return (host, [], [])
 
-getTypeAndValue :: VariableStack -> RightHandSide -> (String, [Indent], [InternalVariableName])
-getTypeAndValue variableStack (RightHandSideValue (RightHandSideType typeName [rightHandSideValue])) =
-  let (rightHandSideJs, dependencies) = rightHandSideValueToJs variableStack rightHandSideValue
-   in (typeName, rightHandSideJs, dependencies)
+getTypeAndValue :: VariableStack -> RightHandSide -> AppStateMonad (String, [Indent], [InternalVariableName])
+getTypeAndValue variableStack (RightHandSideValue (RightHandSideType typeName [rightHandSideValue])) = do
+  (rightHandSideJs, dependencies) <- rightHandSideValueToJs variableStack rightHandSideValue
+  return (typeName, rightHandSideJs, dependencies)
 
 getValueAttributeOfType :: String -> String
 getValueAttributeOfType "CheckBox" = "checked"
