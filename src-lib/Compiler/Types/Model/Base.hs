@@ -5,15 +5,25 @@ import Compiler.Util (functionToJs)
 import Data.List (intersperse)
 import Types
 
-compileModel :: Root -> VariableStack -> [Indent]
+compileModel :: Root -> VariableStack -> AppStateMonad [Indent]
 compileModel (Model name options) variableStack =
-  let hasGnerator = any (\(_, mergedOption) -> any fst mergedOption) options
-   in [ Ln (name ++ "(updateCallback, ...args) {"),
+  do
+    let hasGnerator = any (\(_, mergedOption) -> any fst mergedOption) options
+    functionJs <-
+      mapM
+        ( \(optionName, optionValue) ->
+            do
+              (functionJs, _) <- functionToJs variableStack (map snd optionValue)
+              return (Ln ("const __" ++ optionName ++ " = ") : functionJs ++ [Br])
+        )
+        options
+
+    return
+      [ Ln (name ++ "(updateCallback, ...args) {"),
         Br,
         Ind
-          ( ( concat
-                [Ln ("const __" ++ optionName ++ " = ") : fst (functionToJs variableStack (map snd optionValue)) ++ [Br] | (optionName, optionValue) <- options]
-            )
+          ( concat
+              functionJs
               ++ ( if hasGnerator
                      then
                        [ Ln "const iterable = __init(...args);",

@@ -65,136 +65,149 @@ indent' indentationLevel (Br : restLines)
 indent' indentationLevel ((Ln line) : restLines) = line ++ indent' indentationLevel restLines
 indent' indentationLevel ((Ind indentedLines) : lines) = '\t' : indent' (indentationLevel + 1) indentedLines ++ replicate indentationLevel '\t' ++ indent' indentationLevel lines
 
-functionToJs :: VariableStack -> [RightHandSide] -> ([Indent], [InternalVariableName])
-functionToJs variableStack allFunctions@((FunctionDefinition arguments _) : restFunctionDefinition) =
-  let (patterns, dependencies) = functionToJs' variableStack allFunctions
-      argumentsJs = [[DotNotation ("_arg" ++ show index)] | (_, index) <- zip arguments [0 ..]]
+functionToJs :: VariableStack -> [RightHandSide] -> AppStateMonad ([Indent], [InternalVariableName])
+functionToJs variableStack allFunctions@((FunctionDefinition arguments _) : restFunctionDefinition) = do
+  (patterns, dependencies) <- functionToJs' variableStack allFunctions
+  let argumentsJs = [[DotNotation ("_arg" ++ show index)] | (_, index) <- zip arguments [0 ..]]
       dependencies' = filter (not . \dependency -> any (`isPrefixOf` dependency) argumentsJs) dependencies
-   in ( [ Ln ("(" ++ intercalate ", " [propertyChainToString argumentJs | argumentJs <- argumentsJs] ++ ") => {"),
-          Br,
-          Ind patterns,
-          Ln "}"
-        ],
-        dependencies'
-      )
-functionToJs variableStack [RightHandSideValue rightHandSideValue] =
-  let (functionBodyJs, dependencies) = rightHandSideValueToJs variableStack rightHandSideValue
-   in ( [ Ln "(evt) => {",
-          Br,
-          Ind (functionBodyJs ++ [Ln "(evt)"]),
-          Br,
-          Ln "}"
-        ],
-        dependencies
-      )
+  return
+    ( [ Ln ("(" ++ intercalate ", " [propertyChainToString argumentJs | argumentJs <- argumentsJs] ++ ") => {"),
+        Br,
+        Ind patterns,
+        Ln "}"
+      ],
+      dependencies'
+    )
+functionToJs variableStack [RightHandSideValue rightHandSideValue] = do
+  (functionBodyJs, dependencies) <- rightHandSideValueToJs variableStack rightHandSideValue
+  return
+    ( [ Ln "(evt) => {",
+        Br,
+        Ind (functionBodyJs ++ [Ln "(evt)"]),
+        Br,
+        Ln "}"
+      ],
+      dependencies
+    )
 
-functionToJs' :: VariableStack -> [RightHandSide] -> ([Indent], [InternalVariableName])
-functionToJs' variableStack [] = ([], [])
+functionToJs' :: VariableStack -> [RightHandSide] -> AppStateMonad ([Indent], [InternalVariableName])
+functionToJs' variableStack [] = do return ([], [])
 functionToJs' variableStack ((FunctionDefinition arguments rightHandSideValue) : restFunctionDefinition)
-  | null patterns = (Ln "return " : rightHandValueJs ++ [Ln ";", Br], dependencies)
-  | otherwise =
-    let (nextPatterns, nextDependencies) = functionToJs' variableStack restFunctionDefinition
-     in ( [ Ln "if( "
-          ]
-            ++ intersperse (Ln " && ") patterns
-            ++ [ Ln ") {",
-                 Br,
-                 Ind
-                   ( Ln "return " :
-                     fst (rightHandSideValueToJs variableStack'' rightHandSideValue) ++ [Ln ";"]
-                   ),
-                 Br,
-                 Ln "}"
-               ]
-            ++ [Br]
-            ++ nextPatterns,
-          dependencies ++ nextDependencies
-        )
+  | null patterns = do
+    (rightHandValueJs, dependencies) <- rightHandSideValueToJs variableStack'' rightHandSideValue
+    return (Ln "return " : rightHandValueJs ++ [Ln ";", Br], dependencies)
+  | otherwise = do
+    (rightHandValueJs, dependencies) <- rightHandSideValueToJs variableStack'' rightHandSideValue
+    (nextPatterns, nextDependencies) <- functionToJs' variableStack restFunctionDefinition
+    return
+      ( [ Ln "if( "
+        ]
+          ++ intersperse (Ln " && ") patterns
+          ++ [ Ln ") {",
+               Br,
+               Ind
+                 ( Ln "return " :
+                   rightHandValueJs ++ [Ln ";"]
+                 ),
+               Br,
+               Ln "}"
+             ]
+          ++ [Br]
+          ++ nextPatterns,
+        dependencies ++ nextDependencies
+      )
   where
     (patterns, variableStack') = leftHandSidesToJs variableStack [[DotNotation ("_arg" ++ show index)] | index <- [0 ..]] arguments
     variableStack'' = variableStack' ++ variableStack
-    (rightHandValueJs, dependencies) = rightHandSideValueToJs variableStack'' rightHandSideValue
 
-rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> ([Indent], [InternalVariableName])
+rightHandSideValueToJs :: VariableStack -> RightHandSideValue -> AppStateMonad ([Indent], [InternalVariableName])
 rightHandSideValueToJs variableStack functionCall@(FunctionCall functionReference argumentPublicNames) = rightHandSideValueFunctionCallToJs [] variableStack functionCall
-rightHandSideValueToJs variableStack (Variable variableParts) =
+rightHandSideValueToJs variableStack (Variable variableParts) = do
   let variableName = publicVariableToInternal variableStack variableParts
-   in ([Ln (propertyChainToString variableName)], [variableName])
-rightHandSideValueToJs variableStack (MixedTextValue []) = ([Ln ""], [])
+  return ([Ln (propertyChainToString variableName)], [variableName])
+rightHandSideValueToJs variableStack (MixedTextValue []) = do return ([Ln ""], [])
 rightHandSideValueToJs variableStack (MixedTextValue ((StaticText staticText) : restMixedTextValues))
-  | null restMixedTextValues = ([Ln ("\"" ++ staticText ++ "\"")], [])
-  | otherwise = (Ln ("\"" ++ staticText ++ "\" + ") : restValue, restDependencies)
-  where
-    (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
+  | null restMixedTextValues = do return ([Ln ("\"" ++ staticText ++ "\"")], [])
+  | otherwise = do
+    (restValue, restDependencies) <- rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
+    return (Ln ("\"" ++ staticText ++ "\" + ") : restValue, restDependencies)
 rightHandSideValueToJs variableStack (MixedTextValue ((DynamicText rightHandSide) : restMixedTextValues))
-  | null restMixedTextValues = (currentValue ++ [Ln ".toString()"], currentDependencies)
-  | otherwise = (currentValue ++ [Ln ".toString() + "] ++ restValue, currentDependencies ++ restDependencies)
-  where
-    (currentValue, currentDependencies) = rightHandSideValueToJs variableStack rightHandSide
-    (restValue, restDependencies) = rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
-rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideValues) =
-  let rightHandSidesJs = map (rightHandSideValueToJs variableStack) rightHandSideValues
-   in ( [ Ln ("{ _type: \"" ++ typeName ++ "\", ") -- TODO replace "_type" with Symbol("ADT")
-        ]
-          ++ ( intercalate
-                 [Ln ", "]
-                 [ Ln ("[" ++ show index ++ "]: ") : rightHandSideJs
-                   | ((rightHandSideJs, _), index) <-
-                       zip rightHandSidesJs [0 ..]
+  | null restMixedTextValues = do
+    (currentValue, currentDependencies) <- rightHandSideValueToJs variableStack rightHandSide
+    return (currentValue ++ [Ln ".toString()"], currentDependencies)
+  | otherwise = do
+    (currentValue, currentDependencies) <- rightHandSideValueToJs variableStack rightHandSide
+    (restValue, restDependencies) <- rightHandSideValueToJs variableStack (MixedTextValue restMixedTextValues)
+    return (currentValue ++ [Ln ".toString() + "] ++ restValue, currentDependencies ++ restDependencies)
+rightHandSideValueToJs variableStack (RightHandSideType typeName rightHandSideValues) = do
+  rightHandSidesJs <- mapM (rightHandSideValueToJs variableStack) rightHandSideValues
+  return
+    ( [ Ln ("{ _type: \"" ++ typeName ++ "\", ") -- TODO replace "_type" with Symbol("ADT")
+      ]
+        ++ ( intercalate
+               [Ln ", "]
+               [ Ln ("[" ++ show index ++ "]: ") : rightHandSideJs
+                 | ((rightHandSideJs, _), index) <-
+                     zip rightHandSidesJs [0 ..]
+               ]
+               ++ [Ln "}"]
+           ),
+      concatMap snd rightHandSidesJs
+    )
+rightHandSideValueToJs variableStack (Number number) = do return ([Ln (show number)], [])
+rightHandSideValueToJs variableStack (RightHandSideRecord rightHandSideValues msourceRightHandSideValue) = do
+  jsValues <- mapM (rightHandSideValueToJs variableStack . snd) rightHandSideValues
+  let zipedJsValues = zip (map fst rightHandSideValues) jsValues
+  (sourceRightHandSideJs, sourceRightHandSideDependencies) <- case msourceRightHandSideValue of
+    Just sourceRightHandSide ->
+      do
+        (jsValue, dependencies) <- rightHandSideValueToJs variableStack sourceRightHandSide
+        return (Ln "..." : jsValue ++ [Ln ","], dependencies)
+    Nothing -> do return ([], [])
+  return
+    ( [Ln "{"]
+        ++ sourceRightHandSideJs
+        ++ intercalate [Ln ", "] (map (\(propertyName, (jsValue, _)) -> Ln (propertyName ++ ": ") : jsValue) zipedJsValues)
+        ++ [ Ln "}"
+           ],
+      sourceRightHandSideDependencies ++ concatMap snd jsValues
+    )
+rightHandSideValueToJs variableStack (RightHandSideOperation rightHandSideOperator firstRightHandSideValue secondRightHandSideValue) = do
+  (firstRightHandSideJs, firstDependencies) <- rightHandSideValueToJs variableStack firstRightHandSideValue
+  (secondRightHandSideJs, secondDpendencies) <- rightHandSideValueToJs variableStack secondRightHandSideValue
+  return
+    ( firstRightHandSideJs ++ [rightHandSideOperatorToJs rightHandSideOperator] ++ secondRightHandSideJs,
+      firstDependencies ++ secondDpendencies
+    )
+rightHandSideValueToJs variableStack (RightHandSideList rightHandSideValues []) = do
+  rightHandSideValuesJs <- mapM (rightHandSideValueToJs variableStack) rightHandSideValues
+  return
+    ( Ln "[" :
+      intercalate [Ln ", "] (map fst rightHandSideValuesJs)
+        ++ [ Ln "]"
+           ],
+      concatMap snd rightHandSideValuesJs
+    )
+rightHandSideValueToJs variableStack (RightHandSideList rightHandSideValues feedRightHandSideValues) = do
+  (content, dependencies) <- rightHandSideListGenerator variableStack rightHandSideValues feedRightHandSideValues
+  return
+    ( [ Ln "(() => {",
+        Br,
+        Ind
+          ( [ Ln "const result = [];",
+              Br
+            ]
+              ++ content
+              ++ [ Br,
+                   Ln "return result;",
+                   Br
                  ]
-                 ++ [Ln "}"]
-             ),
-        concatMap snd rightHandSidesJs
-      )
-rightHandSideValueToJs variableStack (Number number) = ([Ln (show number)], [])
-rightHandSideValueToJs variableStack (RightHandSideRecord rightHandSideValues msourceRightHandSideValue) =
-  let jsValues = map (rightHandSideValueToJs variableStack . snd) rightHandSideValues
-      zipedJsValues = zip (map fst rightHandSideValues) jsValues
-      (sourceRightHandSideJs, sourceRightHandSideDependencies) = case msourceRightHandSideValue of
-        Just sourceRightHandSide ->
-          let (jsValue, dependencies) = rightHandSideValueToJs variableStack sourceRightHandSide
-           in (Ln "..." : jsValue ++ [Ln ","], dependencies)
-        Nothing -> ([], [])
-   in ( [Ln "{"]
-          ++ sourceRightHandSideJs
-          ++ intercalate [Ln ", "] (map (\(propertyName, (jsValue, _)) -> Ln (propertyName ++ ": ") : jsValue) zipedJsValues)
-          ++ [ Ln "}"
-             ],
-        sourceRightHandSideDependencies ++ concatMap snd jsValues
-      )
-rightHandSideValueToJs variableStack (RightHandSideOperation rightHandSideOperator firstRightHandSideValue secondRightHandSideValue) =
-  let (firstRightHandSideJs, firstDependencies) = rightHandSideValueToJs variableStack firstRightHandSideValue
-      (secondRightHandSideJs, secondDpendencies) = rightHandSideValueToJs variableStack secondRightHandSideValue
-   in ( firstRightHandSideJs ++ [rightHandSideOperatorToJs rightHandSideOperator] ++ secondRightHandSideJs,
-        firstDependencies ++ secondDpendencies
-      )
-rightHandSideValueToJs variableStack (RightHandSideList rightHandSideValues []) =
-  let rightHandSideValuesJs = map (rightHandSideValueToJs variableStack) rightHandSideValues
-   in ( Ln "[" :
-        intercalate [Ln ", "] (map fst rightHandSideValuesJs)
-          ++ [ Ln "]"
-             ],
-        concatMap snd rightHandSideValuesJs
-      )
-rightHandSideValueToJs variableStack (RightHandSideList rightHandSideValues feedRightHandSideValues) =
-  let (content, dependencies) = rightHandSideListGenerator variableStack rightHandSideValues feedRightHandSideValues
-   in ( [ Ln "(() => {",
-          Br,
-          Ind
-            ( [ Ln "const result = [];",
-                Br
-              ]
-                ++ content
-                ++ [ Br,
-                     Ln "return result;",
-                     Br
-                   ]
-            )
-        ]
-          ++ [ Ln "})()"
-             ],
-        dependencies
-      )
+          )
+      ]
+        ++ [ Ln "})()"
+           ],
+      dependencies
+    )
 
 rightHandSideOperatorToJs :: RightHandSideOperator -> Indent
 rightHandSideOperatorToJs Equal = Ln " == "
@@ -205,57 +218,60 @@ rightHandSideOperatorToJs Multiply = Ln " * "
 rightHandSideOperatorToJs Division = Ln " / "
 rightHandSideOperatorToJs Modulo = Ln " % "
 
-rightHandSideListGenerator :: VariableStack -> [RightHandSideValue] -> [ListSourceOrFilter] -> ([Indent], [InternalVariableName])
-rightHandSideListGenerator variableStack [] [] = ([], [])
-rightHandSideListGenerator variableStack (rightHandSideValue : nextRightHandSideValues) [] =
-  let (rightHandSideValueJs, rightHandSideDependencies) = rightHandSideValueToJs variableStack rightHandSideValue
-      (nextRightHandSideValueJs, nextRightHandSideDependencies) = rightHandSideListGenerator variableStack nextRightHandSideValues []
-   in ( Ln "result.push(" :
-        rightHandSideValueJs ++ [Ln ");", Br]
-          ++ nextRightHandSideValueJs,
-        rightHandSideDependencies ++ nextRightHandSideDependencies
-      )
-rightHandSideListGenerator variableStack rightHandSideValues ((ListSource (leftHandSide, rightHandSideValue)) : feedRightHandSideValues) =
-  let (sourceJs, sourceDependencies) = rightHandSideValueToJs variableStack rightHandSideValue
-      (loopConditions, variableStack') = leftHandSideToJs variableStack leftHandSide [DotNotation "entity"]
-      (nestedJs, nestedDependencies) = rightHandSideListGenerator (variableStack' ++ variableStack) rightHandSideValues feedRightHandSideValues
-   in ( Ln "for (const entity of " : -- "entity" variable name needs to be suffixed with exprId
-        sourceJs
-          ++ [ Ln ") {",
-               Br,
-               Ind
-                 nestedJs,
-               Br,
-               Ln "}",
-               Br
-             ],
-        sourceDependencies ++ nestedDependencies
-      )
-rightHandSideListGenerator variableStack rightHandSideValues (Filter filterRightHandValue : feedRightHandSideValues) =
-  let (filterRightHandValueJs, filterRightHandValueDependencies) = rightHandSideValueToJs variableStack filterRightHandValue
-      (nestedJs, nestedDependencies) = rightHandSideListGenerator variableStack rightHandSideValues feedRightHandSideValues
-   in ( [ Ln "if ("
-        ]
-          ++ filterRightHandValueJs
-          ++ [ Ln ") {",
-               Br,
-               Ind
-                 nestedJs,
-               Br,
-               Ln "}",
-               Br
-             ],
-        filterRightHandValueDependencies ++ nestedDependencies
-      )
+rightHandSideListGenerator :: VariableStack -> [RightHandSideValue] -> [ListSourceOrFilter] -> AppStateMonad ([Indent], [InternalVariableName])
+rightHandSideListGenerator variableStack [] [] = do return ([], [])
+rightHandSideListGenerator variableStack (rightHandSideValue : nextRightHandSideValues) [] = do
+  (rightHandSideValueJs, rightHandSideDependencies) <- rightHandSideValueToJs variableStack rightHandSideValue
+  (nextRightHandSideValueJs, nextRightHandSideDependencies) <- rightHandSideListGenerator variableStack nextRightHandSideValues []
+  return
+    ( Ln "result.push(" :
+      rightHandSideValueJs ++ [Ln ");", Br]
+        ++ nextRightHandSideValueJs,
+      rightHandSideDependencies ++ nextRightHandSideDependencies
+    )
+rightHandSideListGenerator variableStack rightHandSideValues ((ListSource (leftHandSide, rightHandSideValue)) : feedRightHandSideValues) = do
+  (sourceJs, sourceDependencies) <- rightHandSideValueToJs variableStack rightHandSideValue
+  let (loopConditions, variableStack') = leftHandSideToJs variableStack leftHandSide [DotNotation "entity"]
+  (nestedJs, nestedDependencies) <- rightHandSideListGenerator (variableStack' ++ variableStack) rightHandSideValues feedRightHandSideValues
+  return
+    ( Ln "for (const entity of " : -- "entity" variable name needs to be suffixed with exprId
+      sourceJs
+        ++ [ Ln ") {",
+             Br,
+             Ind
+               nestedJs,
+             Br,
+             Ln "}",
+             Br
+           ],
+      sourceDependencies ++ nestedDependencies
+    )
+rightHandSideListGenerator variableStack rightHandSideValues (Filter filterRightHandValue : feedRightHandSideValues) = do
+  (filterRightHandValueJs, filterRightHandValueDependencies) <- rightHandSideValueToJs variableStack filterRightHandValue
+  (nestedJs, nestedDependencies) <- rightHandSideListGenerator variableStack rightHandSideValues feedRightHandSideValues
+  return
+    ( [ Ln "if ("
+      ]
+        ++ filterRightHandValueJs
+        ++ [ Ln ") {",
+             Br,
+             Ind
+               nestedJs,
+             Br,
+             Ln "}",
+             Br
+           ],
+      filterRightHandValueDependencies ++ nestedDependencies
+    )
 
 type Curry = [Indent]
 
-rightHandSideValueFunctionCallToJs :: [Curry] -> VariableStack -> RightHandSideValue -> ([Indent], [InternalVariableName])
-rightHandSideValueFunctionCallToJs curry variableStack (FunctionCall functionReference argumentPublicNames) =
-  let (functionValue, functionDependencies) = rightHandSideValueToJs variableStack functionReference
-      arguments = map (rightHandSideValueToJs variableStack) argumentPublicNames
-      function = functionValue ++ [Ln "("] ++ intercalate [Ln ", "] (curry ++ map fst arguments) ++ [Ln ")"]
-   in (function, functionDependencies ++ concatMap snd arguments)
+rightHandSideValueFunctionCallToJs :: [Curry] -> VariableStack -> RightHandSideValue -> AppStateMonad ([Indent], [InternalVariableName])
+rightHandSideValueFunctionCallToJs curry variableStack (FunctionCall functionReference argumentPublicNames) = do
+  (functionValue, functionDependencies) <- rightHandSideValueToJs variableStack functionReference
+  arguments <- mapM (rightHandSideValueToJs variableStack) argumentPublicNames
+  let function = functionValue ++ [Ln "("] ++ intercalate [Ln ", "] (curry ++ map fst arguments) ++ [Ln ")"]
+  return (function, functionDependencies ++ concatMap snd arguments)
 
 leftHandSidesToJs :: VariableStack -> [InternalVariableName] -> [LeftHandSide] -> ([Indent], VariableStack)
 leftHandSidesToJs variableStack _ [] = ([], variableStack)
