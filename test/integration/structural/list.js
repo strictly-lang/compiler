@@ -1,5 +1,6 @@
 import "/test/components/structural/list/base.sly";
 import "/test/components/structural/list/destructure.sly";
+import "/test/components/structural/list/multisource.sly";
 
 describe("list handling", () => {
   let container;
@@ -77,4 +78,27 @@ describe("list handling", () => {
     expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[1].textContent).toBe("0: baz");
   });
+
+  it("multisource list", () => {
+    const element = document.createElement(
+      "test-components-structural-list-multisource"
+    );
+    container.appendChild(element);
+
+    expect(element.shadowRoot.childNodes.length).toBe(8);
+    debugger
+    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
+
+    expect(element.shadowRoot.childNodes[1].textContent).toBe("0: 3");
+    expect(element.shadowRoot.childNodes[2].textContent).toBe("0: 4");
+
+    expect(element.shadowRoot.childNodes[3].textContent).toBe("1: 3");
+    expect(element.shadowRoot.childNodes[4].textContent).toBe("1: 4");
+
+    expect(element.shadowRoot.childNodes[5].textContent).toBe("2: 3");
+    expect(element.shadowRoot.childNodes[6].textContent).toBe("2: 4");
+
+    expect(element.shadowRoot.childNodes[7].tagName).toBe("FOOTER");
+
+  })
 });

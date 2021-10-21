@@ -126,7 +126,7 @@ walkDependencies (((internalName, updateCallback) : updateCallbacks))
     let setterName = internalNameToSetterName internalName
         (matchedUpdateCallbacks, unmatchedUpdateCallbacks) = partition ((setterName ==) . internalNameToSetterName . fst) updateCallbacks
      in getSetter setterName (updateCallback : map snd matchedUpdateCallbacks) ++ walkDependencies unmatchedUpdateCallbacks
-  | otherwise = error ("There is an observer missing for " ++ propertyChainToString internalName)
+  | otherwise = walkDependencies updateCallbacks
   where
     isProps = propertiesScope `isPrefixOf` internalName
 

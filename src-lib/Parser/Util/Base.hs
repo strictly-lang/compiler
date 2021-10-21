@@ -51,7 +51,7 @@ dynamicTextParser = do
 
 leftHandSideTupleParser :: Parser LeftHandSide
 leftHandSideTupleParser = do
-  tuples <- between (char '(') (char ')') (sepBy leftHandSideParser (char ',' <* sc))
+  tuples <- between (char '(') (char ')') (leftHandSideParser `sepBy` (char ',' <* sc))
   return (LeftTuple tuples)
 
 leftHandSideHoleParser :: Parser LeftHandSide
@@ -75,7 +75,7 @@ leftHandSideTypeParser = do
   hasOptions <- optional (lookAhead (char '('))
   case hasOptions of
     Just _ -> do
-      values <- between (char '(' <* sc) (char ')') (sepBy leftHandSideParser (char ',' <* sc))
+      values <- between (char '(' <* sc) (char ')') (leftHandSideParser `sepBy` (char ',' <* sc))
       return (LeftType typeName values)
     Nothing -> do
       return (LeftType typeName [])
@@ -245,13 +245,18 @@ rightHandSideValueTypeParser = do
 
 rightHandSideValueParser :: Parser RightHandSideValue
 rightHandSideValueParser = do
-  rightHandSideValue <- (rightHandSideValueTypeParser <|> rightHandSideValueNumberParser <|> rightHandSideValueTextParser <|> rightHandSideValueRecordParser <|> rightHandSideValueVariableParser <|> rightHandSideValueListParser) <* sc
+  rightHandSideValue <- (rightHandSideValueTypeParser <|> rightHandSideValueNumberParser <|> rightHandSideValueTextParser <|> rightHandSideValueRecordParser <|> rightHandSideValueVariableParser <|> rightHandSideValueListParser <|> rightHandSideValueTupleParser) <* sc
   optionalOperator <- optional rightHandSideOperatorParser
 
   case optionalOperator of
     Just operator -> do
       RightHandSideOperation operator rightHandSideValue <$> rightHandSideValueParser
     Nothing -> return rightHandSideValue
+
+rightHandSideValueTupleParser :: Parser RightHandSideValue
+rightHandSideValueTupleParser = do
+  tuples <- between (char '(') (char ')') (rightHandSideValueParser `sepBy` (char ',' <* sc))
+  return (Tuple tuples)
 
 rightHandSideValueNumberParser :: Parser RightHandSideValue
 rightHandSideValueNumberParser = do

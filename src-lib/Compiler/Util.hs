@@ -208,6 +208,16 @@ rightHandSideValueToJs variableStack (RightHandSideList rightHandSideValues feed
            ],
       dependencies
     )
+rightHandSideValueToJs variableStack (Tuple rightHandSideValues) = do
+  rightHandSideValuesJs <- mapM (rightHandSideValueToJs variableStack) rightHandSideValues
+
+  return
+    ( Ln "[" :
+      intercalate [Ln ", "] (map fst rightHandSideValuesJs)
+        ++ [ Ln "]"
+           ],
+      concatMap snd rightHandSideValuesJs
+    )
 
 rightHandSideOperatorToJs :: RightHandSideOperator -> Indent
 rightHandSideOperatorToJs Equal = Ln " == "
@@ -231,10 +241,12 @@ rightHandSideListGenerator variableStack (rightHandSideValue : nextRightHandSide
     )
 rightHandSideListGenerator variableStack rightHandSideValues ((ListSource (leftHandSide, rightHandSideValue)) : feedRightHandSideValues) = do
   (sourceJs, sourceDependencies) <- rightHandSideValueToJs variableStack rightHandSideValue
-  let (loopConditions, variableStack') = leftHandSideToJs variableStack leftHandSide [DotNotation "entity"]
+  exprId <- getGetFreshExprId
+  let variableName = "entity" ++ show exprId
+  let (loopConditions, variableStack') = leftHandSideToJs variableStack leftHandSide [DotNotation variableName]
   (nestedJs, nestedDependencies) <- rightHandSideListGenerator (variableStack' ++ variableStack) rightHandSideValues feedRightHandSideValues
   return
-    ( Ln "for (const entity of " : -- "entity" variable name needs to be suffixed with exprId
+    ( Ln ("for (const " ++ variableName ++ " of ") :
       sourceJs
         ++ [ Ln ") {",
              Br,
