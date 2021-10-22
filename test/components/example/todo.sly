@@ -23,7 +23,7 @@ model:text{
 }
 
 view
-	#model ({todos, textValue}, todosDispatch) <- main()
+	#model \<{todos, textValue}, todosDispatch> <- main()
 		#model 
 		input{
 			value = Text(textValue)

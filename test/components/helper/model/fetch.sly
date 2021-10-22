@@ -8,7 +8,7 @@ model:data{
 
 view
 	#if props.load
-		#model \(dataState, _) <- data(props.id)
+		#model \<dataState, _> <- data(props.id)
 			#match dataState
 				#case Pending
 					"Loading..."

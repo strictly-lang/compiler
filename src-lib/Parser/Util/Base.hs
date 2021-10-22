@@ -51,7 +51,7 @@ dynamicTextParser = do
 
 leftHandSideTupleParser :: Parser LeftHandSide
 leftHandSideTupleParser = do
-  tuples <- between (char '(') (char ')') (leftHandSideParser `sepBy` (char ',' <* sc))
+  tuples <- between (char '<') (char '>') (leftHandSideParser `sepBy` (char ',' <* sc))
   return (LeftTuple tuples)
 
 leftHandSideHoleParser :: Parser LeftHandSide
@@ -255,7 +255,7 @@ rightHandSideValueParser = do
 
 rightHandSideValueTupleParser :: Parser RightHandSideValue
 rightHandSideValueTupleParser = do
-  tuples <- between (char '(') (char ')') (rightHandSideValueParser `sepBy` (char ',' <* sc))
+  tuples <- between (char '<') (char '>') (rightHandSideValueParser `sepBy` (char ',' <* sc))
   return (Tuple tuples)
 
 rightHandSideValueNumberParser :: Parser RightHandSideValue

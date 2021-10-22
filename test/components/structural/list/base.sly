@@ -6,11 +6,11 @@ model:main{
 }
 
 view
-	#model \(mainState, mainDispatch) <- main()
+	#model \<mainState, mainDispatch> <- main()
 		button{
 			onclick = /_ -> mainDispatch(2)
 		}
-		#each \(value, index) <- zipWithIndex(mainState)
+		#each \<value, index> <- zipWithIndex(mainState)
 			div
 				"${index}: ${value}"
 		#else

@@ -6,7 +6,7 @@ model:data{
 
 view
 	div
-		#model \(dataState, dataDispatch) <- data()
+		#model \<dataState, dataDispatch> <- data()
 			#match dataState
 				#case First
 					button{
