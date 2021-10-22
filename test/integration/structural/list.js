@@ -86,7 +86,6 @@ describe("list handling", () => {
     container.appendChild(element);
 
     expect(element.shadowRoot.childNodes.length).toBe(8);
-    debugger
     expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
 
     expect(element.shadowRoot.childNodes[1].textContent).toBe("0: 3");
