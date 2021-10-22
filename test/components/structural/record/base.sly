@@ -4,7 +4,7 @@ model:main{
 }
 
 view
-	#model \(mainState, mainDispatch) <- main()
+	#model \<mainState, mainDispatch> <- main()
 		button{
 			onclick = /_ -> mainDispatch(2)
 		}

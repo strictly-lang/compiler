@@ -4,7 +4,7 @@ model:main{
 }
 
 view
-	#model \(mainState, mainDispatch) <- main()
+	#model \<mainState, mainDispatch> <- main()
 		input{
 			value = Text(mainState)
 			oninput = /Text(value) -> mainDispatch(value)

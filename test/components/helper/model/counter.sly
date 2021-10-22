@@ -5,7 +5,7 @@ model:counter{
 }
 
 view
-	#model \(counterState, counterDispatch) <- counter()
+	#model \<counterState, counterDispatch> <- counter()
 		button{
 			onclick = /_ -> counterDispatch(Decrement)
 		}

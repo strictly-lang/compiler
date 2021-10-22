@@ -5,7 +5,7 @@ model:data{
 
 view
 	header
-	#model \(dataState, dataDispatch) <- data()
+	#model \<dataState, dataDispatch> <- data()
 		#if props.foo
 			#match dataState
 				#case First

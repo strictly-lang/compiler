@@ -6,7 +6,7 @@ model:selection{
 
 view
 	#each \entity <- [props.page * 10 .. props.page * 10 + 10]
-		#model (selectionState, selectionDispatch) <- selection(props.page)
+		#model \<selectionState, selectionDispatch> <- selection(props.page)
 			div{
 				class?selected = selectionState
 				onclick = /_ -> selectionDispatch(selectionState ? RemoveSelection : AddSelection)

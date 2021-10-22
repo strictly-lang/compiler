@@ -4,7 +4,7 @@ model:base{
 }
 
 view
-	#model \(values, dispatch) <- base()
+	#model \<values, dispatch> <- base()
 		header{
 			onclick = /_ -> dispatch([Odd(0), Even(1), Even(2)])
 		}

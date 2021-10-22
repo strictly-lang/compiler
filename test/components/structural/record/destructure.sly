@@ -4,7 +4,7 @@ model:main{
 }
 
 view
-	#model \({x, deep = { y = yValue }}, mainDispatch) <- main()
+	#model \<{x, deep = { y = yValue }}, mainDispatch> <- main()
 		button{
 			onclick = /_ -> mainDispatch(2)
 		}

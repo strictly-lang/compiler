@@ -2,7 +2,7 @@ import /vendor/strictly/prelude/src/index.js (zipWithIndex)
 
 view
 	header
-	#each \(a, b) <- [(a, b) | \a <- [0, 1, 2], \b <- [3, 4]]
+	#each \<a, b> <- [<a, b> | \a <- [0, 1, 2], \b <- [3, 4]]
 		div
 			"${a}: ${b}"
 	#else
