@@ -2087,8 +2087,8 @@ karma-jasmine@^4.0.1:
     jasmine-core "^3.6.0"
 
 karma@^6.3.4:
-  version "6.3.6"
-  resolved "https://registry.yarnpkg.com/karma/-/karma-6.3.6.tgz#6f64cdd558c7d0c9da6fcdece156089582694611"
+  version "6.3.7"
+  resolved "https://registry.yarnpkg.com/karma/-/karma-6.3.7.tgz#35d7c7ff46d7cc21633075a9fdafcb495546bf9a"
   dependencies:
     body-parser "^1.19.0"
     braces "^3.0.2"
