@@ -23,7 +23,7 @@ main = /props ->
 
 	$input{
 		value = Text(textValue)
-		oninput = Text(textValue) ->
+		oninput = /Text(textValue) ->
 			todosDispatch(ChangeText(textValue))
 	}
 	$button{
