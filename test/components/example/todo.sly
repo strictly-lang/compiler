@@ -28,7 +28,7 @@ main = /props ->
 	}
 	$button{
 		type = Submit
-		onclick = _ -> todosDispatch(CreateTodo)
+		onclick = /_ -> todosDispatch(CreateTodo)
 	}
 	$ul
 		todos.length == 0 ?
