@@ -1,10 +1,11 @@
-style
+style = {
 	.row = {
 		color = Blue
 	}
-	.row .done = {
+	.row.done = {
 		color = Grey
 	}
+}
 
 data = / -> {
 	init = { currentText = "", todos = [] }
@@ -13,32 +14,31 @@ data = / -> {
 	reducer = /{ todos, currentText }, CreateTodo ->
 		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
 	reducer = /state@{ todos }, ToggleDone(index) ->
-		let todos' = [{ isDone = if index == index' then False else isDone == False | todo }} | ( todo@{ isDone }, index' ) <- zipWithIndex(todos)]
-		in { todos' | state }
+		let todos' = [{ isDone = index == index' ? False : isDone == False | todo } | < todo@{ isDone }, index' > <- zipWithIndex(todos)];
+		{ todos = todos' | state }
 }
 
 main = /props ->
-	\<{todos, textValue}, todosDispatch> <- model(data())
+	\<{todos, textValue}, todosDispatch> <- model(data());
 
-	$
-		$input{
-			value = Text(textValue)
-			oninput = Text(textValue) ->
-				todosDispatch(ChangeText(textValue))
-		}
-		$button{
-			type = Submit
-			onclick = _ -> todosDispatch(CreateTodo)
-		}
-		$ul
-			if( todos.length == 0 )
-				"You don't have any todos left"
-			else
-				todos.map(/{value, isDone}, index ->
-					$li{
-						class = "row"
-						class?done = isDone
-						onclick = _ -> todosDispatch(ToggleDone(index))
-					}
-						"${value}"
-				)
+	$input{
+		value = Text(textValue)
+		oninput = Text(textValue) ->
+			todosDispatch(ChangeText(textValue))
+	}
+	$button{
+		type = Submit
+		onclick = _ -> todosDispatch(CreateTodo)
+	}
+	$ul
+		todos.length == 0 ?
+			"You don't have any todos left"
+		:
+			todos.map(/{value, isDone}, index ->
+				$li{
+					class = "row"
+					class?done = isDone
+					onclick = /_ -> todosDispatch(ToggleDone(index))
+				}
+					"${value}"
+			)
