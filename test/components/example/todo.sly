@@ -14,7 +14,7 @@ data = / -> {
 	reducer = /{ todos, currentText }, CreateTodo ->
 		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
 	reducer = /state@{ todos }, ToggleDone(index) ->
-		let todos' = [{ isDone = index == index' ? False : isDone == False | todo } | \< todo@{ isDone }, index' > <- zipWithIndex(todos)];
+		let todos' = [{ isDone = if ( index == index') False else isDone == False | todo } | \< todo@{ isDone }, index' > <- zipWithIndex(todos)];
 		{ todos = todos' | state }
 }
 
@@ -31,9 +31,9 @@ main = /props ->
 		onclick = /_ -> todosDispatch(CreateTodo)
 	}
 	$ul
-		todos.length == 0 ?
+		if (todos.length == 0)
 			"You don't have any todos left"
-		:
+		else
 			todos.map(/{value, isDone}, index ->
 				$li{
 					class = "row"
