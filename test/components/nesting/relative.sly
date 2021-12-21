@@ -1,4 +1,4 @@
-view
-	.-deep-index{
+main = /props ->
+	$.-deep-index{
 		foo = props.foo
 	}

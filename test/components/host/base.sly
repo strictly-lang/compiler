@@ -1,2 +1,2 @@
-view
-	div
+main = /props ->
+	$div

@@ -1,19 +1,19 @@
 import /vendor/strictly/prelude/src/index.js (zipWithIndex)
 
-view
-	#match props.values
-		#case []
-			span
+main = /props ->
+	match props.values
+		case /[] ->
+			$span
 				"empty values"
-		#case [value]
-			span
+		case /[value] ->
+			$span
 				"one value ${value}"
-		#case [firstValue, secondValue | restValues]
-			span
+		case /[firstValue, secondValue | restValues] ->
+			$span
 				"first: ${firstValue}, second: ${secondValue}"
-			#each \<value, index> <- zipWithIndex(restValues)
-				div
+			each \[value, index] <- zipWithIndex(restValues)
+				$div
 					"${index}: ${value}"
-			#else
-				div
+			else
+				$div
 					"empty rest"

@@ -1,5 +1,5 @@
-view
-	div{
+main = /props ->
+	$div{
 		class="foo"
 		part=props.bar
 		title="combined ${props.foo} text"

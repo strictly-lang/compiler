@@ -1,11 +1,11 @@
-model:main{
-	init = /-> ""
+data = / -> {
+	init = ""
 	reducer = /_, action -> action
 }
 
-view
-	#model \<mainState, mainDispatch> <- main()
-		input{
-			value = Text(mainState)
-			oninput = /Text(value) -> mainDispatch(value)
-		}
+main = /props ->
+	\<mainState, mainDispatch> <- model(data());
+	input{
+		value = Text(mainState)
+		oninput = /Text(value) -> mainDispatch(value)
+	}

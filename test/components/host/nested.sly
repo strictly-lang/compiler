@@ -1,4 +1,4 @@
-view
-	div
+main = /props ->
+	$div
 		img
-	span
+	$span

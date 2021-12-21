@@ -1,4 +1,4 @@
-view
-	test-components-nesting-deep-index{
+main = /props ->
+	$test-components-nesting-deep-index{
 		foo = props.foo
 	}

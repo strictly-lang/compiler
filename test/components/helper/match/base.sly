@@ -1,22 +1,22 @@
 data = / -> {
-	init = /-> First
+	init = First
 	reducer = /First, action -> Second( action )
 	reducer = /Second( value ), action -> Third( value + action )
 }
 
 main = /props ->
 	$div
-		\<dataState, dataDispatch> <- model(data())
-		#match dataState
-			#case /First ->
-				$button{
+		\[dataState, dataDispatch] <- model(data());
+		match dataState
+			case /First ->
+				$$button{
 					onclick = /_ -> dataDispatch(1)
 				}
 					"first"
-			#case /Second( value ) ->
-				$button{
+			case /Second( value ) ->
+				$$button{
 					onclick = /_ -> dataDispatch(2)
 				}
 					"second: ${value}"
-			#case /Third( value ) ->
+			case /Third( value ) ->
 				"third: ${value}"

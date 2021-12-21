@@ -1,17 +1,17 @@
-model:base{
-	init = / -> [Even(0), Odd(1), Even(2)]
+data = / -> {
+	init = [Even(0), Odd(1), Even(2)]
 	reducer = / _, action -> action
 }
 
-view
-	#model \<values, dispatch> <- base()
-		header{
-			onclick = /_ -> dispatch([Odd(0), Even(1), Even(2)])
-		}
-		#each \Even(value) <- values
-			div
-				"${value}"
-		#else
-			span
-				"else"
-		footer
+main = /props ->
+	\<values, dispatch> <- model(data());
+	$header{
+		onclick = /_ -> dispatch([Odd(0), Even(1), Even(2)])
+	}
+	each \Even(value) <- values
+		$div
+			"${value}"
+	else
+		$span
+			"else"
+	$footer

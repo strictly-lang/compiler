@@ -1,3 +1,3 @@
-view
-	div
+main = /props ->
+	$div
 		" foo  ${props.bar}  baz "

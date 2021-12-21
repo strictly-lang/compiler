@@ -1,4 +1,4 @@
-view
+main = /props ->
 	input{
 		value = CheckBox(props.value)
 		oninput = /CheckBox(value) -> props.oninput(value)

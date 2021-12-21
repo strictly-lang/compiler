@@ -1,9 +1,9 @@
-view
-	header
-	#if props.foo
-		div
+main = /props ->
+	$header
+	if props.foo
+		$div
 			"foo-${props.bar}"
-	#else
-		span
+	else
+		$span
 			"not-foo-${props.bar}"
-	footer
+	$footer

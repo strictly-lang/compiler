@@ -1,5 +1,5 @@
 style
-	div{
+	$div{
 		padding = [Px(1)]
 	}
 	.class{
@@ -13,12 +13,12 @@ style
 	#entity.class{
 		background-color = Initial
 	}
-view
-	div
-	div{
+main = /props ->
+	$div
+	$div{
 		id="entity"
 		class="class"
 	}
-	div{
+	$div{
 		class="class"
 	}

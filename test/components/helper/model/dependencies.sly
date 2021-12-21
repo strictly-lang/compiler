@@ -1,16 +1,16 @@
-model:selection{
-	init = /_ -> false
+data = /_ -> {
+	init = false
 	reducer = /_, RemoveSelection -> false
 	reducer = /_, AddSelection    -> true
 }
 
-view
-	#each \entity <- [props.page * 10 .. props.page * 10 + 10]
-		#model \<selectionState, selectionDispatch> <- selection(props.page)
-			div{
-				class?selected = selectionState
-				onclick = /_ -> selectionDispatch(selectionState ? RemoveSelection : AddSelection)
-			}
-				"${entity}"
-	#else
+main = /props ->
+	each \entity <- [props.page * 10 .. props.page * 10 + 10]
+		\[selectionState, selectionDispatch] <- model(data(props.page));
+		$div{
+			class?selected = selectionState
+			onclick = /_ -> selectionDispatch(selectionState ? RemoveSelection : AddSelection)
+		}
+			"${entity}"
+	else
 		-

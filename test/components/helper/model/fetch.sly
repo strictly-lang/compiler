@@ -1,20 +1,24 @@
 import /vendor/strictly/prelude/src/index.js (fetchText)
 
-model:data{
-	init* = /id -> fetchText("/api/${id}")
-	reducer = /Pending, Ok(response) -> Result( response )
-	reducer = /Pending, error@Error(_) -> error
-}
+data = /id ->
+	result <- fetchText("/api/${id}");
+	{
+		init = match result
+					case /Pending -> Pending
+					case /Done(Ok(response)) -> Result(response)
+					case /Done(error@Error(_)) -> error
+		reducer = /state, action -> state
+	}
 
-view
-	#if props.load
-		#model \<dataState, _> <- data(props.id)
-			#match dataState
-				#case Pending
-					"Loading..."
-				#case Result( content )
-					"${content}"
-				#case Error( _ )
-					"could not load"
-	#else
+main = /props ->
+	if props.load
+		\[dataState, _] <- model(data(props.id));
+		match dataState
+			case /Pending ->
+				"Loading..."
+			case /Result( content ) ->
+				"${content}"
+			case /Error( _ ) ->
+				"could not load"
+	else
 		"not to be loaded"
