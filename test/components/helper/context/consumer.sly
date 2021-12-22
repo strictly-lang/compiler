@@ -1,6 +1,6 @@
 main = /props ->
 	$div
-		if (props.foo)
+		if props.foo then
 			\valueFromContext <- context(some-parent-element);
 			"${valueFromContext}"
 		else

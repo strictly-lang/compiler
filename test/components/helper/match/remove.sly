@@ -5,8 +5,8 @@ data = / -> {
 
 main = /props ->
 	$header
-	\<dataState, dataDispatch> <- model(data());
-		if props.foo
+	\[dataState, dataDispatch] <- model(data());
+		if props.foo then
 			match dataState
 				case /First ->
 					$div{

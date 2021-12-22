@@ -4,7 +4,7 @@ data = / -> {
 }
 
 main = /props ->
-	\<values, dispatch> <- model(data());
+	\[values, dispatch] <- model(data());
 	$header{
 		onclick = /_ -> dispatch([Odd(0), Even(1), Even(2)])
 	}

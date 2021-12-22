@@ -1,5 +1,5 @@
 main = /props ->
-	input{
+	$input{
 		value = Text(props.value)
 		oninput = /Text(value) -> props.oninput(value)
 	}

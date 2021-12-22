@@ -1,6 +1,6 @@
 main = /props ->
 	$header
-	if props.foo
+	if props.foo then
 		$div
 			"foo-${props.bar}"
 	else

@@ -6,7 +6,7 @@ data = / -> {
 
 main = /props ->
 	$div
-		\<dataState, dataDispatch> <- model(data());
+		\[dataState, dataDispatch] <- model(data());
 		match dataState
 			case /First ->
 				$button{

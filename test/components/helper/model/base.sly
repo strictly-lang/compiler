@@ -4,8 +4,8 @@ data = / -> {
 }
 
 main = /props ->
-	\<mainState, mainDispatch> <- model(data());
-	input{
+	\[mainState, mainDispatch] <- model(data());
+	$input{
 		value = Text(mainState)
 		oninput = /Text(value) -> mainDispatch(value)
 	}

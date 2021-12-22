@@ -1,7 +1,7 @@
 main = /props ->
 	$header
-	if props.foo
-		if props.bar
+	if props.foo then
+		if props.bar then
 			$div
 		else
 			$span

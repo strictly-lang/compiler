@@ -14,12 +14,12 @@ data = / -> {
 	reducer = /{ todos, currentText }, CreateTodo ->
 		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
 	reducer = /state@{ todos }, ToggleDone(index) ->
-		let todos' = [{ isDone = if ( index == index') False else isDone == False | todo } | \< todo@{ isDone }, index' > <- zipWithIndex(todos)];
+		let todos' = [{ isDone = if index == index' then False else isDone == False | todo } | \[ todo@{ isDone }, index' ] <- zipWithIndex(todos)];
 		{ todos = todos' | state }
 }
 
 main = /props ->
-	\<{todos, textValue}, todosDispatch> <- model(data());
+	\[{todos, textValue}, todosDispatch] <- model(data());
 
 	$input{
 		value = Text(textValue)
@@ -31,7 +31,7 @@ main = /props ->
 		onclick = /_ -> todosDispatch(CreateTodo)
 	}
 	$ul
-		if (todos.length == 0)
+		if todos.length == 0 then
 			"You don't have any todos left"
 		else
 			todos.map(/{value, isDone}, index ->
