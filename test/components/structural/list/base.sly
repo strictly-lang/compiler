@@ -1,12 +1,12 @@
 import /vendor/strictly/prelude/src/index.js (zipWithIndex)
 
-data = / -> {
+state = / -> {
 	init = [0, 1, 3]
 	reducer = /state, multiply -> [ value, value * 2 | \value <- state, value != 0]
 }
 
 main = /props ->
-	\[mainState, mainDispatch] <- model(data());
+	\[mainState, mainDispatch] <- model(state());
 	$button{
 		onclick = /_ -> mainDispatch(2)
 	}

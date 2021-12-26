@@ -1,4 +1,4 @@
-data = /_ -> {
+state = /_ -> {
 	init = false
 	reducer = /_, RemoveSelection -> false
 	reducer = /_, AddSelection    -> true
@@ -6,7 +6,7 @@ data = /_ -> {
 
 main = /props ->
 	each \entity <- [props.page * 10 .. props.page * 10 + 10]
-		\[selectionState, selectionDispatch] <- model(data(props.page));
+		\[selectionState, selectionDispatch] <- model(state(props.page));
 		$div{
 			class?selected = selectionState
 			onclick = /_ -> selectionDispatch(selectionState ? RemoveSelection : AddSelection)

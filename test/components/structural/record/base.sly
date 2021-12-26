@@ -1,10 +1,10 @@
-data = / -> {
+state = / -> {
 	init = { x = 1, y = 0}
 	reducer = /state, x -> { x = state.x + x | state}
 }
 
 main = / ->
-	\[mainState, mainDispatch] <- model(data());
+	\[mainState, mainDispatch] <- model(state());
 	$button{
 		onclick = /_ -> mainDispatch(2)
 	}

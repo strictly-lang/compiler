@@ -1,11 +1,11 @@
-data = / -> {
+state = / -> {
 	init = 0
 	reducer = /state, Increment -> state + 1
 	reducer = /state, Decrement -> state - 1
 }
 
 main = /props ->
-	\[counterState, counterDispatch] <- model(data());
+	\[counterState, counterDispatch] <- model(state());
 	$button{
 		onclick = /_ -> counterDispatch(Decrement)
 	}

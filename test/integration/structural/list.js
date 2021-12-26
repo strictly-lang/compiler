@@ -98,6 +98,5 @@ describe("list handling", () => {
     expect(element.shadowRoot.childNodes[6].textContent).toBe("2: 4");
 
     expect(element.shadowRoot.childNodes[7].tagName).toBe("FOOTER");
-
-  })
+  });
 });

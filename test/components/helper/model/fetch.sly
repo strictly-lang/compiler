@@ -1,6 +1,6 @@
 import /vendor/strictly/prelude/src/index.js (fetchText)
 
-data = /id ->
+state = /id ->
 	\result <- fetchText("/api/${id}");
 	{
 		init = match result
@@ -12,8 +12,8 @@ data = /id ->
 
 main = /props ->
 	if props.load then
-		\[dataState, _] <- model(data(props.id));
-		match dataState
+		\[stateState, _] <- model(state(props.id));
+		match stateState
 			case /Pending ->
 				"Loading..."
 			case /Result( content ) ->

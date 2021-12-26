@@ -1,10 +1,10 @@
-data = / -> {
+state = / -> {
 	init = ""
 	reducer = /_, action -> action
 }
 
 main = /props ->
-	\[mainState, mainDispatch] <- model(data());
+	\[mainState, mainDispatch] <- model(state());
 	$input{
 		value = Text(mainState)
 		oninput = /Text(value) -> mainDispatch(value)

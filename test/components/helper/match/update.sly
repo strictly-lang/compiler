@@ -1,4 +1,4 @@
-data = / -> {
+state = / -> {
 	init = First( 1 )
 	reducer = / First( value ), action -> Second( value + action )
 	reducer = / Second( value ), action -> Second( value + action + action )
@@ -6,16 +6,16 @@ data = / -> {
 
 main = /props ->
 	$div
-		\[dataState, dataDispatch] <- model(data());
-		match dataState
+		\[stateState, stateDispatch] <- model(state());
+		match stateState
 			case /First( value ) ->
 				$button{
-					onclick = /_ -> dataDispatch(1)
+					onclick = /_ -> stateDispatch(1)
 				}
 					"first: ${value} ${props.foo}"
 			case /Second( value ) ->
 				$button{
-					onclick = /_ -> dataDispatch(3)
+					onclick = /_ -> stateDispatch(3)
 				}
 					"second: ${value} ${props.foo}"
 		$span

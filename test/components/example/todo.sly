@@ -7,7 +7,9 @@ style = {
 	}
 }
 
-data = / -> {
+data Action = ChangeText(String) | CreateTodo | ToggleDone(Integer);
+
+state = / -> {
 	init = { currentText = "", todos = [] }
 	reducer = /state@{ currentText }, ChangeText(text) ->
 		{ currentText = text | state}
@@ -19,7 +21,7 @@ data = / -> {
 }
 
 main = /props ->
-	\[{todos, textValue}, todosDispatch] <- model(data());
+	\[{todos, textValue}, todosDispatch] <- model(state());
 
 	$input{
 		value = Text(textValue)
