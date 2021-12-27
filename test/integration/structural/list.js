@@ -16,6 +16,7 @@ describe("list handling", () => {
     const element = document.createElement(
       "test-components-structural-list-base"
     );
+
     container.appendChild(element);
 
     expect(element.shadowRoot.childNodes.length).toBe(4);
