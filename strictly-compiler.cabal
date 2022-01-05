@@ -23,7 +23,8 @@ library
                        Parser.Types,
                        Parser.Util,
                        Parser.Main,
-                       Parser.Types.Root
+                       Parser.Types.Root,
+                       Parser.Types.RightHandSide
                        Compiler.Util
                        Compiler.Types.Root
 
