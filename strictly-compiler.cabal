@@ -19,21 +19,14 @@ extra-source-files:  CHANGELOG.md,README.md
 
 library
   exposed-modules:     Compiler.Main
-  other-modules:       Types,Parser.Main,
-                       Parser.Util.Base,
-                       Parser.Model.Base,
-                       Parser.Style.Base,
-                       Parser.Import.Base,
-                       Parser.Util.Base,
-                       Parser.View.Base,
-                       Compiler.Types,
-                       Compiler.Util,
-                       Compiler.Javascript,
-                       Compiler.Types.Root,
-                       Compiler.Types.Model.Base,
-                       Compiler.Types.Style.Base,
-                       Compiler.Types.View.Base,
-                       Compiler.Types.View.Host
+  other-modules:       Types,
+                       Parser.Types,
+                       Parser.Util,
+                       Parser.Main,
+                       Parser.Types.Root
+                       Compiler.Util
+                       Compiler.Types.Root
+
   -- other-extensions:
   build-depends:       base, megaparsec, mtl
   hs-source-dirs:      src-lib

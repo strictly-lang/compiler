@@ -1,15 +1,13 @@
-module Parser.Main (parseRoot) where
+module Parser.Main where
 
-import Control.Applicative ((<|>))
-import Parser.Import.Base (importParser)
-import Parser.Model.Base (modelParser)
-import Parser.Style.Base (styleParser)
-import Parser.Util.Base (indentParserRepeat)
-import Parser.View.Base (viewParser)
-import Text.Megaparsec (eof, many, parse)
+import Data.Void (Void)
+import Parser.Types
+import Parser.Types.Root (rootParser)
+import Text.Megaparsec (Parsec, eof, many, parse)
+import Text.Megaparsec.Char (eol)
 import Types
 
 parseRoot = parse parseRoot' ""
 
 parseRoot' :: Parser [Root]
-parseRoot' = indentParserRepeat 0 (importParser <|> viewParser <|> modelParser <|> styleParser) <* eof
+parseRoot' = many (many eol *> (rootParser <* eol)) <* eof

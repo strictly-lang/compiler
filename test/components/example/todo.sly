@@ -1,3 +1,6 @@
+data Action = ChangeText(String) | CreateTodo | ToggleDone(Integer);
+
+
 style = {
 	.row = {
 		color = Blue
@@ -8,7 +11,6 @@ style = {
 	}
 }
 
-data Action = ChangeText(String) | CreateTodo | ToggleDone(Integer);
 
 state = / -> {
 	init = { currentText = "", todos = [] }

@@ -1,49 +1,53 @@
 module Types where
 
-import Data.Functor.Identity (Identity)
-import Data.Void (Void)
-import Text.Megaparsec (Parsec)
-
-type Line = Int
-
-type Column = Int
-
-type Option a = (String, a)
-
-type Namespace = String
-
-type MergedOption a = (String, [a])
-
-type Position = (Line, Column)
-
-type Name = String
-
-type IndentationLevel = Int
-
 data Root
-  = View [ViewContent]
-  | Model Name [MergedOption (Bool, RightHandSide)]
-  | RootImport Import
-  | Style [StyleContent]
+  = RootDataDeclaration String [DataDeclaration]
+  | RootAssignment String Expression
   deriving (Show)
 
-newtype Import = Import (String, [String])
+newtype DataDeclaration
+  = DataDeclaration (String, [DataDeclaration])
+  deriving (Show)
+
+data RightHandSide
+  = VariableAssignment LeftHandSide Expression
+  | Stream LeftHandSide Expression
+  | Expression Expression
+  deriving (Show)
+
+data Expression
+  = RightHandSideVariable String
+  | RightHandSideList [Expression]
+  | RightHandSideRecord Record
+  | RightHandSideAlgebraicDataType String [Expression]
+  | RightHandSideNumber Integer
+  | RightHandSideString [RightHandSideString]
+  | RightHandSideFunctionDefinition [LeftHandSide] [RightHandSide] RightHandSide
+  | RightHandSideFunctionCall [Expression] [Expression]
+  | RightHandSideOperator Operator Expression Expression
+  | RightHandSideCondition Expression Expression Expression
+  | RightHandSideMatch Expression [(LeftHandSide, Expression)]
+  | RightHandSideHost String Record RightHandSide
+  | RightHandSideFragment [Expression]
+  deriving (Show)
+
+type Record = [(String, Maybe String, Expression)]
+
+data RightHandSideString
+  = RightHandSideStringStatic String
+  | RightHandSideStringDynamic Expression
   deriving (Show)
 
 data LeftHandSide
-  = LeftAlias String LeftHandSide
-  | LeftVariable String
-  | LeftTuple [LeftHandSide]
-  | LeftType String [LeftHandSide]
-  | LeftHole
-  | LeftRecord [(String, Maybe LeftHandSide)]
-  | LeftList [LeftHandSide] (Maybe LeftHandSide)
+  = LeftHandSideVariable String
+  | LeftHandSideList [LeftHandSide]
+  | LeftHandSideRecord [(String, LeftHandSide)]
+  | LeftHandSideAlgebraicDataType String [LeftHandSide]
+  | LeftHandSIdeAlias String LeftHandSide
+  | LeftHandSideHole
   deriving (Show)
 
-data Operator = FeedOperator
-  deriving (Show)
-
-data RightHandSideOperator
+data Operator
   = Equal
   | Unequal
   | Plus
@@ -51,52 +55,5 @@ data RightHandSideOperator
   | Multiply
   | Division
   | Modulo
+  | Concat
   deriving (Show)
-
-data RightHandSideValue
-  = Variable [String]
-  | Tuple [RightHandSideValue]
-  | FunctionCall RightHandSideValue [RightHandSideValue]
-  | MixedTextValue [MixedText]
-  | Number Integer
-  | RightHandSideRecord [(String, RightHandSideValue)] (Maybe RightHandSideValue)
-  | RightHandSideList [RightHandSideValue] [ListSourceOrFilter]
-  | RightHandSideOperation RightHandSideOperator RightHandSideValue RightHandSideValue
-  | RightHandSideType String [RightHandSideValue]
-  deriving (Show)
-
-data ListSourceOrFilter
-  = ListSource (LeftHandSide, RightHandSideValue)
-  | Filter RightHandSideValue
-  deriving (Show)
-
-data RightHandSide
-  = RightHandSideValue RightHandSideValue
-  | FunctionDefinition [LeftHandSide] RightHandSideValue
-  deriving (Show)
-
-data ViewContent
-  = Host HostElement (Maybe Import)
-  | MixedText [MixedText]
-  | Condition RightHandSideValue [ViewContent] [ViewContent]
-  | Each (LeftHandSide, RightHandSideValue) [ViewContent] [ViewContent]
-  | ViewModel (LeftHandSide, RightHandSideValue) [ViewContent]
-  | Match RightHandSideValue [Case]
-  | ViewContext (LeftHandSide, String) [ViewContent]
-  deriving (Show)
-
-newtype StyleContent = StyleContent (String, [Option RightHandSideValue])
-  deriving (Show)
-
-newtype HostElement = HostElement (Name, [MergedOption RightHandSide], [ViewContent])
-  deriving (Show)
-
-data Case = Case LeftHandSide [ViewContent]
-  deriving (Show)
-
-data MixedText
-  = StaticText String
-  | DynamicText RightHandSideValue
-  deriving (Show)
-
-type Parser = Parsec Void String
