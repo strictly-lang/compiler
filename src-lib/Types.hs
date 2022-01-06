@@ -13,7 +13,7 @@ data Statement
 
 data Expression
   = RightHandSideVariable String
-  | RightHandSideList [Expression]
+  | RightHandSideList [Expression] [Statement]
   | RightHandSideRecord Record
   | RightHandSideAlgebraicDataType String [Expression]
   | RightHandSideNumber Integer

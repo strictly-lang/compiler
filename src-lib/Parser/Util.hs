@@ -32,7 +32,7 @@ lowercaseIdentifierParser = do
 
 indentationParser :: Parser a -> Parser [a]
 indentationParser parser = do
-  isEndOfLine <- optional eol
+  isEndOfLine <- optional delimiterParser *> optional eol
   indentationLevel <- indentLevel
   case isEndOfLine of
     Just _ -> do
@@ -43,10 +43,17 @@ indentationParser parser = do
           nextResults <- indentationParser parser
           return (result : nextResults)
         Nothing ->
-          do return []
+          do
+            return []
     Nothing -> do
       result <- parser
-      return [result]
+      hasDelimiter <- optional delimiterParser
+      case hasDelimiter of
+        Just _ -> do
+          nextResults <- indentationParser parser
+          return (result : nextResults)
+        Nothing ->
+          return [result]
 
 sc :: Parser ()
 sc = do
