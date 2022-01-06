@@ -1,15 +1,11 @@
 module Types where
 
 data Root
-  = RootDataDeclaration String [DataDeclaration]
+  = RootDataDeclaration String [(String, [String])]
   | RootAssignment String Expression
   deriving (Show)
 
-newtype DataDeclaration
-  = DataDeclaration (String, [DataDeclaration])
-  deriving (Show)
-
-data RightHandSide
+data Statement
   = VariableAssignment LeftHandSide Expression
   | Stream LeftHandSide Expression
   | Expression Expression
@@ -22,12 +18,12 @@ data Expression
   | RightHandSideAlgebraicDataType String [Expression]
   | RightHandSideNumber Integer
   | RightHandSideString [RightHandSideString]
-  | RightHandSideFunctionDefinition [LeftHandSide] [RightHandSide] RightHandSide
+  | RightHandSideFunctionDefinition [LeftHandSide] [Statement]
   | RightHandSideFunctionCall [Expression] [Expression]
   | RightHandSideOperator Operator Expression Expression
   | RightHandSideCondition Expression Expression Expression
   | RightHandSideMatch Expression [(LeftHandSide, Expression)]
-  | RightHandSideHost String Record RightHandSide
+  | RightHandSideHost String Record Statement
   | RightHandSideFragment [Expression]
   deriving (Show)
 

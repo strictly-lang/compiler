@@ -24,8 +24,9 @@ library
                        Parser.Util,
                        Parser.Main,
                        Parser.Types.Root,
-                       Parser.Types.RightHandSide
-                       Compiler.Util
+                       Parser.Types.LeftHandSide,
+                       Parser.Types.Statement,
+                       Compiler.Util,
                        Compiler.Types.Root
 
   -- other-extensions:
