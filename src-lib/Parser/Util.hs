@@ -1,8 +1,9 @@
 module Parser.Util where
 
 import Control.Applicative ((<|>))
+import Control.Monad.State.Strict (put)
 import Parser.Types
-import Text.Megaparsec (many, optional, unPos)
+import Text.Megaparsec (many, optional, try)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, space, string, upperChar)
 import Text.Megaparsec.Char.Lexer
 
@@ -13,7 +14,11 @@ assignParser = do
 
 delimiterParser :: Parser ()
 delimiterParser = do
-  _ <- char ',' *> sc
+  _ <- (eol *> hole') <|> char ',' *> sc *> optional eol *> hole'
+  return ()
+
+hole' :: Parser ()
+hole' = do
   return ()
 
 uppercaseIdentifierParser :: Parser String
@@ -30,30 +35,15 @@ lowercaseIdentifierParser = do
 
   return (firstChar : rest)
 
-indentationParser :: Parser a -> Parser [a]
-indentationParser parser = do
-  isEndOfLine <- optional delimiterParser *> optional eol
-  indentationLevel <- indentLevel
-  case isEndOfLine of
-    Just _ -> do
-      hasIndentation <- optional (string (replicate (unPos indentationLevel) '\t'))
-      case hasIndentation of
-        Just _ -> do
-          result <- parser
-          nextResults <- indentationParser parser
-          return (result : nextResults)
-        Nothing ->
-          do
-            return []
-    Nothing -> do
-      result <- parser
-      hasDelimiter <- optional delimiterParser
-      case hasDelimiter of
-        Just _ -> do
-          nextResults <- indentationParser parser
-          return (result : nextResults)
-        Nothing ->
-          return [result]
+indentationParser :: IndentationLevel -> Parser a -> Parser a
+indentationParser indentationLevel parser = do
+  indentationParser' indentationLevel parser <|> parser
+
+indentationParser' :: IndentationLevel -> Parser a -> Parser a
+indentationParser' indentationLevel parser = do
+  result <- try (optional eol *> string (replicate indentationLevel '\t') *> parser)
+  put indentationLevel
+  return result
 
 sc :: Parser ()
 sc = do

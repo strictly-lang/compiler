@@ -1,11 +1,12 @@
 module Parser.Types.Statement where
 
 import Control.Applicative ((<|>))
+import Control.Monad.State.Strict (get)
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
 import Parser.Util (assignParser, delimiterParser, indentationParser, lowercaseIdentifierParser, sc)
 import Text.Megaparsec (between, lookAhead, many, manyTill, optional, sepBy, sepBy1)
-import Text.Megaparsec.Char (char, string)
+import Text.Megaparsec.Char (char, eol, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
 
@@ -21,7 +22,8 @@ expressionParser =
 
 recordParser :: Parser Expression
 recordParser = do
-  RightHandSideRecord <$> between (char '{' <* sc) (char '}' <* sc) (indentationParser recordOptionParser)
+  indentationLevel <- get
+  RightHandSideRecord <$> between (char '{' <* sc) (char '}' <* sc) (indentationParser (indentationLevel + 1) recordOptionParser `sepBy` delimiterParser)
 
 recordOptionParser :: Parser (String, Maybe String, Expression)
 recordOptionParser = do
@@ -31,13 +33,15 @@ recordOptionParser = do
 
 functionDefinitionParser :: Parser Expression
 functionDefinitionParser = do
-  parameters <- between (char '/' <* sc) (string "->" <* sc) (leftHandSideParser `sepBy` delimiterParser)
+  indentationLevel <- get
+  parameters <- between (char '/' <* sc) (string "->" <* sc) (indentationParser (indentationLevel + 1) leftHandSideParser `sepBy` delimiterParser)
   RightHandSideFunctionDefinition parameters
-    <$> indentationParser statementParser
+    <$> (indentationParser (indentationLevel + 1) statementParser `sepBy1` eol)
 
 listParser :: Parser Expression
 listParser = do
-  entities <- between (char '[' <* sc) (lookAhead (char ']' <|> char '|')) (expressionParser `sepBy` (char ',' <* sc))
+  indentationLevel <- get
+  entities <- between (char '[' <* sc) (lookAhead (char ']' <|> char '|')) (indentationParser (indentationLevel + 1) expressionParser `sepBy` (delimiterParser <* sc))
 
   hasSource <- optional (char '|' <* sc)
 
