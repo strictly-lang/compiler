@@ -4,7 +4,7 @@ import Control.Applicative ((<|>))
 import Control.Monad.State.Strict (get)
 import Parser.Types
 import Parser.Util (blockParser, delimiterParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
-import Text.Megaparsec (between, lookAhead, optional, sepBy)
+import Text.Megaparsec (lookAhead, optional, sepBy)
 import Text.Megaparsec.Char (char)
 import Types
 

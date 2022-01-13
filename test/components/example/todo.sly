@@ -7,7 +7,14 @@ state = / -> {
 	reducer = /{ todos, currentText }, CreateTodo ->
 		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
 	reducer = /state@{ todos }, ToggleDone(index) ->
-		let todos' = [{ isDone = if index == index' then False else todo.isDone == False | todo } | \[ todo@{ isDone }, index' ] <- zipWithIndex(todos)];
+		let todos' = [
+			{
+				isDone = if index == index'
+					then False
+					else todo.isDone == False
+			| todo }
+		| \[ todo@{ isDone }, index' ] <- zipWithIndex(todos)];
+
 		{ todos = todos' | state }
 }
 

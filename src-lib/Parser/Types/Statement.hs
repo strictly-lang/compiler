@@ -4,8 +4,8 @@ import Control.Applicative ((<|>))
 import Control.Monad.State.Strict (get)
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
-import Parser.Util (assignParser, blockParser, delimiterParser, indentationParser, lowercaseIdentifierParser, sc)
-import Text.Megaparsec (between, lookAhead, many, manyTill, optional, sepBy, sepBy1, try)
+import Parser.Util (assignParser, blockParser, delimiterParser, indentationParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
+import Text.Megaparsec (lookAhead, many, manyTill, optional, sepBy, sepBy1, try)
 import Text.Megaparsec.Char (char, eol, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
@@ -14,12 +14,36 @@ statementParser :: Parser Statement
 statementParser = Expression <$> expressionParser
 
 expressionParser :: Parser Expression
-expressionParser =
-  functionDefinitionParser
-    <|> recordParser
-    <|> (RightHandSideString <$> (mixedTextParser <* sc))
-    <|> listParser
-    <|> variableParser
+expressionParser = do
+  expression <-
+    functionDefinitionParser
+      <|> recordParser
+      <|> (RightHandSideString <$> (mixedTextParser <* sc))
+      <|> listParser
+      <|> agebraicDataTypeParser
+      <|> variableParser
+
+  operator <- optional operatorParser
+
+  case operator of
+    Just operator -> do
+      RightHandSideOperator operator expression <$> expressionParser
+    Nothing -> do
+      return expression
+
+------------------------
+-- Expression-Parsers --
+------------------------
+agebraicDataTypeParser :: Parser Expression
+agebraicDataTypeParser = do
+  name <- uppercaseIdentifierParser <* sc
+  hasParameter <- optional (lookAhead (char '('))
+  parameters <- case hasParameter of
+    Just _ -> do
+      indentationLevel <- get
+      blockParser (char '(' *> sc) (char ')' *> sc) expressionParser
+    Nothing -> do return []
+  return (RightHandSideAlgebraicDataType name parameters)
 
 recordParser :: Parser Expression
 recordParser = do
@@ -48,7 +72,7 @@ recordOptionParser = do
 functionDefinitionParser :: Parser Expression
 functionDefinitionParser = do
   indentationLevel <- get
-  parameters <- between (char '/' <* sc) (string "->" <* sc) (leftHandSideParser `sepBy` delimiterParser (indentationLevel + 1))
+  parameters <- blockParser (char '/' <* sc) (string "->" <* sc) leftHandSideParser
 
   hasEol <- optional eol
 
@@ -97,3 +121,60 @@ dynamicTextParser = do
 
 variableParser :: Parser Expression
 variableParser = do RightHandSideVariable <$> (lowercaseIdentifierParser <* sc)
+
+---------------------
+-- Operator Parser --
+---------------------
+operatorParser :: Parser Operator
+operatorParser =
+  do
+    ( equalParser
+        <|> unequalParser
+        <|> concatParser
+        <|> plusParser
+        <|> minusParser
+        <|> multiplyParser
+        <|> divisionParser
+        <|> moduloParser
+      )
+      <* sc
+
+equalParser :: Parser Operator
+equalParser = do
+  _ <- string "=="
+  return Equal
+
+unequalParser :: Parser Operator
+unequalParser = do
+  _ <- string "!="
+  return Unequal
+
+concatParser :: Parser Operator
+concatParser = do
+  _ <- string "++"
+  return Concat
+
+plusParser :: Parser Operator
+plusParser = do
+  _ <- string "+"
+  return Plus
+
+minusParser :: Parser Operator
+minusParser = do
+  _ <- string "-"
+  return Unequal
+
+multiplyParser :: Parser Operator
+multiplyParser = do
+  _ <- string "*"
+  return Multiply
+
+divisionParser :: Parser Operator
+divisionParser = do
+  _ <- string "/"
+  return Division
+
+moduloParser :: Parser Operator
+moduloParser = do
+  _ <- string "%"
+  return Modulo
