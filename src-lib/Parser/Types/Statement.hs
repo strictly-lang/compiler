@@ -5,7 +5,7 @@ import Control.Monad.State.Strict (get)
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
 import Parser.Util (assignParser, delimiterParser, indentationParser, lowercaseIdentifierParser, sc)
-import Text.Megaparsec (between, lookAhead, many, manyTill, optional, sepBy, sepBy1)
+import Text.Megaparsec (between, lookAhead, many, manyTill, optional, sepBy, sepBy1, try)
 import Text.Megaparsec.Char (char, eol, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
@@ -17,13 +17,27 @@ expressionParser :: Parser Expression
 expressionParser =
   functionDefinitionParser
     <|> recordParser
-    <|> (RightHandSideString <$> mixedTextParser)
+    <|> (RightHandSideString <$> (mixedTextParser <* sc))
     <|> listParser
+    <|> variableParser
 
 recordParser :: Parser Expression
 recordParser = do
   indentationLevel <- get
-  RightHandSideRecord <$> between (char '{' <* sc) (char '}' <* sc) (indentationParser (indentationLevel + 1) recordOptionParser `sepBy` delimiterParser)
+  properties <- between (char '{' *> sc *> optional (try (eol *> indentationParser (indentationLevel + 1)))) (lookAhead (char '}' <|> char '|')) (recordOptionParser `sepBy` delimiterParser (indentationLevel + 1))
+
+  hasSource <- optional (char '|' <* sc)
+
+  source <-
+    case hasSource of
+      Just _ -> do
+        statementParser `sepBy1` delimiterParser (indentationLevel + 1)
+      Nothing -> do
+        return []
+
+  _ <- char '}' <* sc
+
+  return (RightHandSideRecord properties source)
 
 recordOptionParser :: Parser (String, Maybe String, Expression)
 recordOptionParser = do
@@ -34,21 +48,28 @@ recordOptionParser = do
 functionDefinitionParser :: Parser Expression
 functionDefinitionParser = do
   indentationLevel <- get
-  parameters <- between (char '/' <* sc) (string "->" <* sc) (indentationParser (indentationLevel + 1) leftHandSideParser `sepBy` delimiterParser)
-  RightHandSideFunctionDefinition parameters
-    <$> (indentationParser (indentationLevel + 1) statementParser `sepBy1` eol)
+  parameters <- between (char '/' <* sc) (string "->" <* sc) (leftHandSideParser `sepBy` delimiterParser (indentationLevel + 1))
+  hasEol <- optional eol
+
+  functionBody <- case hasEol of
+    Just _ -> do
+      result <- statementParser
+      return [result]
+    Nothing -> do
+      statementParser `sepBy1` try (eol *> indentationParser (indentationLevel + 1))
+  return (RightHandSideFunctionDefinition parameters functionBody)
 
 listParser :: Parser Expression
 listParser = do
   indentationLevel <- get
-  entities <- between (char '[' <* sc) (lookAhead (char ']' <|> char '|')) (indentationParser (indentationLevel + 1) expressionParser `sepBy` (delimiterParser <* sc))
+  entities <- between (char '[' <* sc) (lookAhead (char ']' <|> char '|')) (expressionParser `sepBy` delimiterParser (indentationLevel + 1))
 
   hasSource <- optional (char '|' <* sc)
 
   source <-
     case hasSource of
       Just _ -> do
-        statementParser `sepBy1` (char ',' <* sc)
+        statementParser `sepBy1` delimiterParser (indentationLevel + 1)
       Nothing -> do
         return []
 
@@ -71,3 +92,6 @@ dynamicTextParser = do
   value <- string "${" *> expressionParser <* char '}'
 
   return (RightHandSideStringDynamic value)
+
+variableParser :: Parser Expression
+variableParser = do RightHandSideVariable <$> (lowercaseIdentifierParser <* sc)

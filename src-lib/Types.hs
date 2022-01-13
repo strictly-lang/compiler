@@ -14,7 +14,7 @@ data Statement
 data Expression
   = RightHandSideVariable String
   | RightHandSideList [Expression] [Statement]
-  | RightHandSideRecord Record
+  | RightHandSideRecord Record [Statement]
   | RightHandSideAlgebraicDataType String [Expression]
   | RightHandSideNumber Integer
   | RightHandSideString [RightHandSideString]

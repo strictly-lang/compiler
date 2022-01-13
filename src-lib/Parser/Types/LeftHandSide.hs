@@ -1,6 +1,7 @@
 module Parser.Types.LeftHandSide where
 
 import Control.Applicative ((<|>))
+import Control.Monad.State.Strict (get)
 import Parser.Types
 import Parser.Util (delimiterParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
 import Text.Megaparsec (between, lookAhead, optional, sepBy)
@@ -15,7 +16,9 @@ leftHandSideAlgebraicDataTypeParser = do
   name <- uppercaseIdentifierParser <* sc
   hasParameter <- optional (lookAhead (char '('))
   parameters <- case hasParameter of
-    Just _ -> do between (char '(' <* sc) (char ')' <* sc) (leftHandSideParser `sepBy` delimiterParser)
+    Just _ -> do
+      indentationLevel <- get
+      between (char '(' <* sc) (char ')' <* sc) (leftHandSideParser `sepBy` delimiterParser (indentationLevel + 1))
     Nothing -> do return []
   return (LeftHandSideAlgebraicDataType name parameters)
 
