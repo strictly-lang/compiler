@@ -49,14 +49,16 @@ functionDefinitionParser :: Parser Expression
 functionDefinitionParser = do
   indentationLevel <- get
   parameters <- between (char '/' <* sc) (string "->" <* sc) (leftHandSideParser `sepBy` delimiterParser (indentationLevel + 1))
+
   hasEol <- optional eol
 
   functionBody <- case hasEol of
     Just _ -> do
+      _ <- indentationParser (indentationLevel + 1)
+      statementParser `sepBy1` try (eol *> indentationParser (indentationLevel + 1))
+    Nothing -> do
       result <- statementParser
       return [result]
-    Nothing -> do
-      statementParser `sepBy1` try (eol *> indentationParser (indentationLevel + 1))
   return (RightHandSideFunctionDefinition parameters functionBody)
 
 listParser :: Parser Expression

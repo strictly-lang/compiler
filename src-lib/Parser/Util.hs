@@ -1,6 +1,7 @@
 module Parser.Util where
 
 import Control.Applicative ((<|>))
+import Control.Monad.State.Strict (put)
 import Parser.Types
 import Text.Megaparsec (many, optional, try)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, space, string, upperChar)
@@ -13,7 +14,7 @@ assignParser = do
 
 delimiterParser :: IndentationLevel -> Parser ()
 delimiterParser indentationLevel = do
-  _ <- (eol *> indentationParser indentationLevel) <|> char ',' *> sc *> optional (try eol *> indentationParser indentationLevel) *> hole'
+  _ <- try (eol *> indentationParser indentationLevel) <|> char ',' *> sc *> optional (try eol *> indentationParser indentationLevel) *> hole'
   return ()
 
 hole' :: Parser ()
@@ -37,6 +38,7 @@ lowercaseIdentifierParser = do
 indentationParser :: IndentationLevel -> Parser ()
 indentationParser indentationLevel = do
   _ <- string (replicate indentationLevel '\t')
+  _ <- put indentationLevel
   return ()
 
 sc :: Parser ()
