@@ -1,9 +1,9 @@
 module Parser.Util where
 
 import Control.Applicative ((<|>))
-import Control.Monad.State.Strict (put)
+import Control.Monad.State.Strict (get, put)
 import Parser.Types
-import Text.Megaparsec (many, optional, try)
+import Text.Megaparsec (between, many, optional, sepBy, try)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, space, string, upperChar)
 import Text.Megaparsec.Char.Lexer
 
@@ -34,6 +34,11 @@ lowercaseIdentifierParser = do
   rest <- many (letterChar <|> char '\'')
 
   return (firstChar : rest)
+
+blockParser :: Parser begin -> Parser end -> Parser a -> Parser [a]
+blockParser beginParser endParser contentParser = do
+  indentationLevel <- get
+  between (beginParser *> sc *> optional (try (eol *> indentationParser (indentationLevel + 1)))) endParser (contentParser `sepBy` delimiterParser (indentationLevel + 1))
 
 indentationParser :: IndentationLevel -> Parser ()
 indentationParser indentationLevel = do

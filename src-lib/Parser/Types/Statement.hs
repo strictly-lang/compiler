@@ -4,7 +4,7 @@ import Control.Applicative ((<|>))
 import Control.Monad.State.Strict (get)
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
-import Parser.Util (assignParser, delimiterParser, indentationParser, lowercaseIdentifierParser, sc)
+import Parser.Util (assignParser, blockParser, delimiterParser, indentationParser, lowercaseIdentifierParser, sc)
 import Text.Megaparsec (between, lookAhead, many, manyTill, optional, sepBy, sepBy1, try)
 import Text.Megaparsec.Char (char, eol, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
@@ -24,7 +24,7 @@ expressionParser =
 recordParser :: Parser Expression
 recordParser = do
   indentationLevel <- get
-  properties <- between (char '{' *> sc *> optional (try (eol *> indentationParser (indentationLevel + 1)))) (lookAhead (char '}' <|> char '|')) (recordOptionParser `sepBy` delimiterParser (indentationLevel + 1))
+  properties <- blockParser (char '{' *> sc) (lookAhead (char '}' <|> char '|')) recordOptionParser
 
   hasSource <- optional (char '|' <* sc)
 
@@ -64,7 +64,7 @@ functionDefinitionParser = do
 listParser :: Parser Expression
 listParser = do
   indentationLevel <- get
-  entities <- between (char '[' <* sc) (lookAhead (char ']' <|> char '|')) (expressionParser `sepBy` delimiterParser (indentationLevel + 1))
+  entities <- blockParser (char '[' *> sc) (lookAhead (char ']' <|> char '|')) expressionParser
 
   hasSource <- optional (char '|' <* sc)
 

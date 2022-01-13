@@ -3,7 +3,7 @@ module Parser.Types.LeftHandSide where
 import Control.Applicative ((<|>))
 import Control.Monad.State.Strict (get)
 import Parser.Types
-import Parser.Util (delimiterParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
+import Parser.Util (blockParser, delimiterParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
 import Text.Megaparsec (between, lookAhead, optional, sepBy)
 import Text.Megaparsec.Char (char)
 import Types
@@ -18,13 +18,13 @@ leftHandSideAlgebraicDataTypeParser = do
   parameters <- case hasParameter of
     Just _ -> do
       indentationLevel <- get
-      between (char '(' <* sc) (char ')' <* sc) (leftHandSideParser `sepBy` delimiterParser (indentationLevel + 1))
+      blockParser (char '(' *> sc) (char ')' *> sc) leftHandSideParser
     Nothing -> do return []
   return (LeftHandSideAlgebraicDataType name parameters)
 
 leftHandSideRecordParser :: Parser LeftHandSide
 leftHandSideRecordParser = do
-  destructuredProperties <- between (char '{' <* sc) (char '}' <* sc) (leftHandSideRecordEntityParser `sepBy` (char ',' <* sc))
+  destructuredProperties <- blockParser (char '{' <* sc) (char '}' <* sc) leftHandSideRecordEntityParser
   return (LeftHandSideRecord destructuredProperties)
 
 leftHandSideRecordEntityParser :: Parser (String, Maybe LeftHandSide)
