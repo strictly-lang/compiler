@@ -11,7 +11,26 @@ import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
 
 statementParser :: Parser Statement
-statementParser = Expression <$> expressionParser
+statementParser =
+  letParser
+    <|> (Expression <$> expressionParser)
+
+-----------------------
+-- Statement-Parsers --
+-----------------------
+
+letParser :: Parser Statement
+letParser = do
+  _ <- string "let " <* sc
+  leftHandSide <- leftHandSideParser
+  _ <- assignParser *> sc
+  expression <- expressionParser
+
+  VariableAssignment leftHandSide <$> expressionParser
+
+------------------------
+-- Expression-Parsers --
+------------------------
 
 expressionParser :: Parser Expression
 expressionParser = do
@@ -31,9 +50,6 @@ expressionParser = do
     Nothing -> do
       return expression
 
-------------------------
--- Expression-Parsers --
-------------------------
 agebraicDataTypeParser :: Parser Expression
 agebraicDataTypeParser = do
   name <- uppercaseIdentifierParser <* sc

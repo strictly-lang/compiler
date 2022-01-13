@@ -21,7 +21,7 @@ data Expression
   | RightHandSideFunctionDefinition [LeftHandSide] [Statement]
   | RightHandSideFunctionCall [Expression] [Expression]
   | RightHandSideOperator Operator Expression Expression
-  | RightHandSideCondition Expression Expression Expression
+  | RightHandSideCondition Expression [Statement] [Statement]
   | RightHandSideMatch Expression [(LeftHandSide, Expression)]
   | RightHandSideHost String Record Statement
   | RightHandSideFragment [Expression]

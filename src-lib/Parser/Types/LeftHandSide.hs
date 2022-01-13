@@ -45,5 +45,7 @@ leftHandSideVariableParser = do
   isAlias <- optional (char '@')
 
   case isAlias of
-    Just _ -> do LeftHandSideAlias identifier <$> leftHandSideParser
-    Nothing -> do return (LeftHandSideVariable identifier)
+    Just _ -> do LeftHandSideAlias identifier <$> (leftHandSideParser <* sc)
+    Nothing -> do
+      _ <- sc
+      return (LeftHandSideVariable identifier)
