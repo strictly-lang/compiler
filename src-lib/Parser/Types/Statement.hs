@@ -5,7 +5,7 @@ import Control.Monad.State.Strict (get)
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
 import Parser.Util (assignParser, blockParser, delimiterParser, indentationParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
-import Text.Megaparsec (lookAhead, many, manyTill, optional, sepBy, sepBy1, try)
+import Text.Megaparsec (lookAhead, many, manyTill, optional, sepBy, sepBy1, some, try)
 import Text.Megaparsec.Char (char, eol, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
@@ -36,6 +36,7 @@ expressionParser :: Parser Expression
 expressionParser = do
   expression <-
     functionDefinitionParser
+      <|> conditionParser
       <|> recordParser
       <|> (RightHandSideString <$> (mixedTextParser <* sc))
       <|> listParser
@@ -49,6 +50,18 @@ expressionParser = do
       RightHandSideOperator operator expression <$> expressionParser
     Nothing -> do
       return expression
+
+conditionParser :: Parser Expression
+conditionParser = do
+  _ <- string "if " *> sc
+  condition <- expressionParser
+  _ <- string "then" *> sc *> eol
+  indentationLevel <- get
+  thenCase <- some (indentationParser (indentationLevel + 1) *> statementParser) <* eol
+  _ <- indentationParser indentationLevel *> string "else" *> sc *> eol
+  elseCase <- some (indentationParser (indentationLevel + 1) *> statementParser) <* eol
+
+  return (RightHandSideCondition condition thenCase elseCase)
 
 agebraicDataTypeParser :: Parser Expression
 agebraicDataTypeParser = do
