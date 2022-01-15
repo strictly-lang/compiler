@@ -34,24 +34,36 @@ letParser = do
 
 expressionParser :: Parser Expression
 expressionParser = do
-  expression <-
-    functionDefinitionParser
-      <|> conditionParser
-      <|> recordParser
-      <|> (RightHandSideString <$> (mixedTextParser <* sc))
-      <|> listParser
-      <|> agebraicDataTypeParser
-      <|> variableParser
+  expression <- expressionParser'
 
+  nested <- optional (char '.')
+
+  result <- case nested of
+    Just _ -> do
+      nextSessionPart <- expressionParser
+      return (expression : nextSessionPart)
+    Nothing -> do
+      return [expression]
   operator <- optional operatorParser
 
   case operator of
     Just operator -> do
-      RightHandSideOperator operator expression <$> expressionParser
+      nextExpression <- expressionParser
+      return [RightHandSideOperator operator result nextExpression]
     Nothing -> do
-      return expression
+      return result
 
-conditionParser :: Parser Expression
+expressionParser' :: Parser Expression'
+expressionParser' = do
+  functionDefinitionParser
+    <|> conditionParser
+    <|> recordParser
+    <|> (RightHandSideString <$> (mixedTextParser <* sc))
+    <|> listParser
+    <|> agebraicDataTypeParser
+    <|> variableParser
+
+conditionParser :: Parser Expression'
 conditionParser = do
   _ <- string "if " *> sc
   condition <- expressionParser
@@ -63,7 +75,7 @@ conditionParser = do
 
   return (RightHandSideCondition condition thenCase elseCase)
 
-agebraicDataTypeParser :: Parser Expression
+agebraicDataTypeParser :: Parser Expression'
 agebraicDataTypeParser = do
   name <- uppercaseIdentifierParser <* sc
   hasParameter <- optional (lookAhead (char '('))
@@ -74,7 +86,7 @@ agebraicDataTypeParser = do
     Nothing -> do return []
   return (RightHandSideAlgebraicDataType name parameters)
 
-recordParser :: Parser Expression
+recordParser :: Parser Expression'
 recordParser = do
   indentationLevel <- get
   properties <- blockParser (char '{' *> sc) (lookAhead (char '}' <|> char '|')) recordOptionParser
@@ -98,7 +110,7 @@ recordOptionParser = do
   value <- expressionParser
   return (key, Nothing, value)
 
-functionDefinitionParser :: Parser Expression
+functionDefinitionParser :: Parser Expression'
 functionDefinitionParser = do
   indentationLevel <- get
   parameters <- blockParser (char '/' <* sc) (string "->" <* sc) leftHandSideParser
@@ -114,7 +126,7 @@ functionDefinitionParser = do
       return [result]
   return (RightHandSideFunctionDefinition parameters functionBody)
 
-listParser :: Parser Expression
+listParser :: Parser Expression'
 listParser = do
   indentationLevel <- get
   entities <- blockParser (char '[' *> sc) (lookAhead (char ']' <|> char '|')) expressionParser
@@ -148,7 +160,7 @@ dynamicTextParser = do
 
   return (RightHandSideStringDynamic value)
 
-variableParser :: Parser Expression
+variableParser :: Parser Expression'
 variableParser = do RightHandSideVariable <$> (lowercaseIdentifierParser <* sc)
 
 ---------------------

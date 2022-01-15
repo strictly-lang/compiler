@@ -11,7 +11,9 @@ data Statement
   | Expression Expression
   deriving (Show)
 
-data Expression
+type Expression = [Expression']
+
+data Expression'
   = RightHandSideVariable String
   | RightHandSideList [Expression] [Statement]
   | RightHandSideRecord Record [Statement]
