@@ -1,9 +1,8 @@
 module Parser.Util where
 
 import Control.Applicative ((<|>))
-import Control.Monad.State.Strict (get, put)
 import Parser.Types
-import Text.Megaparsec (between, many, optional, sepBy, some, try)
+import Text.Megaparsec (between, many, optional, some, try)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, space, string, upperChar)
 import Text.Megaparsec.Char.Lexer
 
@@ -30,25 +29,24 @@ lowercaseIdentifierParser = do
 
   return (firstChar : rest)
 
-blockParser :: Parser begin -> Parser end -> Parser a -> Parser [a]
-blockParser beginParser endParser contentParser = do
-  indentationLevel <- get
+blockParser :: Parser begin -> Parser end -> (IndentationLevel -> Parser a) -> IndentationLevel -> Parser [a]
+blockParser beginParser endParser contentParser indentationLevel = do
   _ <- beginParser
   isEol <- optional eol'
 
   case isEol of
-    Just _ -> do indentationParser (indentationLevel + 1) *> blockParser' indentationLevel endParser contentParser
+    Just _ -> do indentationParser (blockParser' endParser contentParser indentationLevel) (indentationLevel + 1)
     Nothing -> do
-      blockParser' indentationLevel endParser contentParser
+      blockParser' endParser contentParser indentationLevel indentationLevel
 
-blockParser' :: IndentationLevel -> Parser end -> Parser a -> Parser [a]
-blockParser' indentationLevel endParser contentParser = do
+blockParser' :: Parser end -> (IndentationLevel -> Parser a) -> IndentationLevel -> IndentationLevel -> Parser [a]
+blockParser' endParser contentParser outerIndentationLevel innerIndentationLevel = do
   isEnd <- optional endParser
 
   case isEnd of
     Just _ -> return []
     Nothing -> do
-      content <- contentParser
+      content <- contentParser innerIndentationLevel
 
       isEnd <- optional endParser
 
@@ -59,16 +57,14 @@ blockParser' indentationLevel endParser contentParser = do
 
           nextContent <- case newline of
             Right _ -> do
-              indentationParser (indentationLevel + 1) *> blockParser' indentationLevel endParser contentParser
+              indentationParser (blockParser' endParser contentParser outerIndentationLevel) innerIndentationLevel
             Left _ ->
-              blockParser' indentationLevel endParser contentParser
+              blockParser' endParser contentParser outerIndentationLevel innerIndentationLevel
           return (content : nextContent)
 
-indentationParser :: IndentationLevel -> Parser ()
-indentationParser indentationLevel = do
-  _ <- string (replicate indentationLevel '\t')
-  _ <- put indentationLevel
-  return ()
+indentationParser :: (IndentationLevel -> Parser a) -> IndentationLevel -> Parser a
+indentationParser contentParser indentationLevel = do
+  try (string (replicate indentationLevel '\t') *> contentParser indentationLevel)
 
 eol' :: Parser ()
 eol' = do

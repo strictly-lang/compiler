@@ -4,48 +4,47 @@ import Control.Applicative ((<|>))
 import Control.Monad.State.Strict (get)
 import Parser.Types
 import Parser.Util (blockParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
-import Text.Megaparsec (lookAhead, optional, sepBy)
+import Text.Megaparsec (lookAhead, optional)
 import Text.Megaparsec.Char (char)
 import Types
 
-leftHandSideParser :: Parser LeftHandSide
-leftHandSideParser = leftHandSideAlgebraicDataTypeParser <|> leftHandSideRecordParser <|> leftHandSideVariableParser
+leftHandSideParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideParser indentationLevel = leftHandSideAlgebraicDataTypeParser indentationLevel <|> leftHandSideRecordParser indentationLevel <|> leftHandSideVariableParser indentationLevel
 
-leftHandSideAlgebraicDataTypeParser :: Parser LeftHandSide
-leftHandSideAlgebraicDataTypeParser = do
+leftHandSideAlgebraicDataTypeParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideAlgebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser <* sc
   hasParameter <- optional (lookAhead (char '('))
   parameters <- case hasParameter of
     Just _ -> do
-      indentationLevel <- get
-      blockParser (char '(' *> sc) (char ')' *> sc) leftHandSideParser
+      blockParser (char '(' *> sc) (char ')' *> sc) leftHandSideParser indentationLevel
     Nothing -> do return []
   return (LeftHandSideAlgebraicDataType name parameters)
 
-leftHandSideRecordParser :: Parser LeftHandSide
-leftHandSideRecordParser = do
-  destructuredProperties <- blockParser (char '{' <* sc) (char '}' <* sc) leftHandSideRecordEntityParser
+leftHandSideRecordParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideRecordParser indentationLevel = do
+  destructuredProperties <- blockParser (char '{' <* sc) (char '}' <* sc) leftHandSideRecordEntityParser indentationLevel
   return (LeftHandSideRecord destructuredProperties)
 
-leftHandSideRecordEntityParser :: Parser (String, Maybe LeftHandSide)
-leftHandSideRecordEntityParser = do
+leftHandSideRecordEntityParser :: IndentationLevel -> Parser (String, Maybe LeftHandSide)
+leftHandSideRecordEntityParser indentationLevel = do
   propertyName <- lowercaseIdentifierParser <* sc
   hasAlias <- optional (char '=' <* sc)
 
   case hasAlias of
     Just _ -> do
-      alias <- leftHandSideParser
+      alias <- leftHandSideParser indentationLevel
       return (propertyName, Just alias)
     Nothing -> do
       return (propertyName, Nothing)
 
-leftHandSideVariableParser :: Parser LeftHandSide
-leftHandSideVariableParser = do
+leftHandSideVariableParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideVariableParser indentationLevel = do
   identifier <- lowercaseIdentifierParser
   isAlias <- optional (char '@')
 
   case isAlias of
-    Just _ -> do LeftHandSideAlias identifier <$> (leftHandSideParser <* sc)
+    Just _ -> do LeftHandSideAlias identifier <$> (leftHandSideParser indentationLevel <* sc)
     Nothing -> do
       _ <- sc
       return (LeftHandSideVariable identifier)

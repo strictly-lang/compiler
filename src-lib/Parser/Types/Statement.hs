@@ -1,46 +1,45 @@
 module Parser.Types.Statement where
 
 import Control.Applicative ((<|>))
-import Control.Monad.State.Strict (get)
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
 import Parser.Util (assignParser, blockParser, eol', indentationParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
-import Text.Megaparsec (lookAhead, many, manyTill, optional, sepBy, sepBy1, some, try)
+import Text.Megaparsec (lookAhead, manyTill, optional, some, try)
 import Text.Megaparsec.Char (char, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
 
-statementParser :: Parser Statement
-statementParser =
-  letParser
-    <|> (Expression <$> expressionParser)
+statementParser :: IndentationLevel -> Parser Statement
+statementParser indentationLevel =
+  letParser indentationLevel
+    <|> (Expression <$> expressionParser indentationLevel)
 
 -----------------------
 -- Statement-Parsers --
 -----------------------
 
-letParser :: Parser Statement
-letParser = do
+letParser :: IndentationLevel -> Parser Statement
+letParser indentationLevel = do
   _ <- string "let " <* sc
-  leftHandSide <- leftHandSideParser
+  leftHandSide <- leftHandSideParser indentationLevel
   _ <- assignParser *> sc
-  expression <- expressionParser
+  expression <- expressionParser indentationLevel
 
-  VariableAssignment leftHandSide <$> expressionParser
+  VariableAssignment leftHandSide <$> expressionParser indentationLevel
 
 ------------------------
 -- Expression-Parsers --
 ------------------------
 
-expressionParser :: Parser Expression
-expressionParser = do
-  expression <- expressionParser'
+expressionParser :: IndentationLevel -> Parser Expression
+expressionParser indentationLevel = do
+  expression <- expressionParser' indentationLevel
 
   nested <- optional (char '.')
 
   result <- case nested of
     Just _ -> do
-      nextSessionPart <- expressionParser
+      nextSessionPart <- expressionParser indentationLevel
       return (expression : nextSessionPart)
     Nothing -> do
       return [expression]
@@ -48,114 +47,108 @@ expressionParser = do
 
   case operator of
     Just operator -> do
-      nextExpression <- expressionParser
+      nextExpression <- expressionParser indentationLevel
       return [RightHandSideOperator operator result nextExpression]
     Nothing -> do
       return result
 
-expressionParser' :: Parser Expression'
-expressionParser' = do
-  functionDefinitionParser
-    <|> conditionParser
-    <|> recordParser
-    <|> (RightHandSideString <$> (mixedTextParser <* sc))
-    <|> listParser
-    <|> agebraicDataTypeParser
-    <|> variableParser
+expressionParser' :: IndentationLevel -> Parser Expression'
+expressionParser' indentationLevel = do
+  functionDefinitionParser indentationLevel
+    <|> conditionParser indentationLevel
+    <|> recordParser indentationLevel
+    <|> mixedTextParser indentationLevel
+    <|> listParser indentationLevel
+    <|> agebraicDataTypeParser indentationLevel
+    <|> variableParser indentationLevel
 
-conditionParser :: Parser Expression'
-conditionParser = do
+conditionParser :: IndentationLevel -> Parser Expression'
+conditionParser indentationLevel = do
   _ <- string "if " *> sc
-  condition <- expressionParser
+  condition <- expressionParser indentationLevel
   _ <- string "then" *> sc *> eol'
-  indentationLevel <- get
-  thenCase <- some (indentationParser (indentationLevel + 1) *> statementParser) <* eol'
-  _ <- indentationParser indentationLevel *> string "else" *> sc *> eol'
-  elseCase <- some (indentationParser (indentationLevel + 1) *> statementParser) <* eol'
+  thenCase <- some (try (optional eol' *> indentationParser statementParser (indentationLevel + 1)))
+  _ <- optional eol' *> indentationParser (\indentationLevel -> do string "else" *> sc) indentationLevel
+  elseCase <- some (try (optional eol' *> indentationParser statementParser (indentationLevel + 1)))
 
   return (RightHandSideCondition condition thenCase elseCase)
 
-agebraicDataTypeParser :: Parser Expression'
-agebraicDataTypeParser = do
+agebraicDataTypeParser :: IndentationLevel -> Parser Expression'
+agebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser <* sc
   hasParameter <- optional (lookAhead (char '('))
   parameters <- case hasParameter of
     Just _ -> do
-      indentationLevel <- get
-      blockParser (char '(' *> sc) (char ')' *> sc) expressionParser
+      blockParser (char '(' *> sc) (char ')' *> sc) expressionParser indentationLevel
     Nothing -> do return []
   return (RightHandSideAlgebraicDataType name parameters)
 
-recordParser :: Parser Expression'
-recordParser = do
-  indentationLevel <- get
-  properties <- blockParser (char '{' *> sc) (lookAhead (char '}' <|> char '|')) recordOptionParser
+recordParser :: IndentationLevel -> Parser Expression'
+recordParser indentationLevel = do
+  properties <- blockParser (char '{' *> sc) (lookAhead (char '}' <|> char '|')) recordOptionParser indentationLevel
 
   hasSource <- lookAhead (optional (char '|' <* sc))
 
   RightHandSideRecord properties
     <$> case hasSource of
       Just _ -> do
-        blockParser (char '|' *> sc) (char '}' *> sc) statementParser
+        blockParser (char '|' *> sc) (char '}' *> sc) statementParser indentationLevel
       Nothing -> do
         _ <- char '}' <* sc
         return []
 
-recordOptionParser :: Parser (String, Maybe String, Expression)
-recordOptionParser = do
+recordOptionParser :: IndentationLevel -> Parser (String, Maybe String, Expression)
+recordOptionParser indentationLevel = do
   key <- lowercaseIdentifierParser <* sc <* assignParser <* sc
-  value <- expressionParser
+  value <- expressionParser indentationLevel
   return (key, Nothing, value)
 
-functionDefinitionParser :: Parser Expression'
-functionDefinitionParser = do
-  indentationLevel <- get
-  parameters <- blockParser (char '/' <* sc) (string "->" <* sc) leftHandSideParser
+functionDefinitionParser :: IndentationLevel -> Parser Expression'
+functionDefinitionParser indentationLevel = do
+  parameters <- blockParser (char '/' <* sc) (string "->" <* sc) leftHandSideParser indentationLevel
 
   hasEol' <- optional eol'
 
   functionBody <- case hasEol' of
     Just _ -> do
-      _ <- indentationParser (indentationLevel + 1)
-      statementParser `sepBy1` try (eol' *> indentationParser (indentationLevel + 1))
+      some (try (optional eol' *> indentationParser statementParser (indentationLevel + 1)))
     Nothing -> do
-      result <- statementParser
+      result <- statementParser indentationLevel
       return [result]
   return (RightHandSideFunctionDefinition parameters functionBody)
 
-listParser :: Parser Expression'
-listParser = do
-  indentationLevel <- get
-  entities <- blockParser (char '[' *> sc) (lookAhead (char ']' <|> char '|')) expressionParser
+listParser :: IndentationLevel -> Parser Expression'
+listParser indentationLevel = do
+  entities <- blockParser (char '[' *> sc) (lookAhead (char ']' <|> char '|')) expressionParser indentationLevel
 
   hasSource <- lookAhead (optional (char '|' <* sc))
 
   RightHandSideList entities
     <$> case hasSource of
       Just _ -> do
-        blockParser (char '|' *> sc) (char ']' *> sc) statementParser
+        blockParser (char '|' *> sc) (char ']' *> sc) statementParser indentationLevel
       Nothing -> do
         _ <- char ']' <* sc
         return []
 
-mixedTextParser :: Parser [RightHandSideString]
-mixedTextParser =
-  do char '\"'
-    *> (dynamicTextParser <|> staticTextParser) `manyTill` char '"'
+mixedTextParser :: IndentationLevel -> Parser Expression'
+mixedTextParser indentationLevel = do
+  RightHandSideString
+    <$> (char '\"' *> (dynamicTextParser indentationLevel <|> staticTextParser indentationLevel) `manyTill` char '"')
 
-staticTextParser :: Parser RightHandSideString
-staticTextParser = do
+staticTextParser :: IndentationLevel -> Parser RightHandSideString
+staticTextParser indentationLevel = do
   text <- charLiteral `manyTill` lookAhead (string "\"" <|> string "${")
   return (RightHandSideStringStatic text)
 
-dynamicTextParser :: Parser RightHandSideString
-dynamicTextParser = do
-  value <- string "${" *> expressionParser <* char '}'
+dynamicTextParser :: IndentationLevel -> Parser RightHandSideString
+dynamicTextParser indentationLevel = do
+  value <- string "${" *> expressionParser indentationLevel <* char '}'
 
   return (RightHandSideStringDynamic value)
 
-variableParser :: Parser Expression'
-variableParser = do RightHandSideVariable <$> (lowercaseIdentifierParser <* sc)
+variableParser :: IndentationLevel -> Parser Expression'
+variableParser indentationLevel = do RightHandSideVariable <$> (lowercaseIdentifierParser <* sc)
 
 ---------------------
 -- Operator Parser --

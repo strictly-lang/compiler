@@ -27,7 +27,7 @@ algebraicDataTypeParser = do
 assignmentParser :: Parser Root
 assignmentParser = do
   name <- lowercaseIdentifierParser <* sc <* assignParser <* sc
-  RootAssignment name <$> expressionParser
+  RootAssignment name <$> expressionParser 0
 
 rootParser :: Parser Root
 rootParser = dataParser <|> assignmentParser
