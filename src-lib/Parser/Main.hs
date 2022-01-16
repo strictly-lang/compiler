@@ -18,4 +18,4 @@ parseRoot fileContent =
    in result
 
 parseRoot' :: Parser [Root]
-parseRoot' = many (many eol *> (rootParser <* eol)) <* eof
+parseRoot' = many (many eol *> (rootParser <* many eol)) <* eof
