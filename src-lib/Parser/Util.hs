@@ -32,35 +32,25 @@ lowercaseIdentifierParser = do
 blockParser :: Parser begin -> Parser end -> (IndentationLevel -> Parser a) -> IndentationLevel -> Parser [a]
 blockParser beginParser endParser contentParser indentationLevel = do
   _ <- beginParser
-  isEol <- optional eol'
+  blockParser' endParser contentParser indentationLevel
 
-  case isEol of
-    Just _ -> do indentationParser (blockParser' endParser contentParser indentationLevel) (indentationLevel + 1)
-    Nothing -> do
-      blockParser' endParser contentParser indentationLevel indentationLevel
-
-blockParser' :: Parser end -> (IndentationLevel -> Parser a) -> IndentationLevel -> IndentationLevel -> Parser [a]
-blockParser' endParser contentParser outerIndentationLevel innerIndentationLevel = do
+blockParser' :: Parser end -> (IndentationLevel -> Parser a) -> IndentationLevel -> Parser [a]
+blockParser' endParser contentParser indentationLevel = do
   isEnd <- optional endParser
 
   case isEnd of
     Just _ -> return []
     Nothing -> do
-      content <- contentParser innerIndentationLevel
+      newline <- Right <$> eol' <|> (Right <$> try (char ',' *> sc *> eol')) <|> (Left <$> (char ',' *> sc *> hole'))
 
-      isEnd <- optional endParser
+      content <- case newline of
+        Right _ -> do
+          indentationParser contentParser (indentationLevel + 1)
+        Left _ -> do
+          contentParser indentationLevel
 
-      case isEnd of
-        Just _ -> return [content]
-        Nothing -> do
-          newline <- Right <$> eol' <|> (Right <$> try (char ',' *> sc *> eol')) <|> (Left <$> (char ',' *> sc *> hole'))
-
-          nextContent <- case newline of
-            Right _ -> do
-              indentationParser (blockParser' endParser contentParser outerIndentationLevel) innerIndentationLevel
-            Left _ ->
-              blockParser' endParser contentParser outerIndentationLevel innerIndentationLevel
-          return (content : nextContent)
+      nextContent <- blockParser' endParser contentParser indentationLevel
+      return (content : nextContent)
 
 indentationParser :: (IndentationLevel -> Parser a) -> IndentationLevel -> Parser a
 indentationParser contentParser indentationLevel = do
