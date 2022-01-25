@@ -5,6 +5,7 @@ strictly is a declarative programming language for interactive web-uis.
 ## Goals
 * Correctness
     * through type typesafety and immutability
+    * through the declarative paradigm
 * Safety
     * the compiler will protect you from xss
 * Performance
