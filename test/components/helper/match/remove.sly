@@ -1,16 +1,16 @@
-state = / -> {
+state = \ -> {
 	init = First
-	reducer = /_, action -> action
+	reducer = \_, action -> action
 }
 
-main = /props ->
+main = \props ->
 	$header
-	\[stateState, stateDispatch] <- model(state());
+	let [stateState, stateDispatch] <- model(state());
 		if props.foo then
 			match stateState
-				case /First ->
+				case \First ->
 					$div{
-						onclick = /_ -> stateDispatch(Second)
+						onclick = \_ -> stateDispatch(Second)
 					}
 		else
 			$section

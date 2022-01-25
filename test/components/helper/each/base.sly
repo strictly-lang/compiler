@@ -1,9 +1,9 @@
-import /vendor/strictly/prelude/src/index.js (zipWithIndex)
+import \vendor\strictly\prelude\src\index.js (zipWithIndex)
 
-main = /props ->
+main = \props ->
 	$header
 	if props.baz then
-		each \[value, index] <- zipWithIndex(props.foo)
+		each let [value, index] <- zipWithIndex(props.foo)
 			$div
 				"${index}-${value}-${props.bar}"
 		else

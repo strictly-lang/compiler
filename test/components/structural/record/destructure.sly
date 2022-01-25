@@ -1,12 +1,12 @@
-state = / -> {
+state = \ -> {
 	init = { x = 1, deep = { y = 0 } }
-	reducer = /state, x -> { x = state.x + x | state}
+	reducer = \state, x -> { x = state.x + x | state}
 }
 
-main = / ->
-	\[{x, deep = { y = yValue }}, mainDispatch] <- model(state());
+main = \ ->
+	let [{x, deep = { y = yValue }}, mainDispatch] <- model(state());
 	$button{
-		onclick = /_ -> mainDispatch(2)
+		onclick = \_ -> mainDispatch(2)
 	}
 	$div
 		"${x} ${yValue}"

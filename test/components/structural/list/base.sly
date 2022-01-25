@@ -1,16 +1,16 @@
-import /vendor/strictly/prelude/src/index.js (zipWithIndex)
+import \vendor\strictly\prelude\src\index.js (zipWithIndex)
 
-state = / -> {
+state = \ -> {
 	init = [0, 1, 3]
-	reducer = /state, multiply -> [ value, value * 2 | \value <- state, value != 0]
+	reducer = \state, multiply -> [ value, value * 2 | let value <- state, value != 0]
 }
 
-main = /props ->
-	\[mainState, mainDispatch] <- model(state());
+main = \props ->
+	let [mainState, mainDispatch] <- model(state());
 	$button{
-		onclick = /_ -> mainDispatch(2)
+		onclick = \_ -> mainDispatch(2)
 	}
-	each \[value, index] <- zipWithIndex(mainState)
+	each let [value, index] <- zipWithIndex(mainState)
 		$div
 			"${index}: ${value}"
 	else

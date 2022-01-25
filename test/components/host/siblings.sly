@@ -1,3 +1,3 @@
-main = /props ->
+main = \props ->
 	$div
 	$span

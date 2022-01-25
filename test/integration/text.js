@@ -1,7 +1,7 @@
-import "/test/components/text/base.sly";
-import "/test/components/text/dynamic.sly";
-import "/test/components/text/multidynamic.sly";
-import "/test/components/text/whitespace.sly";
+import "\test\components\text\base.sly";
+import "\test\components\text\dynamic.sly";
+import "\test\components\text\multidynamic.sly";
+import "\test\components\text\whitespace.sly";
 
 describe("text element handling", () => {
   let container;

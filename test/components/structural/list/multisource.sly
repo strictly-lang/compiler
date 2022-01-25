@@ -1,8 +1,8 @@
-import /vendor/strictly/prelude/src/index.js (zipWithIndex)
+import \vendor\strictly\prelude\src\index.js (zipWithIndex)
 
-main = /props ->
+main = \props ->
 	$header
-	each \[a, b] <- [[a, b] | \a <- [0, 1, 2], \b <- [3, 4]]
+	each let [a, b] <- [[a, b] | let a <- [0, 1, 2], let b <- [3, 4]]
 		$div
 			"${a}: ${b}"
 	else

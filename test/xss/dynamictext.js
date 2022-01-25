@@ -10,19 +10,19 @@ describe("host element handling", () => {
 
   it("dynamic text should not interpret html, but just show it as a string", () => {
     const element = document.createElement("test-components-text-dynamic");
-    element.foo = "<div />";
+    element.foo = "<div \>";
     container.appendChild(element);
 
     expect(element.shadowRoot.childNodes.length).toBe(1);
     expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[0].textContent).toBe(
-      "con-<div />-cat"
+      "con-<div \>-cat"
     );
     expect(element.shadowRoot.childNodes[0].querySelector("div")).toBe(null);
-    element.foo = "<span />";
+    element.foo = "<span \>";
 
     expect(element.shadowRoot.childNodes[0].textContent).toBe(
-      "con-<span />-cat"
+      "con-<span \>-cat"
     );
     expect(element.shadowRoot.childNodes[0].querySelector("span")).toBe(null);
   });

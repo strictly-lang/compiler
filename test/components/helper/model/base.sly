@@ -1,11 +1,11 @@
-state = / -> {
+state = \ -> {
 	init = ""
-	reducer = /_, action -> action
+	reducer = \_, action -> action
 }
 
-main = /props ->
-	\[mainState, mainDispatch] <- model(state());
+main = \props ->
+	let [mainState, mainDispatch] <- model(state());
 	$input{
 		value = Text(mainState)
-		oninput = /Text(value) -> mainDispatch(value)
+		oninput = \Text(value) -> mainDispatch(value)
 	}

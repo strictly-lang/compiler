@@ -1,4 +1,4 @@
-import "/test/components/style/base.sly";
+import "\test\components\style\base.sly";
 
 describe("style handling", () => {
   let container;

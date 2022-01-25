@@ -1,5 +1,5 @@
-import "/test/components/helper/model/counter.sly";
-import "/test/components/helper/model/fetch.sly";
+import "\test\components\helper\model\counter.sly";
+import "\test\components\helper\model\fetch.sly";
 
 async function nextTick(amount) {
   for (let i = amount; i > 0; i--) {
@@ -65,20 +65,20 @@ describe("model element handling", () => {
 
     container.appendChild(element);
 
-    expect(fetchSpy).toHaveBeenCalledOnceWith("/api/23");
+    expect(fetchSpy).toHaveBeenCalledOnceWith("\api\23");
     expect(element.shadowRoot.textContent).toBe("Loading...");
 
     await nextTick(10);
 
-    expect(element.shadowRoot.textContent).toBe("text response /api/23");
+    expect(element.shadowRoot.textContent).toBe("text response \api\23");
 
     element.id = 5;
 
-    expect(fetchSpy).toHaveBeenCalledWith("/api/5");
+    expect(fetchSpy).toHaveBeenCalledWith("\api\5");
     expect(element.shadowRoot.textContent).toBe("Loading...");
 
     await nextTick(10);
 
-    expect(element.shadowRoot.textContent).toBe("text response /api/5");
+    expect(element.shadowRoot.textContent).toBe("text response \api\5");
   });
 });

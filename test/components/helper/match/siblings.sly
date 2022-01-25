@@ -1,22 +1,22 @@
-state = / -> {
+state = \ -> {
 	init = First
-	reducer = /First, action -> Second(Third, action)
-	reducer = /Second(Third, outerValue), action -> Fourth(outerValue + action)
+	reducer = \First, action -> Second(Third, action)
+	reducer = \Second(Third, outerValue), action -> Fourth(outerValue + action)
 }
 
-main = /props ->
+main = \props ->
 	$div
-		\[stateState, stateDispatch] <- model(state());
+		let [stateState, stateDispatch] <- model(state());
 		match stateState
-			case /First ->
+			case \First ->
 				$button{
-					onclick = /_ -> stateDispatch(1)
+					onclick = \_ -> stateDispatch(1)
 				}
 					"first"
-			case /Second(Third, value) ->
+			case \Second(Third, value) ->
 				$button{
-					onclick = /_ -> stateDispatch(2)
+					onclick = \_ -> stateDispatch(2)
 				}
 					"second: ${value}"
-			case /Fourth(value) ->
+			case \Fourth(value) ->
 				"third: ${value}"

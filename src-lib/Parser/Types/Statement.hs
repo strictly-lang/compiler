@@ -105,7 +105,7 @@ recordOptionParser indentationLevel = do
 
 functionDefinitionParser :: IndentationLevel -> Parser Expression'
 functionDefinitionParser indentationLevel = do
-  parameters <- blockParser (char '/' <* sc) (string "->" <* sc) leftHandSideParser indentationLevel
+  parameters <- blockParser (char '\\' <* sc) (string "->" <* sc) leftHandSideParser indentationLevel
 
   hasEol' <- optional eol'
 

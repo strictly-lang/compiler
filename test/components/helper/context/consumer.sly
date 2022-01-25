@@ -1,7 +1,7 @@
-main = /props ->
+main = \props ->
 	$div
 		if props.foo then
-			\valueFromContext <- context(some-parent-element);
+			let valueFromContext <- context(some-parent-element);
 			"${valueFromContext}"
 		else
 			"mep"

@@ -1,8 +1,8 @@
-import "/test/components/helper/match/base.sly";
-import "/test/components/helper/match/siblings.sly";
-import "/test/components/helper/match/nested.sly";
-import "/test/components/helper/match/update.sly";
-import "/test/components/helper/match/remove.sly";
+import "\test\components\helper\match\base.sly";
+import "\test\components\helper\match\siblings.sly";
+import "\test\components\helper\match\nested.sly";
+import "\test\components\helper\match\update.sly";
+import "\test\components\helper\match\remove.sly";
 
 describe("match case handling", () => {
   let container;

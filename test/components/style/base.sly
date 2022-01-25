@@ -13,7 +13,7 @@ style
 	#entity.class{
 		background-color = Initial
 	}
-main = /props ->
+main = \props ->
 	$div
 	$div{
 		id="entity"

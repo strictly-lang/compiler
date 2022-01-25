@@ -1,17 +1,17 @@
-counter = / -> {
+counter = \ -> {
 	init = 0
-	reducer = /state, Increment -> state + 1
-	reducer = /state, Decrement -> state - 1
+	reducer = \state, Increment -> state + 1
+	reducer = \state, Decrement -> state - 1
 }
 
-main = /props ->
-	\[counterState, counterDispatch] <- model(counter());
+main = \props ->
+	let [counterState, counterDispatch] <- model(counter());
 	$button{
-		onclick = /_ -> counterDispatch(Decrement)
+		onclick = \_ -> counterDispatch(Decrement)
 	}
 		"Decrement"
 	$button{
-		onclick = /_ -> counterDispatch(Increment)
+		onclick = \_ -> counterDispatch(Increment)
 	}
 		"Increment"
 	"${counterState}"

@@ -1,4 +1,4 @@
-main = /props ->
+main = \props ->
 	$header
 	if props.foo then
 		if props.bar then

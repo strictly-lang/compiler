@@ -1,6 +1,6 @@
-import "/test/components/helper/each/base.sly";
-import "/test/components/helper/each/constraint.sly";
-import "/test/components/helper/each/neverconstraint.sly";
+import "\test\components\helper\each\base.sly";
+import "\test\components\helper\each\constraint.sly";
+import "\test\components\helper\each\neverconstraint.sly";
 
 describe("each loop handling", () => {
   let container;
