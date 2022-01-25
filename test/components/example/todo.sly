@@ -22,14 +22,9 @@ state = / -> {
 main = /props ->
 	\[{todos, textValue}, todosDispatch] <- model(state());
 
-	$style{
-		.row = {
-			color = Blue
-
-			&.done = {
-				color = Grey
-			}
-		}
+	$link{
+		href="./todo.css"
+		rel="stylesheet"
 	}
 	$input{
 		value = Text(textValue)
