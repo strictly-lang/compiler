@@ -46,14 +46,18 @@ blockParser' firstEntry endParser contentParser indentationLevel = do
           then Right <$> eol' <|> (Left <$> hole')
           else Right <$> eol' <|> (Right <$> try (char ',' *> sc *> eol')) <|> (Left <$> (char ',' *> sc *> hole'))
 
-      content <- case newline of
+      contentContainer <- case newline of
         Right _ -> do
-          indentationParser contentParser (indentationLevel + 1)
+          (Left <$> indentationParser (const endParser) indentationLevel) <|> (Right <$> indentationParser contentParser (indentationLevel + 1))
         Left _ -> do
-          contentParser indentationLevel
+          (Left <$> endParser) <|> (Right <$> contentParser indentationLevel)
 
-      nextContent <- blockParser' False endParser contentParser indentationLevel
-      return (content : nextContent)
+      case contentContainer of
+        Right content -> do
+          nextContent <- blockParser' False endParser contentParser indentationLevel
+          return (content : nextContent)
+        Left _ -> do
+          return []
 
 indentationParser :: (IndentationLevel -> Parser a) -> IndentationLevel -> Parser a
 indentationParser contentParser indentationLevel = do
