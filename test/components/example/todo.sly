@@ -14,7 +14,7 @@ state = \ -> {
 				else
 					todo.isDone == False
 			| todo }
-		| let [ todo@{ isDone }, index' ] <- zipWithIndex(todos)];
+		| let [ todo@{ isDone }, index' ] <- zipWithIndex(todos);];
 
 		{ todos = todos' | state }
 }

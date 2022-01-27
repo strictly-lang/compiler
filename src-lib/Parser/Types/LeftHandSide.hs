@@ -2,7 +2,7 @@ module Parser.Types.LeftHandSide where
 
 import Control.Applicative ((<|>))
 import Parser.Types
-import Parser.Util (assignParser, blockParser, functionCalldCloseParser, functionCalldOpenParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, recordCloseParser, recordOpenParser, sc, uppercaseIdentifierParser)
+import Parser.Util (assignParser, blockParser, functionCallCloseParser, functionCallOpenParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, recordCloseParser, recordOpenParser, sc, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, optional)
 import Text.Megaparsec.Char (char)
 import Types
@@ -13,10 +13,10 @@ leftHandSideParser indentationLevel = leftHandSideListParser indentationLevel <|
 leftHandSideAlgebraicDataTypeParser :: IndentationLevel -> Parser LeftHandSide
 leftHandSideAlgebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser <* sc
-  hasParameter <- optional (lookAhead functionCalldOpenParser)
+  hasParameter <- optional (lookAhead functionCallOpenParser)
   parameters <- case hasParameter of
     Just _ -> do
-      blockParser functionCalldOpenParser functionCalldCloseParser leftHandSideParser indentationLevel
+      blockParser functionCallOpenParser functionCallCloseParser leftHandSideParser indentationLevel
     Nothing -> do return []
   return (LeftHandSideAlgebraicDataType name parameters)
 

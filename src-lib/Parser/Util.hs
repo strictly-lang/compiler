@@ -72,6 +72,12 @@ sc = do
 ------------
 -- Tokens --
 ------------
+
+statementTerminationParser :: Parser ()
+statementTerminationParser = do
+  _ <- char ';' *> sc
+  return ()
+
 assignParser :: Parser ()
 assignParser = do
   _ <- char '=' *> sc
@@ -94,14 +100,14 @@ baseOfParser = do
 
   return ()
 
-functionCalldOpenParser :: Parser ()
-functionCalldOpenParser = do
+functionCallOpenParser :: Parser ()
+functionCallOpenParser = do
   _ <- char '(' *> sc
 
   return ()
 
-functionCalldCloseParser :: Parser ()
-functionCalldCloseParser = do
+functionCallCloseParser :: Parser ()
+functionCallCloseParser = do
   _ <- char ')' *> sc
 
   return ()

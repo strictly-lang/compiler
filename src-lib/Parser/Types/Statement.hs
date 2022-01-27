@@ -3,7 +3,7 @@ module Parser.Types.Statement where
 import Control.Applicative ((<|>))
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
-import Parser.Util (assignParser, baseOfParser, blockParser, eol', functionCalldCloseParser, functionCalldOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, recordCloseParser, recordOpenParser, sc, streamParser, uppercaseIdentifierParser)
+import Parser.Util (assignParser, baseOfParser, blockParser, eol', functionCallCloseParser, functionCallOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, manyTill, optional, some, try)
 import Text.Megaparsec.Char (char, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
@@ -25,11 +25,14 @@ letParser indentationLevel = do
   kind <- Left <$> assignParser <|> Right <$> streamParser
   expression <- expressionParser indentationLevel
 
-  case kind of
+  result <- case kind of
     Left _ ->
       return (VariableAssignment leftHandSide expression)
     Right _ ->
       return (Stream leftHandSide expression)
+  _ <- statementTerminationParser
+
+  return result
 
 ------------------------
 -- Expression-Parsers --
@@ -43,10 +46,20 @@ expressionParser indentationLevel = do
 
   result <- case nested of
     Just _ -> do
-      nextSessionPart <- expressionParser indentationLevel
-      return (expression : nextSessionPart)
+      nextExpressionPart <- expressionParser indentationLevel
+      return (expression : nextExpressionPart)
     Nothing -> do
       return [expression]
+
+  hasFunctionCall <- optional (lookAhead functionCallOpenParser)
+
+  result' <- case hasFunctionCall of
+    Just _ -> do
+      functionCall <- RightHandSideFunctionCall result <$> blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
+      return [functionCall]
+    Nothing -> do
+      return result
+
   operator <- optional operatorParser
 
   case operator of
@@ -80,10 +93,10 @@ conditionParser indentationLevel = do
 agebraicDataTypeParser :: IndentationLevel -> Parser Expression'
 agebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser
-  hasParameter <- optional (lookAhead functionCalldOpenParser)
+  hasParameter <- optional (lookAhead functionCallOpenParser)
   parameters <- case hasParameter of
     Just _ -> do
-      blockParser functionCalldOpenParser functionCalldCloseParser expressionParser indentationLevel
+      blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
     Nothing -> do return []
   return (RightHandSideAlgebraicDataType name parameters)
 
