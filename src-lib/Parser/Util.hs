@@ -6,11 +6,6 @@ import Text.Megaparsec (between, many, optional, some, try)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, space, string, upperChar)
 import Text.Megaparsec.Char.Lexer
 
-assignParser :: Parser ()
-assignParser = do
-  _ <- char '=' *> sc
-  return ()
-
 hole' :: Parser ()
 hole' = do
   return ()
@@ -19,13 +14,14 @@ uppercaseIdentifierParser :: Parser String
 uppercaseIdentifierParser = do
   firstChar <- upperChar
   rest <- many (letterChar <|> char '\'')
-
+  _ <- sc
   return (firstChar : rest)
 
 lowercaseIdentifierParser :: Parser String
 lowercaseIdentifierParser = do
   firstChar <- lowerChar
   rest <- many (letterChar <|> char '\'')
+  _ <- sc
 
   return (firstChar : rest)
 
@@ -44,7 +40,7 @@ blockParser' firstEntry endParser contentParser indentationLevel = do
       newline <-
         if firstEntry
           then Right <$> eol' <|> (Left <$> hole')
-          else Right <$> eol' <|> (Right <$> try (char ',' *> sc *> eol')) <|> (Left <$> (char ',' *> sc *> hole'))
+          else Right <$> eol' <|> (Right <$> try (delimiterParser *> eol')) <|> (Left <$> delimiterParser)
 
       contentContainer <- case newline of
         Right _ -> do
@@ -71,4 +67,65 @@ eol' = do
 sc :: Parser ()
 sc = do
   _ <- many (char ' ')
+  return ()
+
+------------
+-- Tokens --
+------------
+assignParser :: Parser ()
+assignParser = do
+  _ <- char '=' *> sc
+  return ()
+
+streamParser :: Parser ()
+streamParser = do
+  _ <- string "<-" *> sc
+  return ()
+
+delimiterParser :: Parser ()
+delimiterParser = do
+  _ <- char ',' *> sc
+
+  return ()
+
+baseOfParser :: Parser ()
+baseOfParser = do
+  _ <- char '|' *> sc
+
+  return ()
+
+functionCalldOpenParser :: Parser ()
+functionCalldOpenParser = do
+  _ <- char '(' *> sc
+
+  return ()
+
+functionCalldCloseParser :: Parser ()
+functionCalldCloseParser = do
+  _ <- char ')' *> sc
+
+  return ()
+
+listOpenParser :: Parser ()
+listOpenParser = do
+  _ <- char '[' *> sc
+
+  return ()
+
+listCloseParser :: Parser ()
+listCloseParser = do
+  _ <- char ']' *> sc
+
+  return ()
+
+recordOpenParser :: Parser ()
+recordOpenParser = do
+  _ <- char '{' *> sc
+
+  return ()
+
+recordCloseParser :: Parser ()
+recordCloseParser = do
+  _ <- char '}' *> sc
+
   return ()

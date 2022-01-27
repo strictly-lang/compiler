@@ -1,35 +1,38 @@
 module Parser.Types.LeftHandSide where
 
 import Control.Applicative ((<|>))
-import Control.Monad.State.Strict (get)
 import Parser.Types
-import Parser.Util (blockParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
+import Parser.Util (assignParser, blockParser, functionCalldCloseParser, functionCalldOpenParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, recordCloseParser, recordOpenParser, sc, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, optional)
 import Text.Megaparsec.Char (char)
 import Types
 
 leftHandSideParser :: IndentationLevel -> Parser LeftHandSide
-leftHandSideParser indentationLevel = leftHandSideAlgebraicDataTypeParser indentationLevel <|> leftHandSideRecordParser indentationLevel <|> leftHandSideVariableParser indentationLevel
+leftHandSideParser indentationLevel = leftHandSideListParser indentationLevel <|> leftHandSideAlgebraicDataTypeParser indentationLevel <|> leftHandSideRecordParser indentationLevel <|> leftHandSideVariableParser indentationLevel
 
 leftHandSideAlgebraicDataTypeParser :: IndentationLevel -> Parser LeftHandSide
 leftHandSideAlgebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser <* sc
-  hasParameter <- optional (lookAhead (char '('))
+  hasParameter <- optional (lookAhead functionCalldOpenParser)
   parameters <- case hasParameter of
     Just _ -> do
-      blockParser (char '(' *> sc) (char ')' *> sc) leftHandSideParser indentationLevel
+      blockParser functionCalldOpenParser functionCalldCloseParser leftHandSideParser indentationLevel
     Nothing -> do return []
   return (LeftHandSideAlgebraicDataType name parameters)
 
+leftHandSideListParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideListParser indentationLevel = do
+  LeftHandSideList <$> blockParser listOpenParser listCloseParser leftHandSideParser indentationLevel
+
 leftHandSideRecordParser :: IndentationLevel -> Parser LeftHandSide
 leftHandSideRecordParser indentationLevel = do
-  destructuredProperties <- blockParser (char '{' <* sc) (char '}' <* sc) leftHandSideRecordEntityParser indentationLevel
+  destructuredProperties <- blockParser recordOpenParser recordCloseParser leftHandSideRecordEntityParser indentationLevel
   return (LeftHandSideRecord destructuredProperties)
 
 leftHandSideRecordEntityParser :: IndentationLevel -> Parser (String, Maybe LeftHandSide)
 leftHandSideRecordEntityParser indentationLevel = do
-  propertyName <- lowercaseIdentifierParser <* sc
-  hasAlias <- optional (char '=' <* sc)
+  propertyName <- lowercaseIdentifierParser
+  hasAlias <- optional assignParser
 
   case hasAlias of
     Just _ -> do
@@ -44,7 +47,7 @@ leftHandSideVariableParser indentationLevel = do
   isAlias <- optional (char '@')
 
   case isAlias of
-    Just _ -> do LeftHandSideAlias identifier <$> (leftHandSideParser indentationLevel <* sc)
+    Just _ -> do LeftHandSideAlias identifier <$> leftHandSideParser indentationLevel
     Nothing -> do
       _ <- sc
       return (LeftHandSideVariable identifier)

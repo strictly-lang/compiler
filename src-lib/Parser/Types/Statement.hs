@@ -3,7 +3,7 @@ module Parser.Types.Statement where
 import Control.Applicative ((<|>))
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
-import Parser.Util (assignParser, blockParser, eol', indentationParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
+import Parser.Util (assignParser, baseOfParser, blockParser, eol', functionCalldCloseParser, functionCalldOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, recordCloseParser, recordOpenParser, sc, streamParser, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, manyTill, optional, some, try)
 import Text.Megaparsec.Char (char, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
@@ -22,10 +22,14 @@ letParser :: IndentationLevel -> Parser Statement
 letParser indentationLevel = do
   _ <- string "let " <* sc
   leftHandSide <- leftHandSideParser indentationLevel
-  _ <- assignParser *> sc
+  kind <- Left <$> assignParser <|> Right <$> streamParser
   expression <- expressionParser indentationLevel
 
-  VariableAssignment leftHandSide <$> expressionParser indentationLevel
+  case kind of
+    Left _ ->
+      return (VariableAssignment leftHandSide expression)
+    Right _ ->
+      return (Stream leftHandSide expression)
 
 ------------------------
 -- Expression-Parsers --
@@ -75,26 +79,26 @@ conditionParser indentationLevel = do
 
 agebraicDataTypeParser :: IndentationLevel -> Parser Expression'
 agebraicDataTypeParser indentationLevel = do
-  name <- uppercaseIdentifierParser <* sc
-  hasParameter <- optional (lookAhead (char '('))
+  name <- uppercaseIdentifierParser
+  hasParameter <- optional (lookAhead functionCalldOpenParser)
   parameters <- case hasParameter of
     Just _ -> do
-      blockParser (char '(' *> sc) (char ')' *> sc) expressionParser indentationLevel
+      blockParser functionCalldOpenParser functionCalldCloseParser expressionParser indentationLevel
     Nothing -> do return []
   return (RightHandSideAlgebraicDataType name parameters)
 
 recordParser :: IndentationLevel -> Parser Expression'
 recordParser indentationLevel = do
-  properties <- blockParser (char '{' *> sc) (lookAhead (char '}' <|> char '|')) recordOptionParser indentationLevel
+  properties <- blockParser recordOpenParser (lookAhead (recordCloseParser <|> baseOfParser)) recordOptionParser indentationLevel
 
-  hasSource <- lookAhead (optional (char '|' <* sc))
+  hasSource <- lookAhead (optional baseOfParser)
 
   RightHandSideRecord properties
     <$> case hasSource of
       Just _ -> do
-        blockParser (char '|' *> sc) (char '}' *> sc) statementParser indentationLevel
+        blockParser baseOfParser recordCloseParser statementParser indentationLevel
       Nothing -> do
-        _ <- char '}' <* sc
+        _ <- recordCloseParser
         return []
 
 recordOptionParser :: IndentationLevel -> Parser (String, Maybe String, Expression)
@@ -119,16 +123,16 @@ functionDefinitionParser indentationLevel = do
 
 listParser :: IndentationLevel -> Parser Expression'
 listParser indentationLevel = do
-  entities <- blockParser (char '[' *> sc) (lookAhead (char ']' <|> char '|')) expressionParser indentationLevel
+  entities <- blockParser listOpenParser (lookAhead (listCloseParser <|> baseOfParser)) expressionParser indentationLevel
 
-  hasSource <- lookAhead (optional (char '|' <* sc))
+  hasSource <- lookAhead (optional baseOfParser)
 
   RightHandSideList entities
     <$> case hasSource of
       Just _ -> do
-        blockParser (char '|' *> sc) (char ']' *> sc) statementParser indentationLevel
+        blockParser baseOfParser listCloseParser statementParser indentationLevel
       Nothing -> do
-        _ <- char ']' <* sc
+        _ <- listCloseParser
         return []
 
 mixedTextParser :: IndentationLevel -> Parser Expression'
@@ -148,7 +152,7 @@ dynamicTextParser indentationLevel = do
   return (RightHandSideStringDynamic value)
 
 variableParser :: IndentationLevel -> Parser Expression'
-variableParser indentationLevel = do RightHandSideVariable <$> (lowercaseIdentifierParser <* sc)
+variableParser indentationLevel = do RightHandSideVariable <$> lowercaseIdentifierParser
 
 ---------------------
 -- Operator Parser --
