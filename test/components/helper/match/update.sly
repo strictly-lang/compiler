@@ -1,19 +1,21 @@
+data States = First | Second[States, Int];
+
 state = \ -> {
-	init = First( 1 )
-	reducer = \ First( value ), action -> Second( value + action )
-	reducer = \ Second( value ), action -> Second( value + action + action )
+	init = First[ 1 ]
+	reducer = \ First[ value ], action -> Second[ value + action ]
+	reducer = \ Second[ value ], action -> Second[ value + action + action]
 }
 
 main = \props ->
 	$div
 		let [stateState, stateDispatch] <- model(state());
 		match stateState
-			case \First( value ) ->
+			case \First[ value ] ->
 				$button{
 					onclick = \_ -> stateDispatch(1)
 				}
 					"first: ${value} ${props.foo}"
-			case \Second( value ) ->
+			case \Second[ value ] ->
 				$button{
 					onclick = \_ -> stateDispatch(3)
 				}

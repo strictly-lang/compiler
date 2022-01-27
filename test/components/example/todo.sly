@@ -1,12 +1,12 @@
-data Action = ChangeText(String) | CreateTodo | ToggleDone(Integer);
+data Action = ChangeText[String] | CreateTodo | ToggleDone[Integer];
 
 state = \ -> {
 	init = { currentText = "", todos = [] }
-	reducer = \state@{ currentText }, ChangeText(text) ->
+	reducer = \state@{ currentText }, ChangeText[text] ->
 		{ currentText = text | state}
 	reducer = \{ todos, currentText }, CreateTodo ->
 		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
-	reducer = \state@{ todos }, ToggleDone(index) ->
+	reducer = \state@{ todos }, ToggleDone[index]->
 		let todos' = [
 			{
 				isDone = if index == index' then
@@ -14,7 +14,7 @@ state = \ -> {
 				else
 					todo.isDone == False
 			| todo }
-		| let [ todo@{ isDone }, index' ] <- zipWithIndex(todos);];
+		| let [ todo@{ isDone }, index' ] <- zip(todos, 0..);];
 
 		{ todos = todos' | state }
 }
@@ -27,9 +27,9 @@ main = \props ->
 		rel="stylesheet"
 	}
 	$input{
-		value = Text(textValue)
-		oninput = \Text(textValue) ->
-			todosDispatch(ChangeText(textValue))
+		value = Text[textValue]
+		oninput = \Text[textValue] ->
+			todosDispatch(ChangeText[textValue])
 	}
 	$button{
 		type = Submit
@@ -39,10 +39,10 @@ main = \props ->
 		if todos.length == 0 then
 			"You don't have any todos left"
 		else
-			let [{value, isDone}, index] <- zipWithIndex(todos);
+			let [{value, isDone}, index] <- zip(todos, 0..);
 			$li{
 				class = "row"
 				class?done = isDone
-				onclick = \_ -> todosDispatch(ToggleDone(index))
+				onclick = \_ -> todosDispatch(ToggleDone[index])
 			}
 				"${value}"

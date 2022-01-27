@@ -1,3 +1,5 @@
+data Action = RemoveSelection | AddSelection;
+
 state = \_ -> {
 	init = false
 	reducer = \_, RemoveSelection -> false
@@ -5,12 +7,10 @@ state = \_ -> {
 }
 
 main = \props ->
-	each let entity <- [props.page * 10 .. props.page * 10 + 10]
-		let [selectionState, selectionDispatch] <- model(state(props.page));
-		$div{
-			class?selected = selectionState
-			onclick = \_ -> selectionDispatch(selectionState ? RemoveSelection : AddSelection)
-		}
-			"${entity}"
-	else
-		-
+	let entity <- [props.page * 10 .. props.page * 10 + 10]
+	let [selectionState, selectionDispatch] <- model(state(props.page));
+	$div{
+		class?selected = selectionState
+		onclick = \_ -> selectionDispatch(selectionState ? RemoveSelection : AddSelection)
+	}
+		"${entity}"

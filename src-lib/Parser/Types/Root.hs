@@ -3,7 +3,7 @@ module Parser.Types.Root where
 import Control.Applicative ((<|>))
 import Parser.Types
 import Parser.Types.Statement
-import Parser.Util (assignParser, lowercaseIdentifierParser, sc, uppercaseIdentifierParser)
+import Parser.Util (assignParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, sc, statementTerminationParser, uppercaseIdentifierParser)
 import Text.Megaparsec (between, many, optional, sepBy)
 import Text.Megaparsec.Char (char, space, space1, string)
 import Types
@@ -11,16 +11,16 @@ import Types
 dataParser :: Parser Root
 dataParser = do
   name <- string "data " *> sc *> uppercaseIdentifierParser <* sc
-  dataDeclarations <- between (assignParser <* sc) (char ';' <* sc) ((algebraicDataTypeParser <* sc) `sepBy` (char '|' <* sc))
+  dataDeclarations <- between assignParser statementTerminationParser ((algebraicDataTypeParser <* sc) `sepBy` (char '|' <* sc))
   return (RootDataDeclaration name dataDeclarations)
 
 algebraicDataTypeParser :: Parser (String, [String])
 algebraicDataTypeParser = do
   name <- uppercaseIdentifierParser
-  hasParameter <- optional (char '(')
+  hasParameter <- optional listOpenParser
   parameters <-
     case hasParameter of
-      Just _ -> do many uppercaseIdentifierParser <* char ')'
+      Just _ -> do many uppercaseIdentifierParser <* listCloseParser
       Nothing -> do return []
   return (name, parameters)
 

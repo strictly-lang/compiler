@@ -1,7 +1,9 @@
+data States = First | Second[States, Int] | Third[Int, Int];
+
 state = \ -> {
 	init = First
-	reducer = \First, action -> Second( action )
-	reducer = \Second( value ), action -> Third( value + action )
+	reducer = \First, action -> Second[ action ]
+	reducer = \Second[ value ], action -> Third[ value + action ]
 }
 
 main = \props ->
@@ -9,14 +11,14 @@ main = \props ->
 		let [stateState, stateDispatch] <- model(state());
 		match stateState
 			case \First ->
-				$$button{
+				$button{
 					onclick = \_ -> stateDispatch(1)
 				}
 					"first"
-			case \Second( value ) ->
-				$$button{
+			case \Second[ value ] ->
+				$button{
 					onclick = \_ -> stateDispatch(2)
 				}
 					"second: ${value}"
-			case \Third( value ) ->
+			case \Third[ value ] ->
 				"third: ${value}"

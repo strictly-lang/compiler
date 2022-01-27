@@ -1,14 +1,15 @@
-import \vendor\strictly\prelude\src\index.js (zipWithIndex)
+import \vendor\strictly\prelude\src\index.js (zip)
 
 main = \props ->
 	$header
 	if props.baz then
-		each let [value, index] <- zipWithIndex(props.foo)
+		if props.foo.length == 0
+			$span
+					"Empty list ${props.bar}"
+		else
+			let [value, index] <- zip(props.foo, [0..])
 			$div
 				"${index}-${value}-${props.bar}"
-		else
-			$span
-				"Empty list ${props.bar}"
 	else
 		$section
 	$footer

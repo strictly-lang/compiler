@@ -1,5 +1,5 @@
 main = \props ->
 	$input{
-		value = Text(props.value)
-		oninput = \Text(value) -> props.oninput(value)
+		value = Text[props.value]
+		oninput = \Text[value] -> props.oninput(value)
 	}

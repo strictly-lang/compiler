@@ -1,4 +1,4 @@
-import \vendor\strictly\prelude\src\index.js (zipWithIndex)
+import \vendor\strictly\prelude\src\index.js (zip)
 
 main = \props ->
 	match props.values
@@ -11,9 +11,6 @@ main = \props ->
 		case \[firstValue, secondValue | restValues] ->
 			$span
 				"first: ${firstValue}, second: ${secondValue}"
-			each let [value, index] <- zipWithIndex(restValues)
-				$div
-					"${index}: ${value}"
-			else
-				$div
-					"empty rest"
+			let [value, index] <- zip(restValues, [0..])
+			$div
+				"${index}: ${value}"

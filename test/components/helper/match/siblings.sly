@@ -1,7 +1,9 @@
+data States = First | Second[States, Int] | Third[Int, Int] | Fourht[Int];
+
 state = \ -> {
 	init = First
-	reducer = \First, action -> Second(Third, action)
-	reducer = \Second(Third, outerValue), action -> Fourth(outerValue + action)
+	reducer = \First, action -> Second[Third, action]
+	reducer = \Second[Third, outerValue], action -> Fourth[outerValue + action]
 }
 
 main = \props ->
@@ -13,10 +15,10 @@ main = \props ->
 					onclick = \_ -> stateDispatch(1)
 				}
 					"first"
-			case \Second(Third, value) ->
+			case \Second[Third, value] ->
 				$button{
 					onclick = \_ -> stateDispatch(2)
 				}
 					"second: ${value}"
-			case \Fourth(value) ->
+			case \Fourth[value] ->
 				"third: ${value}"

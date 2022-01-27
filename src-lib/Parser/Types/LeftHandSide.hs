@@ -13,10 +13,10 @@ leftHandSideParser indentationLevel = leftHandSideListParser indentationLevel <|
 leftHandSideAlgebraicDataTypeParser :: IndentationLevel -> Parser LeftHandSide
 leftHandSideAlgebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser <* sc
-  hasParameter <- optional (lookAhead functionCallOpenParser)
+  hasParameter <- optional (lookAhead listOpenParser)
   parameters <- case hasParameter of
     Just _ -> do
-      blockParser functionCallOpenParser functionCallCloseParser leftHandSideParser indentationLevel
+      blockParser listOpenParser listCloseParser leftHandSideParser indentationLevel
     Nothing -> do return []
   return (LeftHandSideAlgebraicDataType name parameters)
 

@@ -93,10 +93,10 @@ conditionParser indentationLevel = do
 agebraicDataTypeParser :: IndentationLevel -> Parser Expression'
 agebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser
-  hasParameter <- optional (lookAhead functionCallOpenParser)
+  hasParameter <- optional (lookAhead listOpenParser)
   parameters <- case hasParameter of
     Just _ -> do
-      blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
+      blockParser listOpenParser listCloseParser expressionParser indentationLevel
     Nothing -> do return []
   return (RightHandSideAlgebraicDataType name parameters)
 

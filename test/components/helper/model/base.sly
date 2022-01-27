@@ -6,6 +6,6 @@ state = \ -> {
 main = \props ->
 	let [mainState, mainDispatch] <- model(state());
 	$input{
-		value = Text(mainState)
-		oninput = \Text(value) -> mainDispatch(value)
+		value = Text[mainState]
+		oninput = \Text[value] -> mainDispatch(value)
 	}

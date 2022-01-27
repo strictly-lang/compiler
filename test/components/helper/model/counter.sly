@@ -1,3 +1,5 @@
+data Action = Increment | Decrement;
+
 counter = \ -> {
 	init = 0
 	reducer = \state, Increment -> state + 1

@@ -1,10 +1,7 @@
-import \vendor\strictly\prelude\src\index.js (zipWithIndex)
-
 main = \props ->
 	$header
-	each let [a, b] <- [[a, b] | let a <- [0, 1, 2], let b <- [3, 4]]
+	$section
+		let [a, b] <- [[a, b] | let a <- [0, 1, 2], let b <- [3, 4]]
 		$div
 			"${a}: ${b}"
-	else
-		"empty"
 	$footer

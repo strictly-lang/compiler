@@ -1,4 +1,4 @@
-import \vendor\strictly\prelude\src\index.js (zipWithIndex)
+import \vendor\strictly\prelude\src\index.js (zip)
 
 state = \ -> {
 	init = [0, 1, 3]
@@ -10,8 +10,6 @@ main = \props ->
 	$button{
 		onclick = \_ -> mainDispatch(2)
 	}
-	each let [value, index] <- zipWithIndex(mainState)
-		$div
-			"${index}: ${value}"
-	else
-		"empty"
+	let [value, index] <- zip(mainState, 0..)
+	$div
+		"${index}: ${value}"
