@@ -39,10 +39,10 @@ main = \props ->
 		if todos.length == 0 then
 			"You don't have any todos left"
 		else
-			each let [{value, isDone}, index] <- zipWithIndex(todos);
-				$li{
-					class = "row"
-					class?done = isDone
-					onclick = \_ -> todosDispatch(ToggleDone(index))
-				}
-					"${value}"
+			let [{value, isDone}, index] <- zipWithIndex(todos);
+			$li{
+				class = "row"
+				class?done = isDone
+				onclick = \_ -> todosDispatch(ToggleDone(index))
+			}
+				"${value}"
