@@ -5,7 +5,7 @@ import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
 import Parser.Util (assignParser, baseOfParser, blockParser, eol', functionCallCloseParser, functionCallOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, manyTill, optional, some, try)
-import Text.Megaparsec.Char (char, string)
+import Text.Megaparsec.Char (char, lowerChar, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
 
@@ -79,6 +79,7 @@ expressionParser' indentationLevel = do
     <|> rightHandSideListParser indentationLevel
     <|> rightHandSideAgebraicDataTypeParser indentationLevel
     <|> rightHandSideVariableParser indentationLevel
+    <|> rightHandSideHostParser indentationLevel
 
 rightHandSideConditionParser :: IndentationLevel -> Parser Expression'
 rightHandSideConditionParser indentationLevel = do
@@ -103,17 +104,21 @@ rightHandSideAgebraicDataTypeParser indentationLevel = do
 
 rightHandSideRecordParser :: IndentationLevel -> Parser Expression'
 rightHandSideRecordParser indentationLevel = do
+  RightHandSideRecord <$> recordParser indentationLevel
+
+recordParser :: IndentationLevel -> Parser Record
+recordParser indentationLevel = do
   properties <- blockParser recordOpenParser (lookAhead (recordCloseParser <|> baseOfParser)) recordOptionParser indentationLevel
 
   hasSource <- lookAhead (optional baseOfParser)
 
-  RightHandSideRecord properties
-    <$> case hasSource of
-      Just _ -> do
-        blockParser baseOfParser recordCloseParser statementParser indentationLevel
-      Nothing -> do
-        _ <- recordCloseParser
-        return []
+  case hasSource of
+    Just _ -> do
+      basedOn <- blockParser baseOfParser recordCloseParser expressionParser indentationLevel
+      return (properties, basedOn)
+    Nothing -> do
+      _ <- recordCloseParser
+      return (properties, [])
 
 recordOptionParser :: IndentationLevel -> Parser (String, Maybe String, Expression)
 recordOptionParser indentationLevel = do
@@ -179,6 +184,19 @@ dynamicTextParser indentationLevel = do
 
 rightHandSideVariableParser :: IndentationLevel -> Parser Expression'
 rightHandSideVariableParser indentationLevel = do RightHandSideVariable <$> lowercaseIdentifierParser
+
+rightHandSideHostParser :: IndentationLevel -> Parser Expression'
+rightHandSideHostParser indentationLevel = do
+  _ <- char '$'
+  hostName <- some lowerChar
+
+  hasOptions <- optional (lookAhead recordOpenParser)
+
+  record <- case hasOptions of
+    Just _ -> recordParser indentationLevel
+    Nothing -> do return ([], [])
+
+  return (RightHandSideHost hostName record []) -- add children parser
 
 ---------------------
 -- Operator Parser --

@@ -2,6 +2,7 @@ data Action = ChangeText[String] | CreateTodo | ToggleDone[Integer];
 
 state = \ -> {
 	init = { currentText = "", todos = [] }
+
 	reducer = \state@{ currentText }, ChangeText[text] ->
 		{ currentText = text | state}
 	reducer = \{ todos, currentText }, CreateTodo ->

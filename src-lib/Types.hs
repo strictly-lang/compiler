@@ -16,7 +16,7 @@ type Expression = [Expression']
 data Expression'
   = RightHandSideVariable String
   | RightHandSideList [Expression] [Statement]
-  | RightHandSideRecord Record [Statement]
+  | RightHandSideRecord Record
   | RightHandSideAlgebraicDataType String [Expression]
   | RightHandSideNumber Int
   | RightHandSideRange Int (Maybe Int)
@@ -26,11 +26,11 @@ data Expression'
   | RightHandSideOperator Operator Expression Expression
   | RightHandSideCondition Expression [Statement] [Statement]
   | RightHandSideMatch Expression [(LeftHandSide, Expression)]
-  | RightHandSideHost String Record Statement
+  | RightHandSideHost String Record [Statement]
   | RightHandSideFragment [Expression]
   deriving (Show)
 
-type Record = [(String, Maybe String, Expression)]
+type Record = ([(String, Maybe String, Expression)], [Expression])
 
 data RightHandSideString
   = RightHandSideStringStatic String
