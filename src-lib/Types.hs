@@ -30,7 +30,7 @@ data Expression'
   | RightHandSideFragment [Expression]
   deriving (Show)
 
-type Record = ([(String, Maybe String, Expression)], [Expression])
+type Record = ([(String, Maybe String, Expression)], [Statement])
 
 data RightHandSideString
   = RightHandSideStringStatic String

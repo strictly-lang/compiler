@@ -114,7 +114,7 @@ recordParser indentationLevel = do
 
   case hasSource of
     Just _ -> do
-      basedOn <- blockParser baseOfParser recordCloseParser expressionParser indentationLevel
+      basedOn <- blockParser baseOfParser recordCloseParser statementParser indentationLevel
       return (properties, basedOn)
     Nothing -> do
       _ <- recordCloseParser
