@@ -3,7 +3,7 @@ module Parser.Util where
 import Control.Applicative ((<|>))
 import Parser.Types
 import Text.Megaparsec (between, many, optional, some, try)
-import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, space, string, upperChar)
+import Text.Megaparsec.Char (char, digitChar, eol, letterChar, lowerChar, space, string, upperChar)
 import Text.Megaparsec.Char.Lexer
 
 hole' :: Parser ()
@@ -24,6 +24,18 @@ lowercaseIdentifierParser = do
   _ <- sc
 
   return (firstChar : rest)
+
+numberParser :: Parser Int
+numberParser = do
+  result <- some digitChar
+
+  decimalPlaces <- optional (try (char '.' *> some digitChar))
+
+  case decimalPlaces of
+    Just decimalPlacesValue ->
+      return (read (result ++ "." ++ decimalPlacesValue))
+    Nothing ->
+      return (read result)
 
 blockParser :: Parser begin -> Parser end -> (IndentationLevel -> Parser a) -> IndentationLevel -> Parser [a]
 blockParser beginParser endParser contentParser indentationLevel = do

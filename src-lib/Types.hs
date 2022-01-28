@@ -18,7 +18,8 @@ data Expression'
   | RightHandSideList [Expression] [Statement]
   | RightHandSideRecord Record [Statement]
   | RightHandSideAlgebraicDataType String [Expression]
-  | RightHandSideNumber Integer
+  | RightHandSideNumber Int
+  | RightHandSideRange Int (Maybe Int)
   | RightHandSideString [RightHandSideString]
   | RightHandSideFunctionDefinition [LeftHandSide] [Statement]
   | RightHandSideFunctionCall Expression [Expression]
