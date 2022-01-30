@@ -8,7 +8,12 @@ import Text.Megaparsec.Char (char)
 import Types
 
 leftHandSideParser :: IndentationLevel -> Parser LeftHandSide
-leftHandSideParser indentationLevel = leftHandSideListParser indentationLevel <|> leftHandSideAlgebraicDataTypeParser indentationLevel <|> leftHandSideRecordParser indentationLevel <|> leftHandSideVariableParser indentationLevel
+leftHandSideParser indentationLevel = leftHandSideHoleParser indentationLevel <|> leftHandSideListParser indentationLevel <|> leftHandSideAlgebraicDataTypeParser indentationLevel <|> leftHandSideRecordParser indentationLevel <|> leftHandSideVariableParser indentationLevel
+
+leftHandSideHoleParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideHoleParser indentationLevel = do
+  _ <- char '_' *> sc
+  return LeftHandSideHole
 
 leftHandSideAlgebraicDataTypeParser :: IndentationLevel -> Parser LeftHandSide
 leftHandSideAlgebraicDataTypeParser indentationLevel = do
