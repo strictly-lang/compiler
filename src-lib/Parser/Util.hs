@@ -31,11 +31,14 @@ numberParser = do
 
   decimalPlaces <- optional (try (char '.' *> some digitChar))
 
-  case decimalPlaces of
+  result <- case decimalPlaces of
     Just decimalPlacesValue ->
       return (read (result ++ "." ++ decimalPlacesValue))
     Nothing ->
       return (read result)
+
+  _ <- sc
+  return result
 
 blockParser :: Parser begin -> Parser end -> (IndentationLevel -> Parser a) -> IndentationLevel -> Parser [a]
 blockParser beginParser endParser contentParser indentationLevel = do

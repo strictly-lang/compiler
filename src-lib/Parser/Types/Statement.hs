@@ -4,7 +4,7 @@ import Control.Applicative ((<|>))
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
 import Parser.Util (assignParser, baseOfParser, blockParser, functionCallCloseParser, functionCallOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
-import Text.Megaparsec (lookAhead, manyTill, optional, some, try)
+import Text.Megaparsec (lookAhead, manyTill, optional, some, try, many)
 import Text.Megaparsec.Char (char, lowerChar, string, eol)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
@@ -196,7 +196,8 @@ rightHandSideHostParser indentationLevel = do
     Just _ -> recordParser indentationLevel
     Nothing -> do return ([], [])
 
-  return (RightHandSideHost hostName record []) -- add children parser
+  children <- many (indentationParser statementParser (indentationLevel + 1))
+  return (RightHandSideHost hostName record children)
 
 ---------------------
 -- Operator Parser --
