@@ -1,10 +1,10 @@
-state = \ -> {
+store = {
 	init = ""
 	reducer = \_, action -> action
 }
 
 main = \props ->
-	let [mainState, mainDispatch] <- model(state());
+	let [mainState, mainDispatch] <- model(store);
 	$input{
 		value = Text[mainState]
 		oninput = \Text[value] -> mainDispatch(value)

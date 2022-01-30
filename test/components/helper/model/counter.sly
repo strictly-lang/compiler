@@ -1,13 +1,13 @@
-data Action = Increment | Decrement;
+dsata Action = Increment | Decrement;
 
-counter = \ -> {
+store = {
 	init = 0
 	reducer = \state, Increment -> state + 1
 	reducer = \state, Decrement -> state - 1
 }
 
 main = \props ->
-	let [counterState, counterDispatch] <- model(counter());
+	let [counterState, counterDispatch] <- model(store);
 	$button{
 		onclick = \_ -> counterDispatch(Decrement)
 	}

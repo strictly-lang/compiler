@@ -1,6 +1,6 @@
 data Action = ChangeText[String] | CreateTodo | ToggleDone[Integer];
 
-state = \ -> {
+store = {
 	init = { currentText = "", todos = [] }
 
 	reducer = \state@{ currentText }, ChangeText[text] ->
@@ -21,7 +21,7 @@ state = \ -> {
 }
 
 main = \props ->
-	let [{todos, textValue}, todosDispatch] <- model(state());
+	let [{todos, textValue}, todosDispatch] <- model(store);
 
 	$link{
 		href="./todo.css"

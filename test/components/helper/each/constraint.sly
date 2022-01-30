@@ -1,12 +1,12 @@
 data State = Odd[Int] | Even[Int];
 
-state = \ -> {
+store = {
 	init = [Even[0], Odd[1], Even[2]]
 	reducer = \ _, action -> action
 }
 
 main = \props ->
-	let [values, dispatch] <- model(state());
+	let [values, dispatch] <- model(store);
 	$header{
 		onclick = \_ -> dispatch(Odd[0], Even[1], Even[2])
 	}

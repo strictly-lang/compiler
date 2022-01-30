@@ -1,11 +1,11 @@
-state = \ -> {
+store = {
 	init = First
 	reducer = \_, action -> action
 }
 
 main = \props ->
 	$header
-	let [stateState, stateDispatch] <- model(state());
+	let [stateState, stateDispatch] <- model(store);
 		if props.foo then
 			match stateState
 				case \First ->

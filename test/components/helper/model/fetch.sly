@@ -1,6 +1,6 @@
 import \vendor\strictly\prelude\src\index.js (fetchText)
 
-state = \id ->
+store = \id ->
 	let result <- fetchText("\api\${id}");
 	{
 		init = match result
@@ -12,7 +12,7 @@ state = \id ->
 
 main = \props ->
 	if props.load then
-		let [stateState, _] <- model(state(props.id));
+		let [stateState, _] <- model(store(props.id));
 		match stateState
 			case \Pending ->
 				"Loading..."

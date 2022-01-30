@@ -1,6 +1,6 @@
 data States = First | Second[States, Int] | Third[Int, Int];
 
-state = \ -> {
+store = {
 	init = First
 	reducer = \First, action -> Second[ action ]
 	reducer = \Second[ value ], action -> Third[ value + action ]
@@ -8,7 +8,7 @@ state = \ -> {
 
 main = \props ->
 	$div
-		let [stateState, stateDispatch] <- model(state());
+		let [stateState, stateDispatch] <- model(store);
 		match stateState
 			case \First ->
 				$button{

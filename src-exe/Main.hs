@@ -21,12 +21,12 @@ readFramelessFile fileName = do
   fileContent <- readFile fileName
   case parse fileContent of
     Left parseError -> error (errorBundlePretty parseError)
-    -- Right parsedContent ->
-    --   case getJs cwd (normalizePath cwd fileName) parsedContent of
-    --     (Just result) -> return result
-    --     Nothing -> error "Compile Error"
+    -- Right parsedContent -> error (show parsedContent)
 
-    Right parsedContent -> error (show parsedContent)
+    Right parsedContent ->
+      case getJs cwd (normalizePath cwd fileName) parsedContent of
+        (Just result) -> return result
+        Nothing -> error "Compile Error"
 
 normalizePath :: String -> String -> String
 normalizePath cwd filePath@('/' : _) = filePath
