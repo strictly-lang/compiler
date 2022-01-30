@@ -3,9 +3,9 @@ module Parser.Types.Statement where
 import Control.Applicative ((<|>))
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
-import Parser.Util (assignParser, baseOfParser, blockParser, eol', functionCallCloseParser, functionCallOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
+import Parser.Util (assignParser, baseOfParser, blockParser, functionCallCloseParser, functionCallOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, manyTill, optional, some, try)
-import Text.Megaparsec.Char (char, lowerChar, string)
+import Text.Megaparsec.Char (char, lowerChar, string, eol)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
 
@@ -85,10 +85,10 @@ rightHandSideConditionParser :: IndentationLevel -> Parser Expression'
 rightHandSideConditionParser indentationLevel = do
   _ <- string "if " *> sc
   condition <- expressionParser indentationLevel
-  _ <- string "then" *> sc *> eol'
-  thenCase <- some (try (optional eol' *> indentationParser statementParser (indentationLevel + 1)))
-  _ <- optional eol' *> indentationParser (\indentationLevel -> do string "else" *> sc) indentationLevel
-  elseCase <- some (try (optional eol' *> indentationParser statementParser (indentationLevel + 1)))
+  _ <- string "then" *> sc
+  thenCase <- some (indentationParser statementParser (indentationLevel + 1))
+  _ <- indentationParser (\indentationLevel -> do string "else" *> sc) indentationLevel
+  elseCase <- some (indentationParser statementParser (indentationLevel + 1))
 
   return (RightHandSideCondition condition thenCase elseCase)
 
@@ -130,11 +130,11 @@ rightHandSideFunctionDefinitionParser :: IndentationLevel -> Parser Expression'
 rightHandSideFunctionDefinitionParser indentationLevel = do
   parameters <- blockParser (char '\\' <* sc) (string "->" <* sc) leftHandSideParser indentationLevel
 
-  hasEol' <- optional eol'
+  hasEol <- lookAhead (optional eol)
 
-  functionBody <- case hasEol' of
+  functionBody <- case hasEol of
     Just _ -> do
-      some (try (optional eol' *> indentationParser statementParser (indentationLevel + 1)))
+      some (indentationParser statementParser (indentationLevel + 1))
     Nothing -> do
       result <- statementParser indentationLevel
       return [result]

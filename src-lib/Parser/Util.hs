@@ -44,32 +44,19 @@ blockParser beginParser endParser contentParser indentationLevel = do
 
 blockParser' :: Bool -> Parser end -> (IndentationLevel -> Parser a) -> IndentationLevel -> Parser [a]
 blockParser' firstEntry endParser contentParser indentationLevel = do
-  isEnd <- optional endParser
+  isEnd <- optional (endParser <|> try (optional delimiterParser *> indentationParser  (const endParser) indentationLevel ))
 
   case isEnd of
     Just _ -> return []
     Nothing -> do
-      newline <-
-        if firstEntry
-          then Right <$> eol' <|> (Left <$> hole')
-          else Right <$> eol' <|> (Right <$> try (delimiterParser *> eol')) <|> (Left <$> delimiterParser)
+      content <- indentationParser contentParser (indentationLevel + 1) <|> ((if firstEntry then hole' else delimiterParser) *> (contentParser indentationLevel <|>indentationParser contentParser (indentationLevel + 1)))
 
-      contentContainer <- case newline of
-        Right _ -> do
-          (Left <$> indentationParser (const endParser) indentationLevel) <|> (Right <$> indentationParser contentParser (indentationLevel + 1))
-        Left _ -> do
-          (Left <$> endParser) <|> (Right <$> contentParser indentationLevel)
-
-      case contentContainer of
-        Right content -> do
-          nextContent <- blockParser' False endParser contentParser indentationLevel
-          return (content : nextContent)
-        Left _ -> do
-          return []
+      nextContent <- blockParser' False endParser contentParser indentationLevel
+      return (content : nextContent)
 
 indentationParser :: (IndentationLevel -> Parser a) -> IndentationLevel -> Parser a
 indentationParser contentParser indentationLevel = do
-  try (string (replicate indentationLevel '\t') *> contentParser indentationLevel)
+  try (eol' *> string (replicate indentationLevel '\t')) *> contentParser indentationLevel
 
 eol' :: Parser ()
 eol' = do
