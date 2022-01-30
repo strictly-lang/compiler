@@ -10,7 +10,6 @@ algebraicDataTypeConstructor ((name, parameters) : adts) =
     Ind
       [ Ln "this.parameters = parameters;"
       ],
-    Ln "}",
-    Br
+    Ln "}"
   ]
     ++ algebraicDataTypeConstructor adts

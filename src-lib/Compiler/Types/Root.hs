@@ -20,8 +20,7 @@ compileRoot' pathToComponent roots = []
 codeToString :: Int -> Bool -> [Code] -> String
 codeToString indentationLevel first [] = ""
 codeToString indentationLevel first (Ind nestedCode : restCode) =
-  '\n' :
-  codeToString (indentationLevel + 1) True nestedCode
+  codeToString (indentationLevel + 1) True nestedCode ++ "\n"
     ++ codeToString indentationLevel True restCode
 codeToString indentationLevel first (Ln code : restCode)
   | first = replicate indentationLevel '\t' ++ rest
