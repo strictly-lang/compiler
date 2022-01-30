@@ -47,12 +47,12 @@ blockParser beginParser endParser contentParser indentationLevel = do
 
 blockParser' :: Bool -> Parser end -> (IndentationLevel -> Parser a) -> IndentationLevel -> Parser [a]
 blockParser' firstEntry endParser contentParser indentationLevel = do
-  isEnd <- optional (endParser <|> try (optional delimiterParser *> indentationParser  (const endParser) indentationLevel ))
+  isEnd <- optional (endParser <|> try (optional delimiterParser *> indentationParser (const endParser) indentationLevel))
 
   case isEnd of
     Just _ -> return []
     Nothing -> do
-      content <- indentationParser contentParser (indentationLevel + 1) <|> ((if firstEntry then hole' else delimiterParser) *> (contentParser indentationLevel <|>indentationParser contentParser (indentationLevel + 1)))
+      content <- indentationParser contentParser (indentationLevel + 1) <|> ((if firstEntry then hole' else delimiterParser) *> (contentParser indentationLevel <|> indentationParser contentParser (indentationLevel + 1)))
 
       nextContent <- blockParser' False endParser contentParser indentationLevel
       return (content : nextContent)

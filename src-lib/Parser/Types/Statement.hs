@@ -4,8 +4,8 @@ import Control.Applicative ((<|>))
 import Parser.Types
 import Parser.Types.LeftHandSide (leftHandSideParser)
 import Parser.Util (assignParser, baseOfParser, blockParser, functionCallCloseParser, functionCallOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
-import Text.Megaparsec (lookAhead, manyTill, optional, some, try, many)
-import Text.Megaparsec.Char (char, lowerChar, string, eol, letterChar)
+import Text.Megaparsec (lookAhead, many, manyTill, optional, some, try)
+import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 import Types
 
@@ -123,16 +123,16 @@ recordParser indentationLevel = do
 recordOptionParser :: IndentationLevel -> Parser (String, Maybe String, Expression)
 recordOptionParser indentationLevel = do
   key <- lowercaseIdentifierParser
-  
+
   hasCondition <- optional (char '?' *> sc)
 
   condition <- case hasCondition of
     Just _ -> do
-      Just <$> (some letterChar)
+      Just <$> some letterChar
     Nothing -> do
       return Nothing
 
-  _ <- sc *>assignParser
+  _ <- sc *> assignParser
   value <- expressionParser indentationLevel
 
   return (key, condition, value)

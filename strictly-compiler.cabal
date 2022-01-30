@@ -27,7 +27,9 @@ library
                        Parser.Types.LeftHandSide,
                        Parser.Types.Statement,
                        Compiler.Util,
+                       Compiler.Types,
                        Compiler.Types.Root
+                       Compiler.Types.RootDeclaration
 
   -- other-extensions:
   build-depends:       base, megaparsec, mtl
