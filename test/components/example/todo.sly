@@ -27,15 +27,18 @@ main = \props ->
 		href="./todo.css"
 		rel="stylesheet"
 	}
-	$input{
-		value = Text[textValue]
-		oninput = \Text[textValue] ->
-			todosDispatch(ChangeText[textValue])
+	$form{
+		onsubmit = \_ -> todosDispatch(CreateTodo)
 	}
-	$button{
-		type = Submit
-		onclick = \_ -> todosDispatch(CreateTodo)
-	}
+		$input{
+			value = Text[textValue]
+			oninput = \Text[textValue] ->
+				todosDispatch(ChangeText[textValue])
+		}
+		$button{
+			type = Submit
+		}
+
 	$ul
 		if todos.length == 0 then
 			"You don't have any todos left"
