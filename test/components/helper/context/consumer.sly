@@ -1,4 +1,6 @@
-main = \props ->
+main = \ ->
+	let props <- properties();
+
 	$div
 		if props.foo then
 			let valueFromContext <- context(some-parent-element);

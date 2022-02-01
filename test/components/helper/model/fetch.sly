@@ -10,7 +10,9 @@ store = \id ->
 		reducer = \state, action -> state
 	}
 
-main = \props ->
+main = \ ->
+	let props <- properties();
+
 	if props.load then
 		let [stateState, _] <- model(store(props.id));
 		match stateState

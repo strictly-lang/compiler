@@ -1,4 +1,6 @@
-main = \props ->
+main = \ ->
+	let props <- properties();
+
 	$div{
 		class="foo"
 		part=props.bar

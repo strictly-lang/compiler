@@ -1,4 +1,6 @@
-main = \props ->
+main = \ ->
+	let props <- properties();
+
 	$input{
 		value = CheckBox[props.value]
 		oninput = \CheckBox[value] -> props.oninput(value)

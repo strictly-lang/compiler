@@ -20,7 +20,8 @@ store = {
 		{ todos = todos' | state }
 }
 
-main = \props ->
+main = \ ->
+	let props <- properties();
 	let [{todos, textValue}, todosDispatch] <- model(store);
 
 	$link{

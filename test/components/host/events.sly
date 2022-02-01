@@ -1,4 +1,6 @@
-main = \props ->
+main = \ ->
+	let props <- properties();
+
 	$input{
 		value = Text[props.value]
 		oninput = \Text[value] -> props.oninput(value)

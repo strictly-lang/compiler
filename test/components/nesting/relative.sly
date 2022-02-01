@@ -1,4 +1,6 @@
-main = \props ->
+main = \ ->
+	let props <- properties();
+
 	$.-deep-index{
 		foo = props.foo
 	}

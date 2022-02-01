@@ -1,6 +1,8 @@
 import \vendor\strictly\prelude\src\index.js (zip)
 
-main = \props ->
+main = \ ->
+	let props <- properties();
+
 	match props.values
 		case \[] ->
 			$span

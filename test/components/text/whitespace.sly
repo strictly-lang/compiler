@@ -1,3 +1,5 @@
-main = \props ->
+main = \ ->
+	let props <- properties();
+
 	$div
 		" foo  ${props.bar}  baz "
