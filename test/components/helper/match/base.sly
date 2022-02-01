@@ -6,7 +6,7 @@ store = {
 	reducer = \Second[ value ], action -> Third[ value + action ]
 }
 
-main = \props ->
+main = \ ->
 	$div
 		let [stateState, stateDispatch] <- model(store);
 		match stateState

@@ -6,10 +6,14 @@ import Types
 algebraicDataTypeConstructor :: [(String, [String])] -> [Code]
 algebraicDataTypeConstructor [] = []
 algebraicDataTypeConstructor ((name, parameters) : adts) =
-  [ Ln ("function " ++ name ++ "(...parameters) {"),
-    Ind
-      [ Ln "this.parameters = parameters;"
-      ],
-    Ln "}"
-  ]
+  ( if null parameters
+      then [Ln ("function " ++ name ++ "() {}")]
+      else
+        [ Ln ("function " ++ name ++ "(...parameters) {"),
+          Ind
+            [ Ln "this.parameters = parameters;"
+            ],
+          Ln "}"
+        ]
+  )
     ++ algebraicDataTypeConstructor adts

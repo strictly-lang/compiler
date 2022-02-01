@@ -5,7 +5,7 @@ store = {
 	reducer = \ _, action -> action
 }
 
-main = \props ->
+main = \ ->
 	let [values, dispatch] <- model(store);
 	$header{
 		onclick = \_ -> dispatch(Odd[0], Even[1], Even[2])

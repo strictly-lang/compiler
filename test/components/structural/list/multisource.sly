@@ -1,4 +1,4 @@
-main = \props ->
+main = \ ->
 	$header
 	$section
 		let [a, b] <- [[a, b] | let a <- [0, 1, 2], let b <- [3, 4]]

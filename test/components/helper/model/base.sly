@@ -3,7 +3,7 @@ store = {
 	reducer = \_, action -> action
 }
 
-main = \props ->
+main = \ ->
 	let [mainState, mainDispatch] <- model(store);
 	$input{
 		value = Text[mainState]
