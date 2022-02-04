@@ -3,9 +3,9 @@ module Compiler.Types.RootDeclaration where
 import Compiler.Types (AppStateMonad, Code (..))
 import Types
 
-algebraicDataTypeConstructor :: [(String, [String])] -> AppStateMonad [Code]
+algebraicDataTypeConstructor :: [DataDeclaration] -> AppStateMonad [Code]
 algebraicDataTypeConstructor [] = do return []
-algebraicDataTypeConstructor ((name, parameters) : adts) =
+algebraicDataTypeConstructor (DataDeclaration (name, parameters) : adts) =
   do
     next <- algebraicDataTypeConstructor adts
     return

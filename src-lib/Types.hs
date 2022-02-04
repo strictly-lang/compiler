@@ -1,8 +1,11 @@
 module Types where
 
 data Root
-  = RootDataDeclaration String [(String, [String])]
+  = RootDataDeclaration String [DataDeclaration]
   | RootAssignment String Expression
+  deriving (Show)
+
+newtype DataDeclaration = DataDeclaration (String, [DataDeclaration])
   deriving (Show)
 
 data Statement
