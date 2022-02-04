@@ -1,19 +1,24 @@
 module Compiler.Types.RootDeclaration where
 
-import Compiler.Types (Code (..))
+import Compiler.Types (AppStateMonad, Code (..))
 import Types
 
-algebraicDataTypeConstructor :: [(String, [String])] -> [Code]
-algebraicDataTypeConstructor [] = []
+algebraicDataTypeConstructor :: [(String, [String])] -> AppStateMonad [Code]
+algebraicDataTypeConstructor [] = do return []
 algebraicDataTypeConstructor ((name, parameters) : adts) =
-  ( if null parameters
-      then [Ln ("function " ++ name ++ "() {}")]
-      else
-        [ Ln ("function " ++ name ++ "(...parameters) {"),
-          Ind
-            [ Ln "this.parameters = parameters;"
-            ],
-          Ln "}"
-        ]
-  )
-    ++ algebraicDataTypeConstructor adts
+  do
+    next <- algebraicDataTypeConstructor adts
+    return
+      ( ( if null parameters
+            then [Ln ("function " ++ name ++ "() {}")]
+            else
+              [ Ln ("function " ++ name ++ "(...parameters) {"),
+                Ind
+                  [ Ln "this.parameters = parameters;"
+                  ],
+                Ln "}"
+              ]
+        )
+          ++ [Br]
+          ++ next
+      )

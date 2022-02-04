@@ -28,8 +28,9 @@ library
                        Parser.Types.Statement,
                        Compiler.Util,
                        Compiler.Types,
-                       Compiler.Types.Root
-                       Compiler.Types.RootDeclaration
+                       Compiler.Types.Root,
+                       Compiler.Types.RootDeclaration,
+                       Compiler.Types.RootAssignment
 
   -- other-extensions:
   build-depends:       base, megaparsec, mtl

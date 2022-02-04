@@ -1,7 +1,7 @@
 module Compiler.Main where
 
 import Compiler.Types.Root (compileRoot)
-import Compiler.Util (pathToComponent)
+import Compiler.Util (pathToComponentName)
 import Parser.Main (parseRoot)
 import Types
 
@@ -11,7 +11,7 @@ type ComponentPath = String
 
 getJs :: AbsolutePath -> ComponentPath -> [Root] -> Maybe String
 getJs absolutePath componentPath exprs = do
-  componentName <- pathToComponent absolutePath componentPath
+  componentName <- pathToComponentName absolutePath componentPath
   Just (compileRoot componentName exprs)
 
 parse = parseRoot

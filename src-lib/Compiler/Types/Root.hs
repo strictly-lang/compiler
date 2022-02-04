@@ -1,21 +1,29 @@
 module Compiler.Types.Root where
 
-import Compiler.Types (Code (..))
+import Compiler.Types (AppState (AppState), AppStateMonad, Code (..))
+import Compiler.Types.RootAssignment (rootAssignment)
 import Compiler.Types.RootDeclaration (algebraicDataTypeConstructor)
-import Compiler.Util (pathToComponent)
+import Control.Monad.State.Lazy
 import Data.List (intersperse)
 import Types
 
 compileRoot :: String -> [Root] -> String
-compileRoot pathToComponent roots =
-  codeToString 0 True (intersperse Br (compileRoot' pathToComponent roots))
+compileRoot componentName roots =
+  let code = compileRoot' roots
+      (result, _) = runState code (AppState componentName 0)
+   in codeToString 0 True result
 
-compileRoot' :: String -> [Root] -> [Code]
-compileRoot' pathToComponent [] = []
-compileRoot' pathToComponent (RootDataDeclaration _ dataDeclarations : restRoot) =
-  algebraicDataTypeConstructor dataDeclarations
-    ++ compileRoot' pathToComponent restRoot
-compileRoot' pathToComponent roots = []
+compileRoot' :: [Root] -> AppStateMonad [Code]
+compileRoot' [] = do return []
+compileRoot' (RootDataDeclaration _ dataDeclarations : restRoot) = do
+  result <- algebraicDataTypeConstructor dataDeclarations
+  next <- compileRoot' restRoot
+
+  return (result ++ next)
+compileRoot' (RootAssignment name expression : restRoot) = do
+  result <- rootAssignment name expression
+  next <- compileRoot' restRoot
+  return (result ++ next)
 
 codeToString :: Int -> Bool -> [Code] -> String
 codeToString indentationLevel first [] = ""
@@ -23,8 +31,8 @@ codeToString indentationLevel first (Ind nestedCode : restCode) =
   codeToString (indentationLevel + 1) True nestedCode ++ "\n"
     ++ codeToString indentationLevel True restCode
 codeToString indentationLevel first (Ln code : restCode)
-  | first = replicate indentationLevel '\t' ++ rest
-  | otherwise = rest
+  | first = '\n' : replicate indentationLevel '\t' ++ code'
+  | otherwise = code'
   where
-    rest = code ++ codeToString indentationLevel False restCode
+    code' = code ++ codeToString indentationLevel False restCode
 codeToString indentationLevel first (Br : restCode) = '\n' : codeToString indentationLevel True restCode
