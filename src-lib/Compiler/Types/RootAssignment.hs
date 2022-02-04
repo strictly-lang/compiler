@@ -1,8 +1,9 @@
 module Compiler.Types.RootAssignment where
 
 import Compiler.Types
+import Compiler.Types.Expression
 import Compiler.Util (pathToComponentName)
-import Control.Monad.State.Lazy
+import Control.Monad.State.Lazy (MonadState (get))
 import Data.Char (toUpper)
 import Types
 
@@ -20,11 +21,8 @@ rootAssignment "main" expression = do
       Br
     ]
 rootAssignment name expression = do
-  return
-    [ Ln (name ++ " = "),
-      Ln "mep;",
-      Br
-    ]
+  result <- expressionToCode expression
+  return ([Ln (name ++ " = ")] ++ result ++ [Br])
 
 slashToDash :: String -> String
 slashToDash [] = []

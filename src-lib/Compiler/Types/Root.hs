@@ -3,7 +3,7 @@ module Compiler.Types.Root where
 import Compiler.Types (AppState (AppState), AppStateMonad, Code (..))
 import Compiler.Types.RootAssignment (rootAssignment)
 import Compiler.Types.RootDeclaration (algebraicDataTypeConstructor)
-import Control.Monad.State.Lazy
+import Control.Monad.State.Lazy (runState)
 import Data.List (intersperse)
 import Types
 

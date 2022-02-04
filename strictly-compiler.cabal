@@ -27,6 +27,7 @@ library
                        Parser.Types.LeftHandSide,
                        Parser.Types.Statement,
                        Compiler.Util,
+                       Compiler.Types.Expression,
                        Compiler.Types,
                        Compiler.Types.Root,
                        Compiler.Types.RootDeclaration,
