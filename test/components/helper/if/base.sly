@@ -1,6 +1,4 @@
-main = \ ->
-	let props <- properties();
-
+main = \props ->
 	$header
 	if props.foo then
 		$div

@@ -1,5 +1,3 @@
-import \vendor\strictly\prelude\src\index.js (fetchText)
-
 store = \id ->
 	let result <- fetchText("\api\${id}");
 	{
@@ -10,9 +8,7 @@ store = \id ->
 		reducer = \state, action -> state
 	}
 
-main = \ ->
-	let props <- properties();
-
+main = \props ->
 	if props.load then
 		let [stateState, _] <- model(store(props.id));
 		match stateState

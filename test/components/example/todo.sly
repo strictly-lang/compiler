@@ -21,7 +21,6 @@ store = {
 }
 
 main = \ ->
-	let props <- properties();
 	let [{todos, textValue}, todosDispatch] <- model(store);
 
 	$link{

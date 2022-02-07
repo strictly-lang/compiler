@@ -1,15 +1,11 @@
-import \vendor\strictly\prelude\src\index.js (zip)
-
-main = \ ->
-	let props <- properties();
-
+main = \props ->
 	$header
 	if props.baz then
 		if props.foo.length == 0
 			$span
 					"Empty list ${props.bar}"
 		else
-			let [value, index] <- zip(props.foo, [0..])
+			let [value, index] <- zip(props.foo, [0..]);
 			$div
 				"${index}-${value}-${props.bar}"
 	else

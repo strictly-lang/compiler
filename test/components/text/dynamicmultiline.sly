@@ -1,6 +1,4 @@
-main = \ ->
-	let props <- properties();
-
+main = \props ->
 	"foo"
 	"${props.bar}"
 	"baz"

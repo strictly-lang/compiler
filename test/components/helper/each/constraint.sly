@@ -11,7 +11,7 @@ main = \ ->
 		onclick = \_ -> dispatch(Odd[0], Even[1], Even[2])
 	}
 	$section
-		let Even[value] <- values
+		let Even[value] <- values;
 		$div
 			"${value}"
 	$footer

@@ -1,5 +1,3 @@
-main = \ ->
-	let props <- properties();
-
+main = \props ->
 	$div
 		"con-${props.foo}-cat"
