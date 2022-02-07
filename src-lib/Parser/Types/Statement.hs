@@ -73,6 +73,7 @@ expressionParser' :: IndentationLevel -> Parser Expression'
 expressionParser' indentationLevel = do
   rightHandSideFunctionDefinitionParser indentationLevel
     <|> rightHandSideConditionParser indentationLevel
+    <|> rightHandSideMatchParser indentationLevel
     <|> rightHandSideRecordParser indentationLevel
     <|> rightHandSideNumberParser indentationLevel
     <|> rightHandSideMixedTextParser indentationLevel
@@ -91,6 +92,20 @@ rightHandSideConditionParser indentationLevel = do
   elseCase <- some (indentationParser statementParser (indentationLevel + 1))
 
   return (RightHandSideCondition condition thenCase elseCase)
+
+rightHandSideMatchParser :: IndentationLevel -> Parser Expression'
+rightHandSideMatchParser indentationLevel = do
+  _ <- string "match " *> sc
+  matchTarget <- expressionParser indentationLevel
+  cases <- many (indentationParser caseParser (indentationLevel + 1))
+
+  return (RightHandSideMatch matchTarget cases)
+
+caseParser :: IndentationLevel -> Parser (LeftHandSide, [Statement])
+caseParser indentationLevel = do
+  _ <- string "case " *> sc
+  RightHandSideFunctionDefinition [patterns] statements <- rightHandSideFunctionDefinitionParser indentationLevel
+  return (patterns, statements)
 
 rightHandSideAgebraicDataTypeParser :: IndentationLevel -> Parser Expression'
 rightHandSideAgebraicDataTypeParser indentationLevel = do
