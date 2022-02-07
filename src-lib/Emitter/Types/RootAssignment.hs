@@ -1,10 +1,10 @@
-module Compiler.Types.RootAssignment where
+module Emitter.Types.RootAssignment where
 
-import Compiler.Types
-import Compiler.Types.Expression
-import Compiler.Util (pathToComponentName)
 import Control.Monad.State.Lazy (MonadState (get))
 import Data.Char (toUpper)
+import Emitter.Types
+import Emitter.Types.Expression
+import Emitter.Util (pathToComponentName)
 import Types
 
 rootAssignment :: String -> Expression -> AppStateMonad [Code]

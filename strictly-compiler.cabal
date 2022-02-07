@@ -26,12 +26,12 @@ library
                        Parser.Types.Root,
                        Parser.Types.LeftHandSide,
                        Parser.Types.Statement,
-                       Compiler.Util,
-                       Compiler.Types.Expression,
-                       Compiler.Types,
-                       Compiler.Types.Root,
-                       Compiler.Types.RootDeclaration,
-                       Compiler.Types.RootAssignment
+                       Emitter.Util,
+                       Emitter.Types.Expression,
+                       Emitter.Types,
+                       Emitter.Types.Root,
+                       Emitter.Types.RootDeclaration,
+                       Emitter.Types.RootAssignment
 
   -- other-extensions:
   build-depends:       base, megaparsec, mtl

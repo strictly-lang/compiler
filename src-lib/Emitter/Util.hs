@@ -1,7 +1,7 @@
-module Compiler.Util where
+module Emitter.Util where
 
-import Compiler.Types
 import Control.Monad.State.Lazy (MonadState (state))
+import Emitter.Types
 
 type AbsolutePath = String
 

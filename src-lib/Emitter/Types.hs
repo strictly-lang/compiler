@@ -1,4 +1,4 @@
-module Compiler.Types where
+module Emitter.Types where
 
 import Control.Monad.State.Lazy (State)
 

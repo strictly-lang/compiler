@@ -1,6 +1,6 @@
-module Compiler.Types.RootDeclaration where
+module Emitter.Types.RootDeclaration where
 
-import Compiler.Types (AppStateMonad, Code (..))
+import Emitter.Types (AppStateMonad, Code (..))
 import Types
 
 algebraicDataTypeConstructor :: [DataDeclaration] -> AppStateMonad [Code]

@@ -1,7 +1,7 @@
-module Compiler.Types.Expression where
+module Emitter.Types.Expression where
 
-import Compiler.Types
 import Data.List (intersperse)
+import Emitter.Types
 import Types
 
 expressionToCode :: Expression -> AppStateMonad [Code]

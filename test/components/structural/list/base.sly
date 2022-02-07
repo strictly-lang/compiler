@@ -1,6 +1,6 @@
 store = {
 	init = [0, 1, 3]
-	reducer = \state, multiply -> [ value, value * 2 | let value <- state, value != 0]
+	reducer = \state, multiply -> [ value, value * 2 | let value <- state;, value != 0]
 }
 
 main = \ ->
