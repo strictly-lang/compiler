@@ -2,7 +2,7 @@ module Parser.Types.LeftHandSide where
 
 import Control.Applicative ((<|>))
 import Parser.Types
-import Parser.Util (assignParser, blockParser, functionCallCloseParser, functionCallOpenParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, recordCloseParser, recordOpenParser, sc, uppercaseIdentifierParser)
+import Parser.Util (assignParser, baseOfParser, blockParser, functionCallCloseParser, functionCallOpenParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, recordCloseParser, recordOpenParser, sc, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, optional)
 import Text.Megaparsec.Char (char)
 import Types
@@ -27,7 +27,20 @@ leftHandSideAlgebraicDataTypeParser indentationLevel = do
 
 leftHandSideListParser :: IndentationLevel -> Parser LeftHandSide
 leftHandSideListParser indentationLevel = do
-  LeftHandSideList <$> blockParser listOpenParser listCloseParser leftHandSideParser indentationLevel
+  destructures <- blockParser listOpenParser (lookAhead (listCloseParser <|> baseOfParser)) leftHandSideParser indentationLevel
+
+  hasRest <- optional (lookAhead baseOfParser)
+
+  rest <- case hasRest of
+    Just _ -> do
+      _ <- baseOfParser
+      Just <$> leftHandSideParser indentationLevel
+    Nothing -> do
+      return Nothing
+
+  _ <- listCloseParser
+
+  return (LeftHandSideList destructures rest)
 
 leftHandSideRecordParser :: IndentationLevel -> Parser LeftHandSide
 leftHandSideRecordParser indentationLevel = do

@@ -42,7 +42,7 @@ data RightHandSideString
 
 data LeftHandSide
   = LeftHandSideVariable String
-  | LeftHandSideList [LeftHandSide]
+  | LeftHandSideList [LeftHandSide] (Maybe LeftHandSide)
   | LeftHandSideRecord [(String, Maybe LeftHandSide)]
   | LeftHandSideAlgebraicDataType String [LeftHandSide]
   | LeftHandSideAlias String LeftHandSide
