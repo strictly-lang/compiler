@@ -1,9 +1,9 @@
-import "\test\components\host\base.sly";
-import "\test\components\host\siblings.sly";
-import "\test\components\host\nested.sly";
-import "\test\components\host\attributes.sly";
-import "\test\components\host\events.sly";
-import "\test\components\host\checkbox.sly";
+import "/test/components/host/base.sly";
+import "/test/components/host/siblings.sly";
+import "/test/components/host/nested.sly";
+import "/test/components/host/attributes.sly";
+import "/test/components/host/events.sly";
+import "/test/components/host/checkbox.sly";
 
 describe("host element handling", () => {
   let container;
@@ -90,7 +90,7 @@ describe("host element handling", () => {
     const element = document.createElement("test-components-host-events");
     element.value = "foo";
     element.oninput = (_evt) => {
-      \\ Doing nothing with the event
+      // Doing nothing with the event
     };
 
     container.appendChild(element);
@@ -153,7 +153,7 @@ describe("host element handling", () => {
     const element = document.createElement("test-components-host-checkbox");
     element.value = true;
     element.oninput = (_evt) => {
-      \\ Doing nothing with the event
+      // Doing nothing with the event
     };
 
     container.appendChild(element);

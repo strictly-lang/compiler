@@ -1,6 +1,6 @@
-import "\test\components\structural\list\base.sly";
-import "\test\components\structural\list\destructure.sly";
-import "\test\components\structural\list\multisource.sly";
+import "/test/components/structural/list/base.sly";
+import "/test/components/structural/list/destructure.sly";
+import "/test/components/structural/list/multisource.sly";
 
 describe("list handling", () => {
   let container;

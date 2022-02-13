@@ -1,5 +1,5 @@
-import "\test\components\nesting\absolute.sly";
-import "\test\components\nesting\relative.sly";
+import "/test/components/nesting/absolute.sly";
+import "/test/components/nesting/relative.sly";
 
 describe("component handling", () => {
   let container;

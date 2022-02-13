@@ -1,5 +1,5 @@
-import "\test\components\helper\if\base.sly";
-import "\test\components\helper\if\remove.sly";
+import "/test/components/helper/if/base.sly";
+import "/test/components/helper/if/remove.sly";
 
 describe("if condition handling", () => {
   let container;

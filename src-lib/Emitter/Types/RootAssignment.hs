@@ -14,22 +14,27 @@ rootAssignment "main" expression = do
   let elementName = slashToDash (componentName appState)
       elementClassName = slashToCamelCase (componentName appState)
       properties = DotNotation "this" : nameToVariable "_properties" exprId
+      mounted = DotNotation "this" : nameToVariable "_mounted" exprId
 
   return
-    [ Ln ("class " ++ elementClassName ++ " extends HtmlElement {"),
+    [ Ln ("class " ++ elementClassName ++ " extends HTMLElement {"),
       Ind
         [ Ln "constructor() {",
           Ind
             [ Ln "super();",
               Br,
               Ln (variableToString properties ++ " = {};"),
+              Br,
+              Ln (variableToString mounted ++ " = false;"),
               Br
             ],
           Ln "}",
           Br,
           Ln "connectedCallback() {",
           Ind
-            [ Ln "this.attachShadow();",
+            [ Ln "this.attachShadow({ mode: 'open' });",
+              Br,
+              Ln (variableToString mounted ++ " = true;"),
               Br
             ],
           Ln "}",

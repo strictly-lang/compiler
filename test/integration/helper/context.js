@@ -1,4 +1,4 @@
-import "\test\components\helper\context\consumer.sly";
+import "/test/components/helper/context/consumer.sly";
 
 describe("context handling", () => {
   let container;
@@ -79,7 +79,7 @@ describe("context handling", () => {
       const element = document.createElement(
         "test-components-helper-context-consumer"
       );
-      \\ @TODO the Exception is thrown, but is caughtable, figure out how to test it anyway
+      // @TODO the Exception is thrown, but is caughtable, figure out how to test it anyway
       expect(() => container.appendChild(element)).toThrow(
         new Error('Could not find provider "some-parent-element"')
       );

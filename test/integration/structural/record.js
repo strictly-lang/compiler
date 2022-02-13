@@ -1,5 +1,5 @@
-import "\test\components\structural\record\base.sly";
-import "\test\components\structural\record\destructure.sly";
+import "/test/components/structural/record/base.sly";
+import "/test/components/structural/record/destructure.sly";
 
 describe("record handling", () => {
   let container;
