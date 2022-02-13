@@ -22,3 +22,15 @@ getGetFreshExprId =
 
 removeFileExtension :: String -> String
 removeFileExtension p = take (length p - length ".sly") p
+
+data Variable = DotNotation String | BracketNotation String
+
+instance Show Variable where
+  show (DotNotation name) = '.' : name
+  show (BracketNotation name) = '[' : name ++ "]"
+
+nameToVariable :: String -> Int -> [Variable]
+nameToVariable name exprId = [DotNotation (name ++ show exprId)]
+
+variableToString :: [Variable] -> String
+variableToString ((DotNotation v) : vs) = concat (v : map show vs)

@@ -1,7 +1,6 @@
 module Emitter.Types.Root where
 
 import Control.Monad.State.Lazy (runState)
-import Data.List (intersperse)
 import Emitter.Types (AppState (AppState), AppStateMonad, Code (..))
 import Emitter.Types.RootAssignment (rootAssignment)
 import Emitter.Types.RootDeclaration (algebraicDataTypeConstructor)

@@ -1,5 +1,5 @@
 store = \id ->
-	let result <- fetchText("\api\${id}");
+	let result <- fetchText("/api/${id}");
 	{
 		init = match result
 			case \Pending -> Pending
