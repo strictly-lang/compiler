@@ -1,4 +1,4 @@
-main = \props ->
+main = \props, _ ->
 	"foo"
 	"${props.bar}"
 	"baz"

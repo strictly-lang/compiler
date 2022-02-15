@@ -2,40 +2,53 @@ module Emitter.Types.Expression where
 
 import Data.List (intersperse)
 import Emitter.Types
+import Emitter.Util (leftHandSideToCode, variableToString)
 import Types
 
-expressionToCode :: Expression -> AppStateMonad [Code]
-expressionToCode [] = do
-  return []
-expressionToCode (expression : expressions) = do
-  result <- expressionToCode' expression
-  next <- expressionToCode expressions
+expressionToCode :: VariableStack -> Expression -> AppStateMonad ([Code], [[Variable]])
+expressionToCode = expressionToCode' True
+
+expressionToCode' :: Bool -> VariableStack -> Expression -> AppStateMonad ([Code], [[Variable]])
+expressionToCode' translateVariableStack variableStack [] = do
+  return ([], [])
+expressionToCode' translateVariableStack variableStack (expression : expressions) = do
+  (result, resultDependencies) <- expressionToCode'' translateVariableStack variableStack expression
+  (next, nextDependencies) <- expressionToCode' False variableStack expressions
   return
     ( if null next
         then result
-        else result ++ [Ln "."] ++ next
+        else result ++ [Ln "."] ++ next,
+      resultDependencies ++ nextDependencies
     )
 
-expressionToCode' :: Expression' -> AppStateMonad [Code]
-expressionToCode' (RightHandSideRecord _) = do
+expressionToCode'' :: Bool -> VariableStack -> Expression' -> AppStateMonad ([Code], [[Variable]])
+expressionToCode'' translateVariableStack variableStack (RightHandSideVariable variableName)
+  | translateVariableStack = do
+    let (variable, constraint) = leftHandSideToCode variableStack variableName
+    return ([Ln (variableToString variable)], [variable])
+  | not translateVariableStack = do
+    return ([Ln variableName], [])
+expressionToCode'' translateVariableStack variableStack (RightHandSideRecord _) = do
   return
-    [ Ln "{",
-      Ln "}"
-    ]
-expressionToCode' (RightHandSideString strings) = do
-  results <- mapM rightHandSideStringToCode strings
-
+    ( [ Ln "{",
+        Ln "}"
+      ],
+      []
+    )
+expressionToCode'' translateVariableStack variableStack (RightHandSideString strings) = do
+  results <- mapM (rightHandSideStringToCode variableStack) strings
   return
     ( Ln "`" :
-      concat results
+      concatMap fst results
         ++ [ Ln "`"
-           ]
+           ],
+      concatMap snd results
     )
-expressionToCode' expression = do
+expressionToCode'' translateVariableStack variableStack expression = do
   error (show expression)
 
-rightHandSideStringToCode :: RightHandSideString -> AppStateMonad [Code]
-rightHandSideStringToCode (RightHandSideStringStatic value) = return [Ln value]
-rightHandSideStringToCode (RightHandSideStringDynamic value) = do
-  nested <- expressionToCode value
-  return (Ln "${" : nested ++ [Ln "}"])
+rightHandSideStringToCode :: VariableStack -> RightHandSideString -> AppStateMonad ([Code], [[Variable]])
+rightHandSideStringToCode variableStack (RightHandSideStringStatic value) = return ([Ln value], [])
+rightHandSideStringToCode variableStack (RightHandSideStringDynamic value) = do
+  (nested, dependencies) <- expressionToCode variableStack value
+  return (Ln "${" : nested ++ [Ln "}"], dependencies)

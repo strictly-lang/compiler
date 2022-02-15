@@ -1,4 +1,4 @@
-main = \props ->
+main = \props, _ ->
 	$div{
 		class="foo"
 		part=props.bar

@@ -14,7 +14,7 @@ style
 		background-color = Initial
 	}
 
-main = \ ->
+main = \_, _ ->
 	$div
 	$div{
 		id="entity"

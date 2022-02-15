@@ -5,19 +5,20 @@ import Data.Char (toUpper)
 import Emitter.Types
 import Emitter.Types.Expression (expressionToCode)
 import Emitter.Types.View (render)
-import Emitter.Util (Variable (DotNotation), getGetFreshExprId, nameToVariable, pathToComponentName, variableToString)
+import Emitter.Util (getGetFreshExprId, nameToVariable, pathToComponentName, variableToString)
 import Types
 
 rootAssignment :: String -> Expression -> AppStateMonad [Code]
-rootAssignment "main" [RightHandSideFunctionDefinition constraints statements] = do
+rootAssignment "main" [RightHandSideFunctionDefinition [propertiesParam, attributesParam] statements] = do
   appState <- get
   exprId <- getGetFreshExprId
   let elementName = slashToDash (componentName appState)
       elementClassName = slashToCamelCase (componentName appState)
       properties = DotNotation "this" : nameToVariable "_properties" exprId
       mounted = DotNotation "this" : nameToVariable "_mounted" exprId
+      variableStack = [(properties, propertiesParam)]
 
-  children <- render statements [DotNotation "this", DotNotation "shadowRoot"]
+  children <- render statements [DotNotation "this", DotNotation "shadowRoot"] variableStack
 
   return
     [ Ln ("class " ++ elementClassName ++ " extends HTMLElement {"),
@@ -51,7 +52,7 @@ rootAssignment "main" [RightHandSideFunctionDefinition constraints statements] =
       Br
     ]
 rootAssignment name expression = do
-  result <- expressionToCode expression
+  (result, _) <- expressionToCode [] expression
   return ([Ln ("const " ++ name ++ " = ")] ++ result ++ [Ln ";", Br])
 
 slashToDash :: String -> String

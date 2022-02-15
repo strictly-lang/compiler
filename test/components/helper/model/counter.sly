@@ -6,7 +6,7 @@ store = {
 	reducer = \state, Decrement -> state - 1
 }
 
-main = \ ->
+main = \_, _ ->
 	let [counterState, counterDispatch] <- model(store);
 	$button{
 		onclick = \_ -> counterDispatch(Decrement)

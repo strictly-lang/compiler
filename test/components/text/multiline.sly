@@ -1,4 +1,4 @@
-main = \ ->
+main = \_, _ ->
 	"foo"
 	"bar"
 	"baz"

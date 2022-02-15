@@ -3,7 +3,7 @@ store = {
 	reducer = \_, action -> action
 }
 
-main = \props ->
+main = \props, _ ->
 	$header
 	let [stateState, stateDispatch] <- model(store);
 		if props.foo then

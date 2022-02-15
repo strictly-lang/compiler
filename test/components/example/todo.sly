@@ -20,7 +20,7 @@ store = {
 		{ todos = todos' | state }
 }
 
-main = \ ->
+main = \_, _ ->
 	let [{todos, textValue}, todosDispatch] <- model(store);
 
 	$link{

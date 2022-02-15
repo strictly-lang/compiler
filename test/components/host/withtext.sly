@@ -1,3 +1,3 @@
-main = \ ->
+main = \_, _ ->
 	$div
 		"text"

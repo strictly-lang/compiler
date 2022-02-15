@@ -1,23 +1,23 @@
 module Emitter.Types.View where
 
-import Emitter.Types (AppStateMonad, Code (Br, Ln))
+import Emitter.Types
 import Emitter.Types.Expression (expressionToCode)
-import Emitter.Util (Variable, getGetFreshExprId, nameToVariable, variableToString)
+import Emitter.Util (getGetFreshExprId, nameToVariable, variableToString)
 import Types
 
-render :: [Statement] -> [Variable] -> AppStateMonad [Code]
-render [] root = do
+render :: [Statement] -> [Variable] -> VariableStack -> AppStateMonad [Code]
+render [] variableStack root = do
   return []
-render statements root = do
-  (code, nextStatements) <- render' statements root
-  nextRenders <- render nextStatements root
+render statements variableStack root = do
+  (code, nextStatements) <- render' statements variableStack root
+  nextRenders <- render nextStatements variableStack root
   return (code ++ nextRenders)
 
-render' :: [Statement] -> [Variable] -> AppStateMonad ([Code], [Statement])
-render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) : nextStatements) parent = do
+render' :: [Statement] -> [Variable] -> VariableStack -> AppStateMonad ([Code], [Statement])
+render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) : nextStatements) parent variableStack = do
   exprId <- getGetFreshExprId
   let ele = nameToVariable "ele" exprId
-  children <- render nestedStatements ele
+  children <- render nestedStatements ele variableStack
 
   return
     ( [ Ln ("const " ++ variableToString ele ++ " = document.createElement(\"" ++ hostName ++ "\")"),
@@ -29,10 +29,10 @@ render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) :
         ++ children,
       nextStatements
     )
-render' ((Expression expression) : nextStatements) parent = do
+render' ((Expression expression) : nextStatements) parent variableStack = do
   exprId <- getGetFreshExprId
   let ele = nameToVariable "text" exprId
-  result <- expressionToCode expression
+  (result, dependencies) <- expressionToCode variableStack expression
 
   return
     ( Ln ("const " ++ variableToString ele ++ " = document.createTextNode(") :
@@ -44,5 +44,5 @@ render' ((Expression expression) : nextStatements) parent = do
            ],
       nextStatements
     )
-render' statement parent = do
+render' statement parent variableStack = do
   error (show statement)

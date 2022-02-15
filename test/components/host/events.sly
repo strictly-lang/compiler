@@ -1,4 +1,4 @@
-main = \props ->
+main = \props, _ ->
 	$input{
 		value = Text[props.value]
 		oninput = \Text[value] -> props.oninput(value)

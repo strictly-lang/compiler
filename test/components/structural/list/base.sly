@@ -3,7 +3,7 @@ store = {
 	reducer = \state, multiply -> [ value, value * 2 | let value <- state;, value != 0]
 }
 
-main = \ ->
+main = \_, _ ->
 	let [mainState, mainDispatch] <- model(store);
 	$button{
 		onclick = \_ -> mainDispatch(2)
