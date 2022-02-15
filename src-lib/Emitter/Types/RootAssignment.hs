@@ -4,7 +4,7 @@ import Control.Monad.State.Lazy (MonadState (get))
 import Data.Char (toUpper)
 import Emitter.Types
 import Emitter.Types.Expression (expressionToCode)
-import Emitter.Types.View (render)
+import Emitter.Types.View (ViewResult (compileCreate), render)
 import Emitter.Util (getGetFreshExprId, nameToVariable, pathToComponentName, variableToString)
 import Types
 
@@ -41,7 +41,7 @@ rootAssignment "main" [RightHandSideFunctionDefinition [propertiesParam, attribu
                 Ln (variableToString mounted ++ " = true;"),
                 Br
               ]
-                ++ children
+                ++ compileCreate children
             ),
           Ln "}",
           Br
