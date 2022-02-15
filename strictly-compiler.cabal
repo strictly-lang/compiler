@@ -31,7 +31,8 @@ library
                        Emitter.Types,
                        Emitter.Types.Root,
                        Emitter.Types.RootDeclaration,
-                       Emitter.Types.RootAssignment
+                       Emitter.Types.RootAssignment,
+                       Emitter.Types.View
 
   -- other-extensions:
   build-depends:       base, megaparsec, mtl

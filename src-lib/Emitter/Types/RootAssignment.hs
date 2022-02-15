@@ -3,18 +3,21 @@ module Emitter.Types.RootAssignment where
 import Control.Monad.State.Lazy (MonadState (get))
 import Data.Char (toUpper)
 import Emitter.Types
-import Emitter.Types.Expression
+import Emitter.Types.Expression (expressionToCode)
+import Emitter.Types.View (render)
 import Emitter.Util (Variable (DotNotation), getGetFreshExprId, nameToVariable, pathToComponentName, variableToString)
 import Types
 
 rootAssignment :: String -> Expression -> AppStateMonad [Code]
-rootAssignment "main" expression = do
+rootAssignment "main" [RightHandSideFunctionDefinition constraints statements] = do
   appState <- get
   exprId <- getGetFreshExprId
   let elementName = slashToDash (componentName appState)
       elementClassName = slashToCamelCase (componentName appState)
       properties = DotNotation "this" : nameToVariable "_properties" exprId
       mounted = DotNotation "this" : nameToVariable "_mounted" exprId
+
+  children <- render statements [DotNotation "this", DotNotation "shadowRoot"]
 
   return
     [ Ln ("class " ++ elementClassName ++ " extends HTMLElement {"),
@@ -32,11 +35,13 @@ rootAssignment "main" expression = do
           Br,
           Ln "connectedCallback() {",
           Ind
-            [ Ln "this.attachShadow({ mode: 'open' });",
-              Br,
-              Ln (variableToString mounted ++ " = true;"),
-              Br
-            ],
+            ( [ Ln "this.attachShadow({ mode: 'open' });",
+                Br,
+                Ln (variableToString mounted ++ " = true;"),
+                Br
+              ]
+                ++ children
+            ),
           Ln "}",
           Br
         ],

@@ -22,3 +22,20 @@ expressionToCode' (RightHandSideRecord _) = do
     [ Ln "{",
       Ln "}"
     ]
+expressionToCode' (RightHandSideString strings) = do
+  results <- mapM rightHandSideStringToCode strings
+
+  return
+    ( Ln "`" :
+      concat results
+        ++ [ Ln "`"
+           ]
+    )
+expressionToCode' expression = do
+  error (show expression)
+
+rightHandSideStringToCode :: RightHandSideString -> AppStateMonad [Code]
+rightHandSideStringToCode (RightHandSideStringStatic value) = return [Ln value]
+rightHandSideStringToCode (RightHandSideStringDynamic value) = do
+  nested <- expressionToCode value
+  return (Ln "${" : nested ++ [Ln "}"])
