@@ -11,6 +11,7 @@ data AppState = AppState
   }
 
 data Variable = DotNotation String | BracketNotation String
+  deriving (Eq)
 
 type VariableStack = [([Variable], LeftHandSide)]
 

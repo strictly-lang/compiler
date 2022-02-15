@@ -11,15 +11,16 @@ expressionToCode = expressionToCode' True
 expressionToCode' :: Bool -> VariableStack -> Expression -> AppStateMonad ([Code], [[Variable]])
 expressionToCode' translateVariableStack variableStack [] = do
   return ([], [])
-expressionToCode' translateVariableStack variableStack (expression : expressions) = do
+expressionToCode' translateVariableStack variableStack (expression : restExpressions) = do
   (result, resultDependencies) <- expressionToCode'' translateVariableStack variableStack expression
-  (next, nextDependencies) <- expressionToCode' False variableStack expressions
-  return
-    ( if null next
-        then result
-        else result ++ [Ln "."] ++ next,
-      resultDependencies ++ nextDependencies
-    )
+  if null restExpressions
+    then return (result, resultDependencies)
+    else do
+      (nested, nestedDependencies) <- expressionToCode' False variableStack restExpressions
+      return
+        ( result ++ [Ln "."] ++ nested,
+          [resultDependency ++ nestedDependency | resultDependency <- resultDependencies, nestedDependency <- nestedDependencies]
+        )
 
 expressionToCode'' :: Bool -> VariableStack -> Expression' -> AppStateMonad ([Code], [[Variable]])
 expressionToCode'' translateVariableStack variableStack (RightHandSideVariable variableName)
@@ -27,7 +28,7 @@ expressionToCode'' translateVariableStack variableStack (RightHandSideVariable v
     let (variable, constraint) = leftHandSideToCode variableStack variableName
     return ([Ln (variableToString variable)], [variable])
   | not translateVariableStack = do
-    return ([Ln variableName], [])
+    return ([Ln variableName], [[DotNotation variableName]])
 expressionToCode'' translateVariableStack variableStack (RightHandSideRecord _) = do
   return
     ( [ Ln "{",
