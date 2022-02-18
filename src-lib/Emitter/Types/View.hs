@@ -40,7 +40,7 @@ render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) :
   return
     ( ViewResult
         { compileCreate =
-            [ Ln (variableToString ele ++ " = document.createElement(\"" ++ hostName ++ "\")"),
+            [ Ln (variableToString ele ++ " = document.createElement(\"" ++ hostName ++ "\");"),
               Br,
               Ln
                 (variableToString parent ++ ".appendChild(" ++ variableToString ele ++ ");"),

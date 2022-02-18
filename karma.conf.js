@@ -21,8 +21,22 @@ module.exports = function (config) {
       },
       {
         pattern: "test/integration/text.js",
-        type: "module"
+        type: "module",
       },
+      {
+        pattern: "test/components/host/*.sly",
+        type: "module",
+        included: false,
+      },
+      {
+        pattern: "test/integration/host/*.js",
+        type: "module",
+      },
+    ],
+    exclude: [
+      "test/components/host/namespace.sly",
+      "test/components/example/todo.sly",
+      "test/components/helper/model/dependencies.sly",
     ],
     preprocessors: {
       "**/*.sly": ["strictly"],
