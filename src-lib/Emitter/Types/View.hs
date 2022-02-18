@@ -35,19 +35,22 @@ render' :: [Statement] -> [Variable] -> [Variable] -> VariableStack -> AppStateM
 render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) : nextStatements) scope parent variableStack = do
   exprId <- getGetFreshExprId
   let ele = scope ++ nameToVariable "ele" exprId
+  (attributeCodeCreate, attributeCodeUpdate) <- renderAttributes variableStack ele hostName attributes
   children <- render nestedStatements scope ele variableStack
 
   return
     ( ViewResult
         { compileCreate =
             [ Ln (variableToString ele ++ " = document.createElement(\"" ++ hostName ++ "\");"),
-              Br,
-              Ln
-                (variableToString parent ++ ".appendChild(" ++ variableToString ele ++ ");"),
               Br
             ]
+              ++ attributeCodeCreate
+              ++ [ Ln
+                     (variableToString parent ++ ".appendChild(" ++ variableToString ele ++ ");"),
+                   Br
+                 ]
               ++ compileCreate children,
-          compileUpdate = compileUpdate children
+          compileUpdate = attributeCodeUpdate ++ compileUpdate children
         },
       nextStatements
     )
@@ -80,3 +83,22 @@ render' ((Expression expression) : nextStatements) scope parent variableStack = 
     )
 render' statement scope parent variableStack = do
   error (show statement)
+
+renderAttributes :: VariableStack -> [Variable] -> String -> Record -> AppStateMonad ([Code], [Update])
+renderAttributes variableStack element hostElement ([], []) = do return ([], [])
+renderAttributes variableStack element hostElement (currentAttribute : nextAttributes, []) = do
+  (currentAtributeCreate, currentAttributeUpdate) <- renderAttribute variableStack element hostElement currentAttribute
+  (nextAttributesCreate, nextAttributesUpdate) <- renderAttributes variableStack element hostElement (nextAttributes, [])
+
+  return (currentAtributeCreate ++ nextAttributesCreate, currentAttributeUpdate ++ nextAttributesUpdate)
+
+renderAttribute :: VariableStack -> [Variable] -> String -> (String, Maybe String, Expression) -> AppStateMonad ([Code], [Update])
+renderAttribute variableStack element hostElement (attributeName, conditionValue, value) = do
+  (value, depedencies) <- expressionToCode variableStack value
+  let code = [Ln (variableToString element ++ ".setAttribute(\"" ++ attributeName ++ "\", ")] ++ value ++ [Ln ");", Br]
+  return
+    ( code,
+      [ (dependency, code)
+        | dependency <- depedencies
+      ]
+    )
