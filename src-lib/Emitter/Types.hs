@@ -4,6 +4,7 @@ import Control.Monad.State.Lazy (State)
 import Types (LeftHandSide)
 
 data Code = Ln String | Ind [Code] | Br
+  deriving (Show)
 
 data AppState = AppState
   { componentName :: String,

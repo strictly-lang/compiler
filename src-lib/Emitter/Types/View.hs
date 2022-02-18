@@ -3,24 +3,27 @@ module Emitter.Types.View where
 import Emitter.Types
 import Emitter.Types.Expression (expressionToCode)
 import Emitter.Util (getGetFreshExprId, nameToVariable, variableToString)
+import GHC.Event (FdKey (keyFd))
 import Types
+
+type Update = ([Variable], [Code])
 
 data ViewResult = ViewResult
   { compileCreate :: [Code],
-    compileUpdate :: [([Variable], [Code])]
+    compileUpdate :: [Update]
   }
 
-render :: [Statement] -> [Variable] -> VariableStack -> AppStateMonad ViewResult
-render [] variableStack root = do
+render :: [Statement] -> [Variable] -> [Variable] -> VariableStack -> AppStateMonad ViewResult
+render [] scope parent variableStack = do
   return
     ( ViewResult
         { compileCreate = [],
           compileUpdate = []
         }
     )
-render statements variableStack root = do
-  (code, nextStatements) <- render' statements variableStack root
-  nextRenders <- render nextStatements variableStack root
+render statements scope parent variableStack = do
+  (code, nextStatements) <- render' statements scope parent variableStack
+  nextRenders <- render nextStatements scope parent variableStack
   return
     ( ViewResult
         { compileCreate = compileCreate code ++ compileCreate nextRenders,
@@ -28,16 +31,16 @@ render statements variableStack root = do
         }
     )
 
-render' :: [Statement] -> [Variable] -> VariableStack -> AppStateMonad (ViewResult, [Statement])
-render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) : nextStatements) parent variableStack = do
+render' :: [Statement] -> [Variable] -> [Variable] -> VariableStack -> AppStateMonad (ViewResult, [Statement])
+render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) : nextStatements) scope parent variableStack = do
   exprId <- getGetFreshExprId
-  let ele = nameToVariable "ele" exprId
-  children <- render nestedStatements ele variableStack
+  let ele = scope ++ nameToVariable "ele" exprId
+  children <- render nestedStatements scope ele variableStack
 
   return
     ( ViewResult
         { compileCreate =
-            [ Ln ("const " ++ variableToString ele ++ " = document.createElement(\"" ++ hostName ++ "\")"),
+            [ Ln (variableToString ele ++ " = document.createElement(\"" ++ hostName ++ "\")"),
               Br,
               Ln
                 (variableToString parent ++ ".appendChild(" ++ variableToString ele ++ ");"),
@@ -48,15 +51,15 @@ render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) :
         },
       nextStatements
     )
-render' ((Expression expression) : nextStatements) parent variableStack = do
+render' ((Expression expression) : nextStatements) scope parent variableStack = do
   exprId <- getGetFreshExprId
-  let ele = nameToVariable "text" exprId
+  let ele = scope ++ nameToVariable "text" exprId
   (result, dependencies) <- expressionToCode variableStack expression
 
   return
     ( ViewResult
         { compileCreate =
-            Ln ("const " ++ variableToString ele ++ " = document.createTextNode(") :
+            Ln (variableToString ele ++ " = document.createTextNode(") :
             result
               ++ [ Ln ".toString());",
                    Br,
@@ -75,5 +78,5 @@ render' ((Expression expression) : nextStatements) parent variableStack = do
         },
       nextStatements
     )
-render' statement parent variableStack = do
+render' statement scope parent variableStack = do
   error (show statement)

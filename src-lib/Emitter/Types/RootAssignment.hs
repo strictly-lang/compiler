@@ -2,10 +2,10 @@ module Emitter.Types.RootAssignment where
 
 import Control.Monad.State.Lazy (MonadState (get))
 import Data.Char (toUpper)
-import Data.List (groupBy, isPrefixOf)
+import Data.List (groupBy, isPrefixOf, partition)
 import Emitter.Types
 import Emitter.Types.Expression (expressionToCode)
-import Emitter.Types.View (ViewResult (compileCreate, compileUpdate), render)
+import Emitter.Types.View (Update, ViewResult (compileCreate, compileUpdate), render)
 import Emitter.Util (getGetFreshExprId, nameToVariable, pathToComponentName, variableToString)
 import Types
 
@@ -15,14 +15,15 @@ rootAssignment "main" [RightHandSideFunctionDefinition [propertiesParam, attribu
   exprId <- getGetFreshExprId
   let elementName = slashToDash (componentName appState)
       elementClassName = slashToCamelCase (componentName appState)
-      properties = DotNotation "this" : nameToVariable "_properties" exprId
-      mounted = DotNotation "this" : nameToVariable "_mounted" exprId
+      scope = [DotNotation "this"]
+      properties = scope ++ nameToVariable "_properties" exprId
+      mounted = scope ++ nameToVariable "_mounted" exprId
       variableStack = [(properties, propertiesParam)]
 
-  children <- render statements [DotNotation "this", DotNotation "shadowRoot"] variableStack
+  children <- render statements scope [DotNotation "this", DotNotation "shadowRoot"] variableStack
   let getProperty = \property -> if properties `isPrefixOf` property then property !! length properties else error ("Missing watcher for: " ++ show property)
-  let groupedUpdates = groupBy (\(a, code) (b, _) -> getProperty a == getProperty b) (compileUpdate children)
 
+  (noneProperties, propertySetters) <- getSetters mounted properties (compileUpdate children)
   return
     [ Ln ("class " ++ elementClassName ++ " extends HTMLElement {"),
       Ind
@@ -49,12 +50,7 @@ rootAssignment "main" [RightHandSideFunctionDefinition [propertiesParam, attribu
             Ln "}",
             Br
           ]
-            ++ concat
-              [ [Ln ("set " ++ property ++ "(foo) {"), Br, Ind updateCode, Ln "}", Br]
-                | update <- groupedUpdates,
-                  (variable, updateCode) <- update,
-                  let (DotNotation property) = getProperty variable
-              ]
+            ++ propertySetters
         ),
       Ln "}",
       Br,
@@ -64,6 +60,43 @@ rootAssignment "main" [RightHandSideFunctionDefinition [propertiesParam, attribu
 rootAssignment name expression = do
   (result, _) <- expressionToCode [] expression
   return ([Ln ("const " ++ name ++ " = ")] ++ result ++ [Ln ";", Br])
+
+getSetters :: [Variable] -> [Variable] -> [Update] -> AppStateMonad ([Update], [Code])
+getSetters mounted propertyPrefix [] = do return ([], [])
+getSetters mounted propertyPrefix allUpdates@(currentUpdate@(variable, _) : restUpdates) = do
+  let isProperty = propertyPrefix `isPrefixOf` variable
+      propertyChain = take (length propertyPrefix) variable
+      (updateCodes, restUpdates') =
+        if isProperty
+          then partition (isPrefixOf propertyChain . fst) allUpdates
+          else ([], restUpdates)
+  exprId <- getGetFreshExprId
+  let DotNotation propertyName = variable !! length propertyPrefix
+  let value = nameToVariable "value" exprId
+
+  (noneProperties, nextUpdates) <- getSetters mounted propertyPrefix restUpdates'
+
+  return
+    ( if isProperty then noneProperties else currentUpdate : noneProperties,
+      [ Ln ("set " ++ propertyName ++ "(" ++ variableToString value ++ ") {"),
+        Ind
+          ( [ Ln (variableToString propertyChain ++ " = " ++ variableToString value ++ ";"),
+              Br
+            ]
+              ++ if null updateCodes
+                then []
+                else
+                  [ Ln ("if (" ++ variableToString mounted ++ ") {"),
+                    Ind (concatMap snd updateCodes),
+                    Ln "}",
+                    Br
+                  ]
+          ),
+        Ln "}",
+        Br
+      ]
+        ++ nextUpdates
+    )
 
 slashToDash :: String -> String
 slashToDash [] = []
