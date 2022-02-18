@@ -16,7 +16,7 @@
     "karma-firefox-launcher": "^2.1.1",
     "karma-jasmine": "^4.0.1",
     "prettier": "^2.4.1",
-    "semantic-release": "^18.0.0"
+    "semantic-release": "^19.0.2"
   },
   "scripts": {
     "test": "cabal v2-build && karma start karma.conf.js",
