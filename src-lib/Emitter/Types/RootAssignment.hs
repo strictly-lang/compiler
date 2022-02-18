@@ -65,7 +65,7 @@ getSetters :: [Variable] -> [Variable] -> [Update] -> AppStateMonad ([Update], [
 getSetters mounted propertyPrefix [] = do return ([], [])
 getSetters mounted propertyPrefix allUpdates@(currentUpdate@(variable, _) : restUpdates) = do
   let isProperty = propertyPrefix `isPrefixOf` variable
-      propertyChain = take (length propertyPrefix) variable
+      propertyChain = take (length propertyPrefix + 1) variable
       (updateCodes, restUpdates') =
         if isProperty
           then partition (isPrefixOf propertyChain . fst) allUpdates
