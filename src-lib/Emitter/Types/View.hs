@@ -1,5 +1,6 @@
 module Emitter.Types.View where
 
+import Data.Char (toLower)
 import Emitter.Types
 import Emitter.Types.Expression (expressionToCode)
 import Emitter.Util (getGetFreshExprId, nameToVariable, variableToString)
@@ -93,7 +94,18 @@ renderAttributes variableStack element hostElement (currentAttribute : nextAttri
   return (currentAtributeCreate ++ nextAttributesCreate, currentAttributeUpdate ++ nextAttributesUpdate)
 
 renderAttribute :: VariableStack -> [Variable] -> String -> (String, Maybe String, Expression) -> AppStateMonad ([Code], [Update])
-renderAttribute variableStack element hostElement (attributeName, conditionValue, value) = do
+renderAttribute variableStack element "input" ("value", Nothing, [RightHandSideAlgebraicDataType inputType [value]]) = do
+  (value, depedencies) <- expressionToCode variableStack value
+  let typeCode = [Ln (variableToString element ++ ".setAttribute(\"type\",\"" ++ map toLower inputType ++ "\");"), Br]
+      valueCode = [Ln (variableToString element ++ ".value = ")] ++ value ++ [Ln ");", Br]
+
+  return
+    ( typeCode ++ valueCode,
+      [ (dependency, valueCode)
+        | dependency <- depedencies
+      ]
+    )
+renderAttribute variableStack element hostElement (attributeName, Nothing, value) = do
   (value, depedencies) <- expressionToCode variableStack value
   let code = [Ln (variableToString element ++ ".setAttribute(\"" ++ attributeName ++ "\", ")] ++ value ++ [Ln ");", Br]
   return
