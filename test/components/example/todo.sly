@@ -1,13 +1,16 @@
-data Action = ChangeText[String] | CreateTodo | ToggleDone[Integer];
+data Action = ChangeText(String), CreateTodo, ToggleDone(Integer);
+
+type State = { currentText = String, todos = String[]};
 
 store = {
 	init = { currentText = "", todos = [] }
 
-	reducer = \state@{ currentText }, ChangeText[text] ->
+	reduver : \State, Action -> State
+	reducer = \state@{ currentText }, ChangeText(text) ->
 		{ currentText = text | state}
 	reducer = \{ todos, currentText }, CreateTodo ->
 		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
-	reducer = \state@{ todos }, ToggleDone[index]->
+	reducer = \state@{ todos }, ToggleDone(index)->
 		let todos' = [
 			{
 				isDone = if index == index' then
@@ -20,6 +23,7 @@ store = {
 		{ todos = todos' | state }
 }
 
+main : \{}, {} -> View[]
 main = \_, _ ->
 	let [{todos, textValue}, todosDispatch] <- model(store);
 
@@ -31,9 +35,9 @@ main = \_, _ ->
 		onsubmit = \_ -> todosDispatch(CreateTodo)
 	}
 		$input{
-			value = Text[textValue]
-			oninput = \Text[textValue] ->
-				todosDispatch(ChangeText[textValue])
+			value = Text(textValue]
+			oninput = \Text(textValue] ->
+				todosDispatch(ChangeText(textValue))
 		}
 		$button{
 			type = Submit
@@ -47,6 +51,6 @@ main = \_, _ ->
 			$li{
 				class = "row"
 				class?done = isDone
-				onclick = \_ -> todosDispatch(ToggleDone[index])
+				onclick = \_ -> todosDispatch(ToggleDone(index))
 			}
 				"${value}"
