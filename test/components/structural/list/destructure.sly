@@ -1,3 +1,4 @@
+main : \{ values: String[] }, {} -> View
 main = \props, _ ->
 	match props.values
 		case \[] ->

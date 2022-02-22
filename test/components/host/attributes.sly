@@ -1,3 +1,4 @@
+main = \{ foo: String, bar: String}, {} -> View
 main = \props, _ ->
 	$div{
 		class="foo"

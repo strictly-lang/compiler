@@ -1,5 +1,7 @@
+main = \{ value: String, oninput: \String -> Void }, {} -> View
 main = \props, _ ->
 	$input{
-		value = Text[props.value]
-		oninput = \Text[value] -> props.oninput(value)
+		type = "text"
+		value = props.value
+		oninput = \String(value) -> props.oninput(value)
 	}

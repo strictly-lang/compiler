@@ -1,3 +1,4 @@
+main : \{ foo: Boolean }, {} -> View
 main = \props, _ ->
 	$div
 		if props.foo then

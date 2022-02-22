@@ -1,3 +1,4 @@
+main : \{ foo: String }, {} -> View
 main = \props, _ ->
 	$div
 		"con-${props.foo}-cat"

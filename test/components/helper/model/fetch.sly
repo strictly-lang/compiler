@@ -3,8 +3,8 @@ store = \id ->
 	{
 		init = match result
 			case \Pending -> Pending
-			case \Done[Ok[response]] -> Result[response]
-			case \Done[error@Error[_]] -> error
+			case \Done(Ok(response)) -> Result(response)
+			case \Done(error@Error(_)) -> error
 		reducer = \state, action -> state
 	}
 

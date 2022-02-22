@@ -1,3 +1,4 @@
+main : \{ bar: String }, {} -> View
 main = \props, _ ->
 	"foo"
 	"${props.bar}"

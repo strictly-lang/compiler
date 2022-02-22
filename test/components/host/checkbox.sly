@@ -1,5 +1,7 @@
+main = \{ value: Boolean, oninput: \Boolean -> Void }, {} -> View
 main = \props, _ ->
 	$input{
-		value = CheckBox[props.value]
-		oninput = \CheckBox[value] -> props.oninput(value)
+		type = "checkbox"
+		value = props.value
+		oninput = \Boolean(value) -> props.oninput(value)
 	}

@@ -1,11 +1,13 @@
-dsata Action = Increment | Decrement;
+dsata Action = Increment, Decrement;
 
 store = {
 	init = 0
+	reducer : \Integer, Action -> Integer
 	reducer = \state, Increment -> state + 1
 	reducer = \state, Decrement -> state - 1
 }
 
+main : \ {}, {} -> View
 main = \_, _ ->
 	let [counterState, counterDispatch] <- model(store);
 	$button{

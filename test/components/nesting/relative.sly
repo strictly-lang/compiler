@@ -1,3 +1,4 @@
+main = \{ foo: String }, {} -> View
 main = \props, _ ->
 	$.-deep-index{
 		foo = props.foo

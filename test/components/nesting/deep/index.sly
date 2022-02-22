@@ -1,3 +1,4 @@
+main = \{ foo: String }, {} -> View
 main = \props, _ ->
 	$div
 		"nested component value: ${props.foo}"

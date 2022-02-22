@@ -1,20 +1,10 @@
-style
-	$div{
-		padding = [Px(1)]
-	}
-	.class{
-		background-color = Rgb(100, 200, 300)
-	}
-
-	#entity{
-		padding = [Rem(2), Rem(3), Rem(4), Rem(5)]
-	}
-
-	#entity.class{
-		background-color = Initial
-	}
-
+main : \{}, {} -> View
 main = \_, _ ->
+	$link{
+		href="./todo.css"
+		rel="stylesheet"
+	}
+
 	$div
 	$div{
 		id="entity"

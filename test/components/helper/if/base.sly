@@ -1,3 +1,4 @@
+main = \{ foo: Boolean, bar: String }, {} -> View
 main = \props, _ ->
 	$header
 	if props.foo then

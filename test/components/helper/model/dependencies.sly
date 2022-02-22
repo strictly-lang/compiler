@@ -2,10 +2,12 @@ data Action = RemoveSelection | AddSelection;
 
 store = \_ -> {
 	init = false
-	reducer = \_, RemoveSelection -> false
-	reducer = \_, AddSelection    -> true
+	reducer : \Boolean, Action -> Boolean
+	reducer = \_, RemoveSelection -> False
+	reducer = \_, AddSelection    -> True
 }
 
+main : { page: Integer }, {} -> View
 main = \props, _ ->
 	let entity <- [props.page * 10 .. (props.page * 10 + 10)];
 	let [selectionState, selectionDispatch] <- model(store(props.page));

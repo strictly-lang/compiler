@@ -1,9 +1,10 @@
-data State = Odd[Int] | Even[Int] | Never[Int];
+data State = Odd(Integer), Even(Integer), Never(Integer);
 
+main = \{}, {} -> View
 main = \_, _ ->
 	$header
 	$section
-		let Never[value] <- [Even[0], Odd[1], Even[2]];
+		let Never(value) <- [Even(0), Odd(1), Even(2)];
 		$div
 			"${value}"
 	$footer

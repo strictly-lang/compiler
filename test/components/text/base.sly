@@ -1,2 +1,3 @@
+main : \{}, {} -> View
 main = \_, _ ->
 	"foo"

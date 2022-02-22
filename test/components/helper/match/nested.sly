@@ -1,11 +1,13 @@
-data States = First | Second[States, Int] | Third[Int, Int] | Fourht[Int];
+data State = First, Second(States, Integer), Third(Integer, Integer), Fourht(Integer);
 
 store = {
 	init = First
-	reducer = \First, action -> Second[ Third[ action + 2], action ]
-	reducer = \Second[ Third[ nestedValue ], outerValue ], action -> Fourth[ nestedValue + outerValue + action]
+	reducer : \ State, Integer -> State
+	reducer = \First, action -> Second( Third( action + 2), action )
+	reducer = \Second( Third( nestedValue ), outerValue ), action -> Fourth( nestedValue + outerValue + action)
 }
 
+main = \{}, {} -> View
 main = \_, _ ->
 	$div
 		let [stateState, stateDispatch] <- model(store);
@@ -15,10 +17,10 @@ main = \_, _ ->
 					onclick = \_ -> stateDispatch(1)
 				}
 					"first"
-			case \Second[ Third[ nestedValue ], siblingValue] ->
+			case \Second( Third( nestedValue ), siblingValue) ->
 				$button{
 					onclick = \_ -> stateDispatch(2)
 				}
 					"second nestedValue: ${nestedValue} siblingValue: ${siblingValue}"
-			case \Fourth[value] ->
+			case \Fourth(value) ->
 				"third: ${value}"

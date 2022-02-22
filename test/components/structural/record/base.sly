@@ -1,8 +1,12 @@
+type State = { x: Ingeger, y: Integer };
+
 store = {
 	init = { x = 1, y = 0}
+	reducer : \State, Integer -> State
 	reducer = \state, x -> { x = state.x + x | state}
 }
 
+main : \{}, {} -> View
 main = \_, _ ->
 	let [mainState, mainDispatch] <- model(store);
 	$button{

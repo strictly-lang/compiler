@@ -1,8 +1,12 @@
+data State = First, Second;
+
 store = {
 	init = First
+	reducer : \State, State -> State 
 	reducer = \_, action -> action
 }
 
+main : \{ foo: Boolean, }, {} -> View
 main = \props, _ ->
 	$header
 	let [stateState, stateDispatch] <- model(store);

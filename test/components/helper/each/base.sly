@@ -1,7 +1,8 @@
+main = \{ foo: String[], baz: Boolean, bar: String }
 main = \props, _ ->
 	$header
 	if props.baz then
-		if props.foo.length == 0
+		if props.foo.length == 0 then
 			$span
 					"Empty list ${props.bar}"
 		else

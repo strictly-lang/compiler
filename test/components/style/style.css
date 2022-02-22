@@ -1,0 +1,15 @@
+div{
+    padding: 1px
+}
+
+.class{
+    background-color: rgb(100, 200, 300);
+}
+
+#entity{
+    padding: 2rem 3rem 4rem 5rem
+}
+
+#entity.class{
+    background-color: Initial;
+}

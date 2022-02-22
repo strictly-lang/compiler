@@ -1,11 +1,13 @@
-data States = First | Second[States, Int] | Third[Int, Int];
+data State = First, Second(Integer), Third(Integer);
 
 store = {
 	init = First
+	reducer : \States, Integer -> State
 	reducer = \First, action -> Second[ action ]
 	reducer = \Second[ value ], action -> Third[ value + action ]
 }
 
+main = \{}, {} -> View
 main = \_, _ ->
 	$div
 		let [stateState, stateDispatch] <- model(store);

@@ -1,11 +1,14 @@
 store = {
 	init = ""
+	reducer : \String, String -> String
 	reducer = \_, action -> action
 }
 
+main : \ {}, {} -> View
 main = \_, _ ->
 	let [mainState, mainDispatch] <- model(store);
 	$input{
-		value = Text[mainState]
-		oninput = \Text[value] -> mainDispatch(value)
+		type = "text"
+		value = mainState
+		oninput = \String[value] -> mainDispatch(value)
 	}

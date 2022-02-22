@@ -1,11 +1,12 @@
 data Action = ChangeText(String), CreateTodo, ToggleDone(Integer);
 
-type State = { currentText = String, todos = String[]};
+type State = { curretnText: String, todos: String[] };
 
 store = {
+	init : State
 	init = { currentText = "", todos = [] }
 
-	reduver : \State, Action -> State
+	reducer : \State, Action -> State
 	reducer = \state@{ currentText }, ChangeText(text) ->
 		{ currentText = text | state}
 	reducer = \{ todos, currentText }, CreateTodo ->
@@ -23,7 +24,7 @@ store = {
 		{ todos = todos' | state }
 }
 
-main : \{}, {} -> View[]
+main : \{}, {} -> View
 main = \_, _ ->
 	let [{todos, textValue}, todosDispatch] <- model(store);
 
@@ -35,12 +36,13 @@ main = \_, _ ->
 		onsubmit = \_ -> todosDispatch(CreateTodo)
 	}
 		$input{
-			value = Text(textValue]
-			oninput = \Text(textValue] ->
+			type = "text"
+			value = textValue
+			oninput = \String(textValue) ->
 				todosDispatch(ChangeText(textValue))
 		}
 		$button{
-			type = Submit
+			type = "submit"
 		}
 
 	$ul

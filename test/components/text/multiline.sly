@@ -1,4 +1,5 @@
-main = \_, _ ->
+ main : \{}, {} -> View
+ main = \_, _ ->
 	"foo"
 	"bar"
 	"baz"
