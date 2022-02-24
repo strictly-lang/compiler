@@ -3,6 +3,7 @@ module Types where
 data Root
   = RootDataDeclaration String [DataDeclaration]
   | RootTypeAlias String TypeDefinition
+  | RootTypeAssignment String TypeDefinition
   | RootAssignment String Expression
   deriving (Show)
 
@@ -42,7 +43,10 @@ data Expression'
   | RightHandSideFragment [Expression]
   deriving (Show)
 
-type Record = ([(String, Maybe String, Expression)], [Statement])
+type Record = ([(String, RecordValue)], [Statement])
+
+data RecordValue = RecordExpression (Maybe String) Expression | RecordType TypeDefinition
+  deriving (Show)
 
 data RightHandSideString
   = RightHandSideStringStatic String

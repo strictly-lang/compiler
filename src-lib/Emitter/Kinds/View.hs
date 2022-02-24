@@ -4,7 +4,6 @@ import Data.Char (toLower)
 import Emitter.Kinds.Expression (expressionToCode)
 import Emitter.Types
 import Emitter.Util (getGetFreshExprId, nameToVariable, variableToString)
-import GHC.Event (FdKey (keyFd))
 import Types
 
 type Update = ([Variable], [Code])
@@ -93,8 +92,8 @@ renderAttributes variableStack element hostElement (currentAttribute : nextAttri
 
   return (currentAtributeCreate ++ nextAttributesCreate, currentAttributeUpdate ++ nextAttributesUpdate)
 
-renderAttribute :: VariableStack -> [Variable] -> String -> (String, Maybe String, Expression) -> AppStateMonad ([Code], [Update])
-renderAttribute variableStack element "input" ("value", Nothing, [RightHandSideAlgebraicDataType inputType [value]]) = do
+renderAttribute :: VariableStack -> [Variable] -> String -> (String, RecordValue) -> AppStateMonad ([Code], [Update])
+renderAttribute variableStack element "input" ("value", (RecordExpression Nothing [RightHandSideAlgebraicDataType inputType [value]])) = do
   (value, depedencies) <- expressionToCode variableStack value
   let typeCode = [Ln (variableToString element ++ ".setAttribute(\"type\",\"" ++ map toLower inputType ++ "\");"), Br]
       valueCode = [Ln (variableToString element ++ ".value = ")] ++ value ++ [Ln ");", Br]
@@ -105,7 +104,7 @@ renderAttribute variableStack element "input" ("value", Nothing, [RightHandSideA
         | dependency <- depedencies
       ]
     )
-renderAttribute variableStack element hostElement (attributeName, Nothing, value) = do
+renderAttribute variableStack element hostElement (attributeName, (RecordExpression Nothing value)) = do
   (value, depedencies) <- expressionToCode variableStack value
   let code = [Ln (variableToString element ++ ".setAttribute(\"" ++ attributeName ++ "\", ")] ++ value ++ [Ln ");", Br]
   return

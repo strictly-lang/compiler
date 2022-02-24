@@ -3,7 +3,7 @@ module Parser.Kinds.Root where
 import Control.Applicative ((<|>))
 import Parser.Kinds.Statement
 import Parser.Types
-import Parser.Util (assignParser, blockParser, functionCallCloseParser, functionCallOpenParser, lowercaseIdentifierParser, sc, statementTerminationParser, typeDefinitionParser, uppercaseIdentifierParser)
+import Parser.Util (assignParser, blockParser, functionCallCloseParser, functionCallOpenParser, lowercaseIdentifierParser, sc, statementTerminationParser, typeAssignParser, typeDefinitionParser, uppercaseIdentifierParser)
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, optional, sepBy)
 import Text.Megaparsec.Char (char, space, space1, string)
 import Types
@@ -29,8 +29,11 @@ algebraicDataTypeParser indentationLevel = do
 
 assignmentParser :: Parser Root
 assignmentParser = do
-  name <- lowercaseIdentifierParser <* sc <* assignParser <* sc
-  RootAssignment name <$> expressionParser 0
+  name <- lowercaseIdentifierParser <* sc
+  kind <- Left <$> typeAssignParser <|> Right <$> assignParser
+  case kind of
+    Left _ -> RootTypeAssignment name <$> typeDefinitionParser 0
+    Right _ -> RootAssignment name <$> expressionParser 0
 
 typeDeclarationParser :: Parser Root
 typeDeclarationParser = do

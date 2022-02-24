@@ -3,7 +3,7 @@ module Parser.Kinds.Statement where
 import Control.Applicative ((<|>))
 import Parser.Kinds.LeftHandSide (leftHandSideParser)
 import Parser.Types
-import Parser.Util (assignParser, baseOfParser, blockParser, functionBodyParser, functionCallCloseParser, functionCallOpenParser, functionDefinitionParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
+import Parser.Util (assignParser, baseOfParser, blockParser, functionBodyParser, functionCallCloseParser, functionCallOpenParser, functionDefinitionParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, typeAssignParser, typeDefinitionParser, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, many, manyTill, optional, some, try)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
@@ -135,7 +135,7 @@ recordParser indentationLevel = do
       _ <- recordCloseParser
       return (properties, [])
 
-recordOptionParser :: IndentationLevel -> Parser (String, Maybe String, Expression)
+recordOptionParser :: IndentationLevel -> Parser (String, RecordValue)
 recordOptionParser indentationLevel = do
   key <- lowercaseIdentifierParser
 
@@ -143,14 +143,19 @@ recordOptionParser indentationLevel = do
 
   condition <- case hasCondition of
     Just _ -> do
-      Just <$> some letterChar
+      Just <$> some letterChar <* sc
     Nothing -> do
       return Nothing
 
-  _ <- sc *> assignParser
-  value <- expressionParser indentationLevel
+  kind <- Left <$> assignParser <|> Right <$> typeAssignParser
 
-  return (key, condition, value)
+  value <- case kind of
+    Left _ ->
+      RecordExpression condition <$> expressionParser indentationLevel
+    Right _ ->
+      RecordType <$> typeDefinitionParser indentationLevel
+
+  return (key, value)
 
 rightHandSideFunctionDefinitionParser :: IndentationLevel -> Parser Expression'
 rightHandSideFunctionDefinitionParser indentationLevel = do
