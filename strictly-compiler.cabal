@@ -23,16 +23,16 @@ library
                        Parser.Types,
                        Parser.Util,
                        Parser.Main,
-                       Parser.Types.Root,
-                       Parser.Types.LeftHandSide,
-                       Parser.Types.Statement,
+                       Parser.Kinds.Root,
+                       Parser.Kinds.LeftHandSide,
+                       Parser.Kinds.Statement,
                        Emitter.Util,
-                       Emitter.Types.Expression,
+                       Emitter.Kinds.Expression,
                        Emitter.Types,
-                       Emitter.Types.Root,
-                       Emitter.Types.RootDeclaration,
-                       Emitter.Types.RootAssignment,
-                       Emitter.Types.View
+                       Emitter.Kinds.Root,
+                       Emitter.Kinds.RootDeclaration,
+                       Emitter.Kinds.RootAssignment,
+                       Emitter.Kinds.View
 
   -- other-extensions:
   build-depends:       base, megaparsec, mtl

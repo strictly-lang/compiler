@@ -1,8 +1,8 @@
-module Emitter.Types.View where
+module Emitter.Kinds.View where
 
 import Data.Char (toLower)
+import Emitter.Kinds.Expression (expressionToCode)
 import Emitter.Types
-import Emitter.Types.Expression (expressionToCode)
 import Emitter.Util (getGetFreshExprId, nameToVariable, variableToString)
 import GHC.Event (FdKey (keyFd))
 import Types

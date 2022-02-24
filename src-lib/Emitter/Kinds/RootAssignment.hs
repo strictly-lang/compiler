@@ -1,11 +1,11 @@
-module Emitter.Types.RootAssignment where
+module Emitter.Kinds.RootAssignment where
 
 import Control.Monad.State.Lazy (MonadState (get))
 import Data.Char (toUpper)
 import Data.List (groupBy, isPrefixOf, partition)
+import Emitter.Kinds.Expression (expressionToCode)
+import Emitter.Kinds.View (Update, ViewResult (compileCreate, compileUpdate), render)
 import Emitter.Types
-import Emitter.Types.Expression (expressionToCode)
-import Emitter.Types.View (Update, ViewResult (compileCreate, compileUpdate), render)
 import Emitter.Util (getGetFreshExprId, nameToVariable, pathToComponentName, variableToString)
 import Types
 

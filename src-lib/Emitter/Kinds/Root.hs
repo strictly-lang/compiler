@@ -1,9 +1,9 @@
-module Emitter.Types.Root where
+module Emitter.Kinds.Root where
 
 import Control.Monad.State.Lazy (runState)
+import Emitter.Kinds.RootAssignment (rootAssignment)
+import Emitter.Kinds.RootDeclaration (algebraicDataTypeConstructor)
 import Emitter.Types (AppState (AppState), AppStateMonad, Code (..))
-import Emitter.Types.RootAssignment (rootAssignment)
-import Emitter.Types.RootDeclaration (algebraicDataTypeConstructor)
 import Types
 
 compileRoot :: String -> [Root] -> String

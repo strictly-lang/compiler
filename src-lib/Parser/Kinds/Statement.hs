@@ -1,8 +1,8 @@
-module Parser.Types.Statement where
+module Parser.Kinds.Statement where
 
 import Control.Applicative ((<|>))
+import Parser.Kinds.LeftHandSide (leftHandSideParser)
 import Parser.Types
-import Parser.Types.LeftHandSide (leftHandSideParser)
 import Parser.Util (assignParser, baseOfParser, blockParser, functionCallCloseParser, functionCallOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, many, manyTill, optional, some, try)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, string)

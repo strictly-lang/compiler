@@ -1,6 +1,6 @@
 module Compiler.Main where
 
-import Emitter.Types.Root (compileRoot)
+import Emitter.Kinds.Root (compileRoot)
 import Emitter.Util (pathToComponentName)
 import Parser.Main (parseRoot)
 import Types

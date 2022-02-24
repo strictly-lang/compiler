@@ -1,4 +1,4 @@
-module Emitter.Types.RootDeclaration where
+module Emitter.Kinds.RootDeclaration where
 
 import Emitter.Types (AppStateMonad, Code (..))
 import Types

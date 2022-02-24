@@ -1,4 +1,4 @@
-module Emitter.Types.Expression where
+module Emitter.Kinds.Expression where
 
 import Data.List (intersperse)
 import Emitter.Types

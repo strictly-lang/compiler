@@ -1,4 +1,4 @@
-module Parser.Types.LeftHandSide where
+module Parser.Kinds.LeftHandSide where
 
 import Control.Applicative ((<|>))
 import Parser.Types
