@@ -3,10 +3,13 @@ module Parser.Kinds.Root where
 import Control.Applicative ((<|>))
 import Parser.Kinds.Statement
 import Parser.Types
-import Parser.Util (assignParser, blockParser, functionCallCloseParser, functionCallOpenParser, lowercaseIdentifierParser, sc, statementTerminationParser, uppercaseIdentifierParser)
+import Parser.Util (assignParser, blockParser, functionCallCloseParser, functionCallOpenParser, lowercaseIdentifierParser, sc, statementTerminationParser, typeDefinitionParser, uppercaseIdentifierParser)
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, optional, sepBy)
 import Text.Megaparsec.Char (char, space, space1, string)
 import Types
+
+rootParser :: Parser Root
+rootParser = dataParser <|> typeDeclarationParser <|> assignmentParser
 
 dataParser :: Parser Root
 dataParser = do
@@ -16,7 +19,7 @@ dataParser = do
 
 algebraicDataTypeParser :: IndentationLevel -> Parser DataDeclaration
 algebraicDataTypeParser indentationLevel = do
-  name <- uppercaseIdentifierParser
+  name <- uppercaseIdentifierParser <* sc
   hasParameter <- optional (lookAhead functionCallOpenParser)
   parameters <-
     case hasParameter of
@@ -29,5 +32,9 @@ assignmentParser = do
   name <- lowercaseIdentifierParser <* sc <* assignParser <* sc
   RootAssignment name <$> expressionParser 0
 
-rootParser :: Parser Root
-rootParser = dataParser <|> assignmentParser
+typeDeclarationParser :: Parser Root
+typeDeclarationParser = do
+  name <- string "type " *> sc *> uppercaseIdentifierParser <* sc <* assignParser
+  typeDefinition <- typeDefinitionParser 0
+  _ <- statementTerminationParser
+  return (RootTypeAlias name typeDefinition)

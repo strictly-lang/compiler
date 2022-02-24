@@ -3,7 +3,7 @@ module Parser.Kinds.Statement where
 import Control.Applicative ((<|>))
 import Parser.Kinds.LeftHandSide (leftHandSideParser)
 import Parser.Types
-import Parser.Util (assignParser, baseOfParser, blockParser, functionCallCloseParser, functionCallOpenParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
+import Parser.Util (assignParser, baseOfParser, blockParser, functionBodyParser, functionCallCloseParser, functionCallOpenParser, functionDefinitionParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, many, manyTill, optional, some, try)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
@@ -154,7 +154,7 @@ recordOptionParser indentationLevel = do
 
 rightHandSideFunctionDefinitionParser :: IndentationLevel -> Parser Expression'
 rightHandSideFunctionDefinitionParser indentationLevel = do
-  parameters <- blockParser (char '\\' <* sc) (string "->" <* sc) leftHandSideParser indentationLevel
+  parameters <- blockParser functionDefinitionParser functionBodyParser leftHandSideParser indentationLevel
 
   hasEol <- lookAhead (optional eol)
 

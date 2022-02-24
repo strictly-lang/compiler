@@ -2,10 +2,19 @@ module Types where
 
 data Root
   = RootDataDeclaration String [DataDeclaration]
+  | RootTypeAlias String TypeDefinition
   | RootAssignment String Expression
   deriving (Show)
 
 newtype DataDeclaration = DataDeclaration (String, [DataDeclaration])
+  deriving (Show)
+
+data TypeDefinition
+  = TypeAlgebraicDataType String [TypeDefinition]
+  | TypeFunction [TypeDefinition] TypeDefinition
+  | TypeRecord [(String, TypeDefinition)]
+  | TypeTuple [TypeDefinition]
+  | TypeList TypeDefinition
   deriving (Show)
 
 data Statement
