@@ -32,7 +32,7 @@ render statements scope parent variableStack = do
     )
 
 render' :: [Statement] -> [Variable] -> [Variable] -> VariableStack -> AppStateMonad (ViewResult, [Statement])
-render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) : nextStatements) scope parent variableStack = do
+render' ((UntypedExpression [RightHandSideHost hostName attributes nestedStatements]) : nextStatements) scope parent variableStack = do
   exprId <- getGetFreshExprId
   let ele = scope ++ nameToVariable "ele" exprId
   (attributeCodeCreate, attributeCodeUpdate) <- renderAttributes variableStack ele hostName attributes
@@ -54,7 +54,7 @@ render' ((Expression [RightHandSideHost hostName attributes nestedStatements]) :
         },
       nextStatements
     )
-render' ((Expression expression) : nextStatements) scope parent variableStack = do
+render' ((UntypedExpression expression) : nextStatements) scope parent variableStack = do
   exprId <- getGetFreshExprId
   let ele = scope ++ nameToVariable "text" exprId
   (result, dependencies) <- expressionToCode variableStack expression

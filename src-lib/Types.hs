@@ -4,7 +4,7 @@ data Root
   = RootDataDeclaration String [DataDeclaration]
   | RootTypeAlias String TypeDefinition
   | RootTypeAssignment String TypeDefinition
-  | RootAssignment String Expression
+  | RootAssignment String UntypedExpression
   deriving (Show)
 
 newtype DataDeclaration = DataDeclaration (String, [DataDeclaration])
@@ -19,38 +19,38 @@ data TypeDefinition
   deriving (Show)
 
 data Statement
-  = VariableAssignment LeftHandSide Expression
-  | Stream LeftHandSide Expression
-  | Expression Expression
+  = VariableAssignment LeftHandSide UntypedExpression
+  | Stream LeftHandSide UntypedExpression
+  | UntypedExpression UntypedExpression
   deriving (Show)
 
-type Expression = [Expression']
+type UntypedExpression = [UntypedExpression']
 
-data Expression'
+data UntypedExpression'
   = RightHandSideVariable String
-  | RightHandSideList [Expression] [Statement]
+  | RightHandSideList [UntypedExpression] [Statement]
   | RightHandSideRecord Record
-  | RightHandSideAlgebraicDataType String [Expression]
+  | RightHandSideAlgebraicDataType String [UntypedExpression]
   | RightHandSideNumber Int
   | RightHandSideRange Int (Maybe Int)
   | RightHandSideString [RightHandSideString]
   | RightHandSideFunctionDefinition [LeftHandSide] [Statement]
-  | RightHandSideFunctionCall Expression [Expression]
-  | RightHandSideOperator Operator Expression Expression
-  | RightHandSideCondition Expression [Statement] [Statement]
-  | RightHandSideMatch Expression [(LeftHandSide, [Statement])]
+  | RightHandSideFunctionCall UntypedExpression [UntypedExpression]
+  | RightHandSideOperator Operator UntypedExpression UntypedExpression
+  | RightHandSideCondition UntypedExpression [Statement] [Statement]
+  | RightHandSideMatch UntypedExpression [(LeftHandSide, [Statement])]
   | RightHandSideHost String Record [Statement]
-  | RightHandSideFragment [Expression]
+  | RightHandSideFragment [UntypedExpression]
   deriving (Show)
 
 type Record = ([(String, RecordValue)], [Statement])
 
-data RecordValue = RecordExpression (Maybe String) Expression | RecordType TypeDefinition
+data RecordValue = RecordExpression (Maybe String) UntypedExpression | RecordType TypeDefinition
   deriving (Show)
 
 data RightHandSideString
   = RightHandSideStringStatic String
-  | RightHandSideStringDynamic Expression
+  | RightHandSideStringDynamic UntypedExpression
   deriving (Show)
 
 data LeftHandSide

@@ -5,10 +5,10 @@ import Emitter.Types
 import Emitter.Util (leftHandSideToCode, variableToString)
 import Types
 
-expressionToCode :: VariableStack -> Expression -> AppStateMonad ([Code], [[Variable]])
+expressionToCode :: VariableStack -> UntypedExpression -> AppStateMonad ([Code], [[Variable]])
 expressionToCode = expressionToCode' True
 
-expressionToCode' :: Bool -> VariableStack -> Expression -> AppStateMonad ([Code], [[Variable]])
+expressionToCode' :: Bool -> VariableStack -> UntypedExpression -> AppStateMonad ([Code], [[Variable]])
 expressionToCode' translateVariableStack variableStack [] = do
   return ([], [])
 expressionToCode' translateVariableStack variableStack (expression : restExpressions) = do
@@ -22,7 +22,7 @@ expressionToCode' translateVariableStack variableStack (expression : restExpress
           [resultDependency ++ nestedDependency | resultDependency <- resultDependencies, nestedDependency <- nestedDependencies]
         )
 
-expressionToCode'' :: Bool -> VariableStack -> Expression' -> AppStateMonad ([Code], [[Variable]])
+expressionToCode'' :: Bool -> VariableStack -> UntypedExpression' -> AppStateMonad ([Code], [[Variable]])
 expressionToCode'' translateVariableStack variableStack (RightHandSideVariable variableName)
   | translateVariableStack = do
     let (variable, constraint) = leftHandSideToCode variableStack variableName

@@ -9,7 +9,7 @@ import Emitter.Types
 import Emitter.Util (getGetFreshExprId, nameToVariable, pathToComponentName, variableToString)
 import Types
 
-rootAssignment :: String -> Expression -> AppStateMonad [Code]
+rootAssignment :: String -> UntypedExpression -> AppStateMonad [Code]
 rootAssignment "main" [RightHandSideFunctionDefinition [propertiesParam, attributesParam] statements] = do
   appState <- get
   exprId <- getGetFreshExprId
