@@ -1,13 +1,13 @@
 module Emitter.Kinds.RootDeclaration where
 
-import Emitter.Types (AppStateMonad, Code (..))
+import Emitter.Types (AppStateMonad, Code (..), VariableStack)
 import Types
 
-algebraicDataTypeConstructor :: [DataDeclaration] -> AppStateMonad [Code]
-algebraicDataTypeConstructor [] = do return []
+algebraicDataTypeConstructor :: [DataDeclaration] -> AppStateMonad ([Code], VariableStack)
+algebraicDataTypeConstructor [] = do return ([], [])
 algebraicDataTypeConstructor (DataDeclaration (name, parameters) : adts) =
   do
-    next <- algebraicDataTypeConstructor adts
+    (next, variableStack) <- algebraicDataTypeConstructor adts
     return
       ( ( if null parameters
             then [Ln ("function " ++ name ++ "() {}")]
@@ -20,5 +20,6 @@ algebraicDataTypeConstructor (DataDeclaration (name, parameters) : adts) =
               ]
         )
           ++ [Br]
-          ++ next
+          ++ next,
+        variableStack
       )

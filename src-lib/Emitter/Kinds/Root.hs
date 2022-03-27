@@ -1,28 +1,42 @@
 module Emitter.Kinds.Root where
 
 import Control.Monad.State.Lazy (runState)
-import Emitter.Kinds.RootAssignment (rootAssignment)
+-- import Emitter.Kinds.RootAssignment (rootAssignment)
+
+import Emitter.Kinds.Expression (toTypedExpression)
 import Emitter.Kinds.RootDeclaration (algebraicDataTypeConstructor)
-import Emitter.Types (AppState (AppState), AppStateMonad, Code (..))
+import Emitter.Kinds.View (render)
+import Emitter.Types
+import Emitter.Util (getGetFreshExprId, nameToVariable)
 import Types
 
 compileRoot :: String -> [Root] -> String
 compileRoot componentName roots =
-  let code = compileRoot' roots
+  let code = compileRoot' [] roots
       (result, _) = runState code (AppState componentName 0)
    in codeToString 0 True result
 
-compileRoot' :: [Root] -> AppStateMonad [Code]
-compileRoot' [] = do return []
-compileRoot' (RootDataDeclaration _ dataDeclarations : restRoot) = do
-  result <- algebraicDataTypeConstructor dataDeclarations
-  next <- compileRoot' restRoot
+compileRoot' :: VariableStack -> [Root] -> AppStateMonad [Code]
+compileRoot' variableStack [] = do return []
+compileRoot' variableStack (RootDataDeclaration _ dataDeclarations : restRoot) = do
+  (result, variableStack') <- algebraicDataTypeConstructor dataDeclarations
+  next <- compileRoot' (variableStack' ++ variableStack) restRoot
 
   return (result ++ next)
-compileRoot' (RootAssignment name expression : restRoot) = do
-  result <- rootAssignment name expression
-  next <- compileRoot' restRoot
-  return (result ++ next)
+compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition) : (RootAssignment "main" untypedExpression) : restRoot) = do
+  exprId <- getGetFreshExprId
+  let param = nameToVariable "main" exprId
+  let (typedExpression, _) = toTypedExpression param typeDefinition untypedExpression
+
+  code <- render typedExpression
+  next <- compileRoot' variableStack restRoot
+
+  return (code ++ next)
+
+-- compileRoot' (RootAssignment name expression : restRoot) = do
+--   result <- rootAssignment name expression
+--   next <- compileRoot' restRoot
+--   return (result ++ next)
 
 codeToString :: Int -> Bool -> [Code] -> String
 codeToString indentationLevel first [] = ""

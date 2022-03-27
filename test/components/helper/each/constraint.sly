@@ -5,7 +5,7 @@ store = {
 	reducer = \ _, action -> action
 }
 
-main = \{}, {} -> View
+main : \{}, {} -> View
 main = \_, _ ->
 	let [values, dispatch] <- model(store);
 	$header{

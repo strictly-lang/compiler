@@ -1,4 +1,4 @@
-main = \{ foo: String[], baz: Boolean, bar: String }
+main : \{ foo: String[], baz: Boolean, bar: String }
 main = \props, _ ->
 	$header
 	if props.baz then

@@ -1,4 +1,4 @@
-main = \{ value: String, oninput: \String -> Void }, {} -> View
+main : \{ value: String, oninput: \String -> Void }, {} -> View
 main = \props, _ ->
 	$input{
 		type = "text"

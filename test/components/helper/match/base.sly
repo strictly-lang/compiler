@@ -7,7 +7,7 @@ store = {
 	reducer = \Second[ value ], action -> Third[ value + action ]
 }
 
-main = \{}, {} -> View
+main : \{}, {} -> View
 main = \_, _ ->
 	$div
 		let [stateState, stateDispatch] <- model(store);

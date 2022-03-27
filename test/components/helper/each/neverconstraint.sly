@@ -1,6 +1,6 @@
 data State = Odd(Integer), Even(Integer), Never(Integer);
 
-main = \{}, {} -> View
+main : \{}, {} -> View
 main = \_, _ ->
 	$header
 	$section

@@ -7,7 +7,7 @@ store = {
 	reducer = \Second( Third( nestedValue ), outerValue ), action -> Fourth( nestedValue + outerValue + action)
 }
 
-main = \{}, {} -> View
+main : \{}, {} -> View
 main = \_, _ ->
 	$div
 		let [stateState, stateDispatch] <- model(store);

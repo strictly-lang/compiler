@@ -1,115 +1,54 @@
 module Emitter.Kinds.View where
 
-import Data.Char (toLower)
-import Emitter.Kinds.Expression (expressionToCode)
+import Control.Monad.State.Lazy (MonadState (get), get)
+import Data.Char (toUpper)
 import Emitter.Types
-import Emitter.Util (getGetFreshExprId, nameToVariable, variableToString)
-import Types
+import Emitter.Util (getGetFreshExprId, nameToVariable, pathToComponentName, variableToString)
 
-type Update = ([Variable], [Code])
-
-data ViewResult = ViewResult
-  { compileCreate :: [Code],
-    compileUpdate :: [Update]
-  }
-
-render :: [Statement] -> [Variable] -> [Variable] -> VariableStack -> AppStateMonad ViewResult
-render [] scope parent variableStack = do
-  return
-    ( ViewResult
-        { compileCreate = [],
-          compileUpdate = []
-        }
-    )
-render statements scope parent variableStack = do
-  (code, nextStatements) <- render' statements scope parent variableStack
-  nextRenders <- render nextStatements scope parent variableStack
-  return
-    ( ViewResult
-        { compileCreate = compileCreate code ++ compileCreate nextRenders,
-          compileUpdate = compileUpdate code ++ compileUpdate nextRenders
-        }
-    )
-
-render' :: [Statement] -> [Variable] -> [Variable] -> VariableStack -> AppStateMonad (ViewResult, [Statement])
-render' ((UntypedExpression [RightHandSideHost hostName attributes nestedStatements]) : nextStatements) scope parent variableStack = do
+render :: TypedExpression -> AppStateMonad [Code]
+render typedExpression = do
+  appState <- get
   exprId <- getGetFreshExprId
-  let ele = scope ++ nameToVariable "ele" exprId
-  (attributeCodeCreate, attributeCodeUpdate) <- renderAttributes variableStack ele hostName attributes
-  children <- render nestedStatements scope ele variableStack
+  let componentName' = componentName appState
+  let unscopedMounted = nameToVariable "mounted" exprId
+  let unscopedProperties = nameToVariable "properties" exprId
+  let scopedMounted = DotNotation "this" : unscopedMounted
+  let scopedProperties = DotNotation "this" : unscopedProperties
 
   return
-    ( ViewResult
-        { compileCreate =
-            [ Ln (variableToString ele ++ " = document.createElement(\"" ++ hostName ++ "\");"),
-              Br
-            ]
-              ++ attributeCodeCreate
-              ++ [ Ln
-                     (variableToString parent ++ ".appendChild(" ++ variableToString ele ++ ");"),
-                   Br
-                 ]
-              ++ compileCreate children,
-          compileUpdate = attributeCodeUpdate ++ compileUpdate children
-        },
-      nextStatements
-    )
-render' ((UntypedExpression expression) : nextStatements) scope parent variableStack = do
-  exprId <- getGetFreshExprId
-  let ele = scope ++ nameToVariable "text" exprId
-  (result, dependencies) <- expressionToCode variableStack expression
+    [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
+      Br,
+      Ind
+        [ Ln (variableToString unscopedMounted ++ " = false;"),
+          Br,
+          Ln (variableToString unscopedProperties ++ " = {};"),
+          Br,
+          Ln "connectedCallback() {",
+          Ind
+            [ Ln "this.attachShadow({mode: 'open'});",
+              Br,
+              Ln (variableToString scopedMounted ++ " = true;")
+            ],
+          Br,
+          Ln "}"
+        ],
+      Ln "}",
+      Br,
+      Ln ("customElements.define(\"" ++ slashToDash componentName' ++ "\", " ++ slashToCamelCase componentName' ++ ");"),
+      Br
+    ]
 
-  return
-    ( ViewResult
-        { compileCreate =
-            Ln (variableToString ele ++ " = document.createTextNode(") :
-            result
-              ++ [ Ln ".toString());",
-                   Br,
-                   Ln (variableToString parent ++ ".appendChild(" ++ variableToString ele ++ ");"),
-                   Br
-                 ],
-          compileUpdate =
-            map
-              ( \dependency ->
-                  ( dependency,
-                    Ln (variableToString ele ++ ".textContent = ") :
-                    result ++ [Ln ".toString();", Br]
-                  )
-              )
-              dependencies
-        },
-      nextStatements
-    )
-render' statement scope parent variableStack = do
-  error (show statement)
+-- Utilities
 
-renderAttributes :: VariableStack -> [Variable] -> String -> Record -> AppStateMonad ([Code], [Update])
-renderAttributes variableStack element hostElement ([], []) = do return ([], [])
-renderAttributes variableStack element hostElement (currentAttribute : nextAttributes, []) = do
-  (currentAtributeCreate, currentAttributeUpdate) <- renderAttribute variableStack element hostElement currentAttribute
-  (nextAttributesCreate, nextAttributesUpdate) <- renderAttributes variableStack element hostElement (nextAttributes, [])
+slashToDash :: String -> String
+slashToDash [] = []
+slashToDash ('/' : ps) = '-' : slashToDash ps
+slashToDash (p : ps) = p : slashToDash ps
 
-  return (currentAtributeCreate ++ nextAttributesCreate, currentAttributeUpdate ++ nextAttributesUpdate)
+slashToCamelCase :: String -> String
+slashToCamelCase (p : ps) = toUpper p : slashToCamelCase' ps
 
-renderAttribute :: VariableStack -> [Variable] -> String -> (String, RecordValue) -> AppStateMonad ([Code], [Update])
-renderAttribute variableStack element "input" ("value", (RecordExpression Nothing [RightHandSideAlgebraicDataType inputType [value]])) = do
-  (value, depedencies) <- expressionToCode variableStack value
-  let typeCode = [Ln (variableToString element ++ ".setAttribute(\"type\",\"" ++ map toLower inputType ++ "\");"), Br]
-      valueCode = [Ln (variableToString element ++ ".value = ")] ++ value ++ [Ln ");", Br]
-
-  return
-    ( typeCode ++ valueCode,
-      [ (dependency, valueCode)
-        | dependency <- depedencies
-      ]
-    )
-renderAttribute variableStack element hostElement (attributeName, (RecordExpression Nothing value)) = do
-  (value, depedencies) <- expressionToCode variableStack value
-  let code = [Ln (variableToString element ++ ".setAttribute(\"" ++ attributeName ++ "\", ")] ++ value ++ [Ln ");", Br]
-  return
-    ( code,
-      [ (dependency, code)
-        | dependency <- depedencies
-      ]
-    )
+slashToCamelCase' :: String -> String
+slashToCamelCase' [] = []
+slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
+slashToCamelCase' (p : ps) = p : slashToCamelCase' ps

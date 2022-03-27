@@ -1,4 +1,4 @@
-main = \{}, {} -> View
+main : \{}, {} -> View
 main = \_, _ ->
 	$div
 	$span
