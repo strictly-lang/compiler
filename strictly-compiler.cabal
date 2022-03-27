@@ -26,11 +26,11 @@ library
                        Parser.Kinds.Root,
                        Parser.Kinds.LeftHandSide,
                        Parser.Kinds.Statement,
+                       Emitter.Types
                        Emitter.Util,
-                       Emitter.Kinds.Expression,
-                       Emitter.Types,
                        Emitter.Kinds.Root,
                        Emitter.Kinds.RootDeclaration,
+                       Emitter.Kinds.Expression
                        Emitter.Kinds.RootAssignment,
                        Emitter.Kinds.View
 

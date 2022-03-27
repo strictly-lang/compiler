@@ -17,7 +17,6 @@ render typedExpression = do
 
   return
     [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
-      Br,
       Ind
         [ Ln (variableToString unscopedMounted ++ " = false;"),
           Br,
@@ -33,6 +32,7 @@ render typedExpression = do
           Ln "}"
         ],
       Ln "}",
+      Br,
       Br,
       Ln ("customElements.define(\"" ++ slashToDash componentName' ++ "\", " ++ slashToCamelCase componentName' ++ ");"),
       Br

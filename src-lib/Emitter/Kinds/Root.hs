@@ -41,10 +41,10 @@ compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition) : (RootAs
 codeToString :: Int -> Bool -> [Code] -> String
 codeToString indentationLevel first [] = ""
 codeToString indentationLevel first (Ind nestedCode : restCode) =
-  codeToString (indentationLevel + 1) True nestedCode ++ "\n"
+  "\n" ++ codeToString (indentationLevel + 1) True nestedCode ++ "\n"
     ++ codeToString indentationLevel True restCode
 codeToString indentationLevel first (Ln code : restCode)
-  | first = '\n' : replicate indentationLevel '\t' ++ code'
+  | first = replicate indentationLevel '\t' ++ code'
   | otherwise = code'
   where
     code' = code ++ codeToString indentationLevel False restCode
