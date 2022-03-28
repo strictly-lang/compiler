@@ -21,12 +21,25 @@ data JsType
   | JsAlgebraicDataTypeDefinition
   | JsAlgebraicDataTypeApplication [TypedExpression]
 
-data TypedExpression = TypedExpression
-  { runType :: VariableStack -> JsType -> [Code],
-    runFunctionApplication :: VariableStack -> [TypedExpression] -> [Code]
+data ViewResult = ViewResult
+  { runViewCreate :: [Code],
+    runViewUpdate :: [Code],
+    runViewUnmount :: [Code],
+    runViewDelete :: [Code]
   }
 
-type VariableStack = [(LeftHandSide, TypedExpression)]
+type Parent = [Variable]
+
+type Predecessor = Maybe [Variable]
+
+data TypedExpression = TypedExpression
+  { runType :: JsType -> AppStateMonad [Code],
+    runFunctionApplication :: VariableStack -> [TypedExpression] -> [Code],
+    runView :: VariableStack -> [([Variable], TypedExpression)] -> Parent -> Predecessor -> AppStateMonad ViewResult,
+    runProperty :: String -> TypedExpression
+  }
+
+type VariableStack = [(String, [Variable], TypedExpression)]
 
 type TypeError = String
 

@@ -1,13 +1,13 @@
 module Emitter.Kinds.Root where
 
-import Control.Monad.State.Lazy (runState)
+import Control.Monad.State.Lazy (get, runState)
 -- import Emitter.Kinds.RootAssignment (rootAssignment)
 
+import Data.Char (toUpper)
 import Emitter.Kinds.Expression (toTypedExpression)
 import Emitter.Kinds.RootDeclaration (algebraicDataTypeConstructor)
-import Emitter.Kinds.View (render)
 import Emitter.Types
-import Emitter.Util (getGetFreshExprId, nameToVariable)
+import Emitter.Util (getGetFreshExprId, nameToVariable, variableToString)
 import Types
 
 compileRoot :: String -> [Root] -> String
@@ -23,15 +23,57 @@ compileRoot' variableStack (RootDataDeclaration _ dataDeclarations : restRoot) =
   next <- compileRoot' (variableStack' ++ variableStack) restRoot
 
   return (result ++ next)
-compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition) : (RootAssignment "main" untypedExpression) : restRoot) = do
+compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunction [propertyTypes, attributeTypes] _)) : (RootAssignment "main" untypedExpression) : restRoot) = do
   exprId <- getGetFreshExprId
   let param = nameToVariable "main" exprId
-  let (typedExpression, _) = toTypedExpression param typeDefinition untypedExpression
+  let (typedRenderFunction, _) = toTypedExpression typeDefinition untypedExpression
+  let (typedProperties, _) = toTypedExpression propertyTypes [RightHandSideVariable "properties"]
+  let (typedAttributes, _) = toTypedExpression attributeTypes [RightHandSideVariable "attributes"]
 
-  code <- render typedExpression
+  appState <- get
+  exprId <- getGetFreshExprId
+  let componentName' = componentName appState
+  let unscopedMounted = nameToVariable "mounted" exprId
+  let unscopedProperties = nameToVariable "properties" exprId
+  let scopedMounted = DotNotation "this" : unscopedMounted
+  let scopedProperties = DotNotation "this" : unscopedProperties
+
+  view <-
+    runView
+      typedRenderFunction
+      variableStack
+      [(scopedProperties, typedProperties), ([], typedAttributes)]
+      [DotNotation "this", DotNotation "shadowRoot"]
+      Nothing
+
   next <- compileRoot' variableStack restRoot
 
-  return (code ++ next)
+  return
+    ( [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
+        Ind
+          [ Ln (variableToString unscopedMounted ++ " = false;"),
+            Br,
+            Ln (variableToString unscopedProperties ++ " = {};"),
+            Br,
+            Ln "connectedCallback() {",
+            Ind
+              ( [ Ln "this.attachShadow({mode: 'open'});",
+                  Br,
+                  Ln (variableToString scopedMounted ++ " = true;")
+                ]
+                  ++ runViewCreate view
+              ),
+            Br,
+            Ln "}"
+          ],
+        Ln "}",
+        Br,
+        Br,
+        Ln ("customElements.define(\"" ++ slashToDash componentName' ++ "\", " ++ slashToCamelCase componentName' ++ ");"),
+        Br
+      ]
+        ++ next
+    )
 
 -- compileRoot' (RootAssignment name expression : restRoot) = do
 --   result <- rootAssignment name expression
@@ -49,3 +91,18 @@ codeToString indentationLevel first (Ln code : restCode)
   where
     code' = code ++ codeToString indentationLevel False restCode
 codeToString indentationLevel first (Br : restCode) = '\n' : codeToString indentationLevel True restCode
+
+-- Utilities
+
+slashToDash :: String -> String
+slashToDash [] = []
+slashToDash ('/' : ps) = '-' : slashToDash ps
+slashToDash (p : ps) = p : slashToDash ps
+
+slashToCamelCase :: String -> String
+slashToCamelCase (p : ps) = toUpper p : slashToCamelCase' ps
+
+slashToCamelCase' :: String -> String
+slashToCamelCase' [] = []
+slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
+slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
