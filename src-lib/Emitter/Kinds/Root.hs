@@ -26,9 +26,9 @@ compileRoot' variableStack (RootDataDeclaration _ dataDeclarations : restRoot) =
 compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunction [propertyTypes, attributeTypes] _)) : (RootAssignment "main" untypedExpression) : restRoot) = do
   exprId <- getGetFreshExprId
   let param = nameToVariable "main" exprId
-  let (typedRenderFunction, _) = toTypedExpression typeDefinition untypedExpression
-  let (typedProperties, _) = toTypedExpression propertyTypes [RightHandSideVariable "properties"]
-  let (typedAttributes, _) = toTypedExpression attributeTypes [RightHandSideVariable "attributes"]
+  (typedRenderFunction, _) <- toTypedExpression variableStack typeDefinition untypedExpression
+  -- (typedProperties, _) <- toTypedExpression variableStack propertyTypes [RightHandSideVariable "properties"]
+  -- (typedAttributes, _) <- toTypedExpression variableStack attributeTypes [RightHandSideVariable "attributes"]
 
   appState <- get
   exprId <- getGetFreshExprId
@@ -41,8 +41,8 @@ compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunct
   view <-
     runView
       typedRenderFunction
-      variableStack
-      [(scopedProperties, typedProperties), ([], typedAttributes)]
+      []
+      -- [(scopedProperties, typedProperties), ([], typedAttributes)]
       [DotNotation "this", DotNotation "shadowRoot"]
       Nothing
 

@@ -31,8 +31,7 @@ library
                        Emitter.Kinds.Root,
                        Emitter.Kinds.RootDeclaration,
                        Emitter.Kinds.Expression
-                       Emitter.Kinds.RootAssignment,
-                       Emitter.Kinds.View
+                       Emitter.Kinds.RootAssignment
 
   -- other-extensions:
   build-depends:       base, megaparsec, mtl

@@ -23,7 +23,7 @@ data JsType
 
 data ViewResult = ViewResult
   { runViewCreate :: [Code],
-    runViewUpdate :: [Code],
+    runViewUpdate :: [([Variable], Code)],
     runViewUnmount :: [Code],
     runViewDelete :: [Code]
   }
@@ -33,9 +33,9 @@ type Parent = [Variable]
 type Predecessor = Maybe [Variable]
 
 data TypedExpression = TypedExpression
-  { runType :: JsType -> AppStateMonad [Code],
-    runFunctionApplication :: VariableStack -> [TypedExpression] -> [Code],
-    runView :: VariableStack -> [([Variable], TypedExpression)] -> Parent -> Predecessor -> AppStateMonad ViewResult,
+  { runPrimitive :: JsType -> AppStateMonad [Code],
+    runFunctionApplication :: [TypedExpression] -> [Code],
+    runView :: [([Variable], TypedExpression)] -> Parent -> Predecessor -> AppStateMonad ViewResult,
     runProperty :: String -> TypedExpression
   }
 
