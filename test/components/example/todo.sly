@@ -1,6 +1,6 @@
 data Action = ChangeText(String), CreateTodo, ToggleDone(Integer);
 
-type State = { curretnText: String, todos: String[] };
+type State = { currentText: String, todos: String[] };
 
 store = {
 	init : State
@@ -8,10 +8,10 @@ store = {
 
 	reducer : \State, Action -> State
 	reducer = \state@{ currentText }, ChangeText(text) ->
-		{ currentText = text | state}
+		{ currentText = text | state }
 	reducer = \{ todos, currentText }, CreateTodo ->
 		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
-	reducer = \state@{ todos }, ToggleDone(index)->
+	reducer = \state@{ todos }, ToggleDone(index) ->
 		let todos' = [
 			{
 				isDone = if index == index' then
