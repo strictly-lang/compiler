@@ -14,8 +14,8 @@ pathToComponentName (p : ps) (a : as)
   | p == a = pathToComponentName ps as
   | otherwise = Nothing
 
-getGetFreshExprId :: AppStateMonad Int
-getGetFreshExprId =
+getFreshExprId :: AppStateMonad Int
+getFreshExprId =
   state
     ( \(AppState componentPath expressionId) ->
         (expressionId, AppState componentPath (expressionId + 1))

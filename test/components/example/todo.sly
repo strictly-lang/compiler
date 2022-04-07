@@ -10,7 +10,7 @@ store = {
 	reducer = \state@{ currentText }, ChangeText(text) ->
 		{ currentText = text | state }
 	reducer = \{ todos, currentText }, CreateTodo ->
-		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
+		{ currentText = "",  todos = [{ value = currentText, isDone = False }] ++ todos }
 	reducer = \state@{ todos }, ToggleDone(index) ->
 		let todos' = [
 			{

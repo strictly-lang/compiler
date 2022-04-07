@@ -14,28 +14,22 @@ data AppState = AppState
 data Variable = DotNotation String | BracketNotation String
   deriving (Eq)
 
-data JsType
-  = JsBool
-  | JsNumber
-  | JsFunctionDefinition
-  | JsAlgebraicDataTypeDefinition
-  | JsAlgebraicDataTypeApplication [TypedExpression]
+type Sibling = [Variable]
 
 data ViewResult = ViewResult
   { runViewCreate :: [Code],
     runViewUpdate :: [([Variable], Code)],
     runViewUnmount :: [Code],
-    runViewDelete :: [Code]
+    runViewDelete :: [Code],
+    runSiblings :: [Sibling]
   }
 
 type Parent = [Variable]
 
-type Predecessor = Maybe [Variable]
-
 data TypedExpression = TypedExpression
-  { runPrimitive :: JsType -> AppStateMonad [Code],
+  { runPrimitive :: AppStateMonad [Code],
     runFunctionApplication :: [TypedExpression] -> [Code],
-    runView :: [([Variable], TypedExpression)] -> Parent -> Predecessor -> AppStateMonad ViewResult,
+    runView :: [([Variable], TypedExpression)] -> [Variable] -> Parent -> [Sibling] -> AppStateMonad ViewResult,
     runProperty :: String -> TypedExpression
   }
 

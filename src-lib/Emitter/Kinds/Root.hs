@@ -7,7 +7,7 @@ import Data.Char (toUpper)
 import Emitter.Kinds.Expression (toTypedExpression)
 import Emitter.Kinds.RootDeclaration (algebraicDataTypeConstructor)
 import Emitter.Types
-import Emitter.Util (getGetFreshExprId, nameToVariable, variableToString)
+import Emitter.Util (getFreshExprId, nameToVariable, variableToString)
 import Types
 
 compileRoot :: String -> [Root] -> String
@@ -24,27 +24,29 @@ compileRoot' variableStack (RootDataDeclaration _ dataDeclarations : restRoot) =
 
   return (result ++ next)
 compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunction [propertyTypes, attributeTypes] _)) : (RootAssignment "main" untypedExpression) : restRoot) = do
-  exprId <- getGetFreshExprId
+  exprId <- getFreshExprId
   let param = nameToVariable "main" exprId
   (typedRenderFunction, _) <- toTypedExpression variableStack typeDefinition untypedExpression
   -- (typedProperties, _) <- toTypedExpression variableStack propertyTypes [RightHandSideVariable "properties"]
   -- (typedAttributes, _) <- toTypedExpression variableStack attributeTypes [RightHandSideVariable "attributes"]
 
   appState <- get
-  exprId <- getGetFreshExprId
+  exprId <- getFreshExprId
+  let scope = [DotNotation "this"]
   let componentName' = componentName appState
   let unscopedMounted = nameToVariable "mounted" exprId
   let unscopedProperties = nameToVariable "properties" exprId
-  let scopedMounted = DotNotation "this" : unscopedMounted
-  let scopedProperties = DotNotation "this" : unscopedProperties
+  let scopedMounted = scope ++ unscopedMounted
+  let scopedProperties = scope ++ unscopedProperties
 
   view <-
     runView
       typedRenderFunction
       []
+      scope
       -- [(scopedProperties, typedProperties), ([], typedAttributes)]
-      [DotNotation "this", DotNotation "shadowRoot"]
-      Nothing
+      (scope ++ [DotNotation "shadowRoot"])
+      []
 
   next <- compileRoot' variableStack restRoot
 
@@ -59,7 +61,8 @@ compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunct
             Ind
               ( [ Ln "this.attachShadow({mode: 'open'});",
                   Br,
-                  Ln (variableToString scopedMounted ++ " = true;")
+                  Ln (variableToString scopedMounted ++ " = true;"),
+                  Br
                 ]
                   ++ runViewCreate view
               ),
