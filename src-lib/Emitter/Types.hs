@@ -27,14 +27,13 @@ data ViewResult = ViewResult
 type Parent = [Variable]
 
 data TypedExpression = TypedExpression
-  { runPrimitive :: AppStateMonad [Code],
-    runFunctionApplication :: [TypedExpression] -> [Code],
-    runView :: [([Variable], TypedExpression)] -> [Variable] -> Parent -> [Sibling] -> AppStateMonad ViewResult,
-    runProperty :: String -> TypedExpression
+  { runPrimitive :: VariableStack -> AppStateMonad [Code],
+    runFunctionApplication :: VariableStack -> [TypedExpression] -> [Code],
+    runView :: VariableStack -> [([Variable], TypedExpression)] -> [Variable] -> Parent -> [Sibling] -> AppStateMonad ViewResult,
+    runProperty :: VariableStack -> String -> AppStateMonad TypedExpression,
+    runResolvedType :: VariableStack -> TypeDefinition
   }
 
 type VariableStack = [(String, [Variable], TypedExpression)]
-
-type TypeError = String
 
 type AppStateMonad = State AppState

@@ -4,7 +4,8 @@ import Control.Monad.State.Lazy (get, runState)
 -- import Emitter.Kinds.RootAssignment (rootAssignment)
 
 import Data.Char (toUpper)
-import Emitter.Kinds.Expression (toTypedExpression)
+import Data.List (find)
+import Emitter.Kinds.Expression (addToVariableStack, toTypedExpression, toTypedExpression')
 import Emitter.Kinds.RootDeclaration (algebraicDataTypeConstructor)
 import Emitter.Types
 import Emitter.Util (getFreshExprId, nameToVariable, variableToString)
@@ -23,12 +24,12 @@ compileRoot' variableStack (RootDataDeclaration _ dataDeclarations : restRoot) =
   next <- compileRoot' (variableStack' ++ variableStack) restRoot
 
   return (result ++ next)
-compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunction [propertyTypes, attributeTypes] _)) : (RootAssignment "main" untypedExpression) : restRoot) = do
+compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunction [_, _] _)) : (RootAssignment "main" untypedExpression) : restRoot) = do
   exprId <- getFreshExprId
   let param = nameToVariable "main" exprId
-  (typedRenderFunction, _) <- toTypedExpression variableStack typeDefinition untypedExpression
-  -- (typedProperties, _) <- toTypedExpression variableStack propertyTypes [RightHandSideVariable "properties"]
-  -- (typedAttributes, _) <- toTypedExpression variableStack attributeTypes [RightHandSideVariable "attributes"]
+
+  (typedRenderFunction, _) <- toTypedExpression typeDefinition untypedExpression
+  let (TypeFunction [propertyTypes, attributeTypes] _) = runResolvedType typedRenderFunction variableStack
 
   appState <- get
   exprId <- getFreshExprId
@@ -38,13 +39,17 @@ compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunct
   let unscopedProperties = nameToVariable "properties" exprId
   let scopedMounted = scope ++ unscopedMounted
   let scopedProperties = scope ++ unscopedProperties
+  let typedProperties = typedOrigin scopedProperties propertyTypes
 
   view <-
     runView
       typedRenderFunction
-      []
+      variableStack
+      [ ( scopedProperties,
+          typedProperties
+        )
+      ]
       scope
-      -- [(scopedProperties, typedProperties), ([], typedAttributes)]
       (scope ++ [DotNotation "shadowRoot"])
       []
 
@@ -82,6 +87,7 @@ compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunct
 --   result <- rootAssignment name expression
 --   next <- compileRoot' restRoot
 --   return (result ++ next)
+compileRoot' variableStack (currentStatement : rest) = error ("not capable of" ++ show currentStatement)
 
 codeToString :: Int -> Bool -> [Code] -> String
 codeToString indentationLevel first [] = ""
@@ -109,3 +115,20 @@ slashToCamelCase' :: String -> String
 slashToCamelCase' [] = []
 slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
+
+typedOrigin :: [Variable] -> TypeDefinition -> TypedExpression
+typedOrigin scope (TypeRecord records) =
+  let primitive = \variableStack -> do return [Ln (variableToString scope)]
+   in TypedExpression
+        { runPrimitive = primitive,
+          runProperty = \variableStack propertyName ->
+            let property = find (\(heystackPropertyName, typeDefinition) -> heystackPropertyName == propertyName) records
+             in case property of
+                  Just (_, propertyTypeDefinition) -> do
+                    prefix <- primitive variableStack
+                    (result, _) <- toTypedExpression' prefix propertyTypeDefinition [RightHandSideVariable propertyName]
+                    return result
+                  Nothing ->
+                    error ("Could not find property" ++ propertyName)
+        }
+typedOrigin scope typeDefinition = error (show typeDefinition)

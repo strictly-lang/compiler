@@ -7,46 +7,54 @@ import Emitter.Util (getFreshExprId, nameToVariable, variableToString)
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
 import Types
 
-toTypedExpression :: VariableStack -> TypeDefinition -> UntypedExpression -> AppStateMonad (TypedExpression, [Variable])
-toTypedExpression variableStack (TypeFunction parameterTypeDefinitions returnTypeDefinition) (untypedExpression : restUntypedExpression) =
+type Prefix = [Code]
+
+toTypedExpression :: TypeDefinition -> UntypedExpression -> AppStateMonad (TypedExpression, [Variable])
+toTypedExpression = toTypedExpression' []
+
+toTypedExpression' :: Prefix -> TypeDefinition -> UntypedExpression -> AppStateMonad (TypedExpression, [Variable])
+toTypedExpression' [] typeDefinition@(TypeFunction parameterTypeDefinitions returnTypeDefinition) (untypedExpression : restUntypedExpression) =
   case untypedExpression of
     RightHandSideFunctionDefinition untypedParameters untypedBody -> do
       return
         ( TypedExpression
-            { runPrimitive = do return [],
-              runView = \parameters ->
+            { runPrimitive = \variableStack -> do return [],
+              runView = \variableStack parameters ->
                 let variableStack' = addToVariableStack variableStack (zip untypedParameters parameters)
                  in render variableStack' untypedBody,
               runFunctionApplication = \_ -> error "no function application implemented",
-              runProperty = \_ -> error "no property access implemented"
+              runProperty = \_ -> error "no property access implemented",
+              runResolvedType = const typeDefinition
             },
           []
         )
     _ ->
       error "nope"
-toTypedExpression variableStack typeDefinition@(TypeAlgebraicDataType "String" []) (RightHandSideString strings : restUntypedExpression) =
+toTypedExpression' prefix@[] typeDefinition@(TypeAlgebraicDataType "String" []) (RightHandSideString strings : restUntypedExpression) =
   return
     ( TypedExpression
-        { runPrimitive = do
-            result <-
-              mapM
-                ( \case
-                    RightHandSideStringStatic static -> do
-                      return [Ln static]
-                    RightHandSideStringDynamic untypedExpression -> do
-                      (typedExpression, dependencies) <- toTypedExpression variableStack typeDefinition untypedExpression
-                      runPrimitive typedExpression
-                )
-                strings
-            return (Ln "\"" : concat result ++ [Ln "\""]),
+        { runPrimitive = \variableStack ->
+            do
+              result <-
+                mapM
+                  ( \case
+                      RightHandSideStringStatic static -> do
+                        return [Ln static]
+                      RightHandSideStringDynamic untypedExpression -> do
+                        (typedExpression, dependencies) <- toTypedExpression' prefix typeDefinition untypedExpression
+                        runPrimitive typedExpression variableStack
+                  )
+                  strings
+              return (Ln "\"" : concat result ++ [Ln "\""]),
           runView = \_ -> error "no view access implemented",
           runFunctionApplication = \_ -> error "no function application implemented",
-          runProperty = \_ -> error "no property access implemented"
+          runProperty = \_ -> error "no property access implemented",
+          runResolvedType = const typeDefinition
         },
       []
     )
-toTypedExpression variableStack typeDefinition untypedExpression =
-  error (show typeDefinition ++ " - " ++ show untypedExpression)
+toTypedExpression' prefix typeDefinition untypedExpression =
+  error (show prefix ++ show typeDefinition ++ " - " ++ show untypedExpression)
 
 addToVariableStack :: VariableStack -> [(LeftHandSide, ([Variable], TypedExpression))] -> VariableStack
 addToVariableStack variableStack [] = variableStack
@@ -87,10 +95,10 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName properti
         }
     )
 render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) scope parent siblings = do
-  (typedResult, dependencies) <- toTypedExpression variableStack (TypeAlgebraicDataType "String" []) untypedExpression
+  (typedResult, dependencies) <- toTypedExpression (TypeAlgebraicDataType "String" []) untypedExpression
   exprId <- getFreshExprId
   let textElement = scope ++ nameToVariable "text" exprId
-  textContent <- runPrimitive typedResult
+  textContent <- runPrimitive typedResult variableStack
   siblingResult <- render variableStack restUntypedBody scope parent (siblings ++ [textElement])
 
   return
