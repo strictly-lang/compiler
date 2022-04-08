@@ -24,31 +24,27 @@ toTypedExpression variableStack (TypeFunction parameterTypeDefinitions returnTyp
         )
     _ ->
       error "nope"
-toTypedExpression variableStack typeDefinition@(TypeAlgebraicDataType "String" []) (untypedExpression : restUntypedExpression) =
-  case untypedExpression of
-    RightHandSideString strings -> do
-      return
-        ( TypedExpression
-            { runPrimitive = do
-                result <-
-                  mapM
-                    ( \case
-                        RightHandSideStringStatic static -> do
-                          return [Ln static]
-                        RightHandSideStringDynamic untypedExpression -> do
-                          (typedExpression, dependencies) <- toTypedExpression variableStack typeDefinition untypedExpression
-                          runPrimitive typedExpression
-                    )
-                    strings
-                return (Ln "\"" : concat result ++ [Ln "\""]),
-              runView = \_ -> error "no view access implemented",
-              runFunctionApplication = \_ -> error "no function application implemented",
-              runProperty = \_ -> error "no property access implemented"
-            },
-          []
-        )
-    _ ->
-      error "nope"
+toTypedExpression variableStack typeDefinition@(TypeAlgebraicDataType "String" []) (RightHandSideString strings : restUntypedExpression) =
+  return
+    ( TypedExpression
+        { runPrimitive = do
+            result <-
+              mapM
+                ( \case
+                    RightHandSideStringStatic static -> do
+                      return [Ln static]
+                    RightHandSideStringDynamic untypedExpression -> do
+                      (typedExpression, dependencies) <- toTypedExpression variableStack typeDefinition untypedExpression
+                      runPrimitive typedExpression
+                )
+                strings
+            return (Ln "\"" : concat result ++ [Ln "\""]),
+          runView = \_ -> error "no view access implemented",
+          runFunctionApplication = \_ -> error "no function application implemented",
+          runProperty = \_ -> error "no property access implemented"
+        },
+      []
+    )
 toTypedExpression variableStack typeDefinition untypedExpression =
   error (show typeDefinition ++ " - " ++ show untypedExpression)
 
@@ -63,11 +59,39 @@ render :: VariableStack -> [Statement] -> [Variable] -> Parent -> [Sibling] -> A
 render variableStack [] scope parent siblings = do
   return
     ViewResult {runViewCreate = [], runViewUpdate = [], runViewUnmount = [], runViewDelete = []}
+render variableStack ((UntypedExpression [RightHandSideHost elementName properties children]) : restUntypedBody) scope parent siblings = do
+  exprId <- getFreshExprId
+  let hostElement = scope ++ nameToVariable "element" exprId
+  childrenResult <- render variableStack children scope hostElement []
+  siblingResult <- render variableStack restUntypedBody scope hostElement (siblings ++ [hostElement])
+
+  return
+    ( ViewResult
+        { runViewCreate =
+            [ Ln (variableToString hostElement ++ " = document.createElement(\"" ++ elementName ++ "\");"),
+              Br
+            ]
+              ++ appendElement parent siblings hostElement
+              ++ runViewCreate childrenResult
+              ++ runViewCreate siblingResult,
+          runViewUpdate =
+            runViewUpdate childrenResult
+              ++ runViewUpdate siblingResult,
+          runViewUnmount =
+            runViewUnmount childrenResult
+              ++ runViewUnmount siblingResult,
+          runViewDelete =
+            runViewDelete childrenResult
+              ++ runViewDelete siblingResult,
+          runSiblings = runSiblings siblingResult
+        }
+    )
 render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) scope parent siblings = do
   (typedResult, dependencies) <- toTypedExpression variableStack (TypeAlgebraicDataType "String" []) untypedExpression
   exprId <- getFreshExprId
   let textElement = scope ++ nameToVariable "text" exprId
   textContent <- runPrimitive typedResult
+  siblingResult <- render variableStack restUntypedBody scope textElement (siblings ++ [textElement])
 
   return
     ( ViewResult
@@ -77,11 +101,12 @@ render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) s
               ++ [ Ln ");",
                    Br
                  ]
-              ++ appendElement parent siblings textElement,
-          runViewUpdate = [],
-          runViewUnmount = [],
-          runViewDelete = [],
-          runSiblings = siblings ++ [textElement]
+              ++ appendElement parent siblings textElement
+              ++ runViewCreate siblingResult,
+          runViewUpdate = runViewUpdate siblingResult,
+          runViewUnmount = runViewUnmount siblingResult,
+          runViewDelete = runViewDelete siblingResult,
+          runSiblings = runSiblings siblingResult
         }
     )
 render variableStack untypedBody scope parent siblings = error "mep"
