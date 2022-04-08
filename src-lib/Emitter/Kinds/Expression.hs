@@ -58,7 +58,7 @@ addToVariableStack variableStack ((LeftHandSideVariable name, (place, typedExpre
 render :: VariableStack -> [Statement] -> [Variable] -> Parent -> [Sibling] -> AppStateMonad ViewResult
 render variableStack [] scope parent siblings = do
   return
-    ViewResult {runViewCreate = [], runViewUpdate = [], runViewUnmount = [], runViewDelete = []}
+    ViewResult {runViewCreate = [], runViewUpdate = [], runViewUnmount = [], runViewDelete = [], runSiblings = siblings}
 render variableStack ((UntypedExpression [RightHandSideHost elementName properties children]) : restUntypedBody) scope parent siblings = do
   exprId <- getFreshExprId
   let hostElement = scope ++ nameToVariable "element" exprId
