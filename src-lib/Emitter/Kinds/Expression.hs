@@ -63,7 +63,7 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName properti
   exprId <- getFreshExprId
   let hostElement = scope ++ nameToVariable "element" exprId
   childrenResult <- render variableStack children scope hostElement []
-  siblingResult <- render variableStack restUntypedBody scope hostElement (siblings ++ [hostElement])
+  siblingResult <- render variableStack restUntypedBody scope parent (siblings ++ [hostElement])
 
   return
     ( ViewResult
@@ -91,7 +91,7 @@ render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) s
   exprId <- getFreshExprId
   let textElement = scope ++ nameToVariable "text" exprId
   textContent <- runPrimitive typedResult
-  siblingResult <- render variableStack restUntypedBody scope textElement (siblings ++ [textElement])
+  siblingResult <- render variableStack restUntypedBody scope parent (siblings ++ [textElement])
 
   return
     ( ViewResult
