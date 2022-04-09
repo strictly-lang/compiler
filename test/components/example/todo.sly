@@ -1,16 +1,17 @@
 data Action = ChangeText(String), CreateTodo, ToggleDone(Integer);
 
-type State = { currentText: String, todos: String[] };
+type Todo = { value: String, isDone: Boolean}
+type State = { currentText: String, todos: Todo[] };
 
 store = {
 	init : State
 	init = { currentText = "", todos = [] }
 
 	reducer : \State, Action -> State
-	reducer = \state@{ currentText }, ChangeText(text) ->
+	reducer = \state, ChangeText(text) ->
 		{ currentText = text | state }
 	reducer = \{ todos, currentText }, CreateTodo ->
-		{ currentText = "",  todos = [{ value = currentText, isDone = False }] ++ todos }
+		{ currentText = "", todos = [{ value = currentText, isDone = False }] ++ todos }
 	reducer = \state@{ todos }, ToggleDone(index) ->
 		let todos' = [
 			{
