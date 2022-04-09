@@ -1,6 +1,6 @@
 data Action = ChangeText(String), CreateTodo, ToggleDone(Integer);
 
-type Todo = { value: String, isDone: Boolean}
+type Todo = { value: String, isDone: Boolean};
 type State = { currentText: String, todos: Todo[] };
 
 store = {
