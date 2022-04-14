@@ -28,7 +28,7 @@ compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunct
   exprId <- getFreshExprId
   let param = nameToVariable "main" exprId
 
-  (typedRenderFunction, _) <- toTypedExpression typeDefinition untypedExpression
+  typedRenderFunction <- toTypedExpression typeDefinition untypedExpression
   let (TypeFunction [propertyTypes, attributeTypes] _) = runResolvedType typedRenderFunction variableStack
 
   appState <- get
@@ -45,9 +45,7 @@ compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunct
     runView
       typedRenderFunction
       variableStack
-      [ ( scopedProperties,
-          typedProperties
-        )
+      [ typedProperties
       ]
       scope
       (scope ++ [DotNotation "shadowRoot"])
@@ -118,16 +116,15 @@ slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
 
 typedOrigin :: [Variable] -> TypeDefinition -> TypedExpression
 typedOrigin scope (TypeRecord records) =
-  let primitive = \variableStack -> do return [Ln (variableToString scope)]
+  let primitive = \variableStack -> do return ([], [Ln (variableToString scope)])
    in TypedExpression
         { runPrimitive = primitive,
           runProperty = \variableStack propertyName ->
             let property = find (\(heystackPropertyName, typeDefinition) -> heystackPropertyName == propertyName) records
              in case property of
                   Just (_, propertyTypeDefinition) -> do
-                    prefix <- primitive variableStack
-                    (result, _) <- toTypedExpression' prefix propertyTypeDefinition [RightHandSideVariable propertyName]
-                    return result
+                    (_, prefix) <- primitive variableStack
+                    toTypedExpression' prefix propertyTypeDefinition [RightHandSideVariable propertyName]
                   Nothing ->
                     error ("Could not find property" ++ propertyName)
         }
