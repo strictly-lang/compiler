@@ -2,70 +2,132 @@
 
 module Emitter.Kinds.Expression where
 
+import Control.Monad.State.Lazy (get)
 import Emitter.Types
-import Emitter.Util (getFreshExprId, nameToVariable, variableToString)
+import Emitter.Util (getFreshExprId, nameToVariable, slashToCamelCase, slashToDash, variableToString)
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
 import Types
 
 type Prefix = [Code]
 
-toTypedExpression :: TypeDefinition -> UntypedExpression -> AppStateMonad TypedExpression
+stringHandler :: TypeHandler
+stringHandler stack typeDefinition@(TypeAlgebraicDataType "String" []) =
+  Just
+    ( \untypedExpression ->
+        StackHandler
+          { runPrimitive =
+              do
+                let prefix = []
+                result <-
+                  case untypedExpression of
+                    RightHandSideString strings -> do
+                      mapM
+                        ( \case
+                            RightHandSideStringStatic static -> do
+                              return ([], [Ln static])
+                            RightHandSideStringDynamic untypedExpression -> do
+                              (TypedExpression typedExpression) <- toTypedExpression' prefix stack typeDefinition untypedExpression
+                              runPrimitive typedExpression
+                        )
+                        strings
+                    (RightHandSideVariable variableName) ->
+                      error (show (length stack))
+                return (concatMap fst result, Ln "\"" : concatMap snd result ++ [Ln "\""]),
+            runView = \_ -> error "no view access implemented",
+            runFunctionApplication = \_ -> error "no function application implemented",
+            runProperty = \_ -> error "no property access implemented",
+            runResolvedType = typeDefinition
+          }
+    )
+stringHandler _ _ = Nothing
+
+componentHandler stack typeDefinition@(TypeFunction [_, _] (TypeAlgebraicDataType "View" [])) =
+  Just
+    ( \untypedExpression ->
+        case untypedExpression of
+          RightHandSideFunctionDefinition parameters body ->
+            StackHandler
+              { runPrimitive =
+                  do
+                    appState <- get
+                    exprId <- getFreshExprId
+                    let scope = [DotNotation "this"]
+                    let componentName' = componentName appState
+                    let unscopedMounted = nameToVariable "mounted" exprId
+                    let unscopedProperties = nameToVariable "properties" exprId
+                    let scopedMounted = scope ++ unscopedMounted
+                    let scopedProperties = scope ++ unscopedProperties
+                    -- let typedProperties = typedOrigin scopedProperties propertyTypes
+
+                    view <- render stack body [] (scope ++ [DotNotation "shadowRoot"]) []
+
+                    return
+                      ( [],
+                        [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
+                          Ind
+                            [ Ln (variableToString unscopedMounted ++ " = false;"),
+                              Br,
+                              Ln (variableToString unscopedProperties ++ " = {};"),
+                              Br,
+                              Ln "connectedCallback() {",
+                              Ind
+                                ( [ Ln "this.attachShadow({mode: 'open'});",
+                                    Br,
+                                    Ln (variableToString scopedMounted ++ " = true;"),
+                                    Br
+                                  ]
+                                    ++ runViewCreate view
+                                ),
+                              Br,
+                              Ln "}"
+                            ],
+                          Ln "}",
+                          Br,
+                          Br,
+                          Ln ("customElements.define(\"" ++ slashToDash componentName' ++ "\", " ++ slashToCamelCase componentName' ++ ");"),
+                          Br
+                        ]
+                      ),
+                runView = \_ -> error "no view access implemented",
+                runFunctionApplication = \_ -> error "no function application implemented",
+                runProperty = \_ -> error "no property access implemented",
+                runResolvedType = typeDefinition
+              }
+    )
+componentHandler _ _ = Nothing
+
+prelude :: [StackEntry]
+prelude =
+  [ StackType stringHandler,
+    StackType componentHandler
+  ]
+
+toTypedExpression :: Stack -> TypeDefinition -> UntypedExpression -> AppStateMonad TypedExpression
 toTypedExpression = toTypedExpression' []
 
-toTypedExpression' :: Prefix -> TypeDefinition -> UntypedExpression -> AppStateMonad TypedExpression
-toTypedExpression' [] typeDefinition@(TypeFunction parameterTypeDefinitions returnTypeDefinition) (untypedExpression : restUntypedExpression) =
-  case untypedExpression of
-    RightHandSideFunctionDefinition untypedParameters untypedBody -> do
-      return
-        ( TypedExpression
-            { runPrimitive = \variableStack -> do return ([], []),
-              runView = \variableStack parameters ->
-                let variableStack' = addToVariableStack variableStack (zip untypedParameters parameters)
-                 in render variableStack' untypedBody,
-              runFunctionApplication = \_ -> error "no function application implemented",
-              runProperty = \_ -> error "no property access implemented",
-              runResolvedType = const typeDefinition
-            }
-        )
-    _ ->
-      error "nope"
-toTypedExpression' prefix typeDefinition@(TypeAlgebraicDataType "String" []) untypedExpression =
-  return
-    ( TypedExpression
-        { runPrimitive = \variableStack ->
-            do
-              result <-
-                case untypedExpression of
-                  [RightHandSideString strings] -> do
-                    mapM
-                      ( \case
-                          RightHandSideStringStatic static -> do
-                            return ([], [Ln static])
-                          RightHandSideStringDynamic untypedExpression -> do
-                            (typedExpression) <- toTypedExpression' prefix typeDefinition untypedExpression
-                            runPrimitive typedExpression variableStack
-                      )
-                      strings
-                  (RightHandSideVariable variableName) : rest ->
-                    error (show (length variableStack))
-              return (concatMap fst result, Ln "\"" : concatMap snd result ++ [Ln "\""]),
-          runView = \_ -> error "no view access implemented",
-          runFunctionApplication = \_ -> error "no function application implemented",
-          runProperty = \_ -> error "no property access implemented",
-          runResolvedType = const typeDefinition
-        }
-    )
-toTypedExpression' prefix typeDefinition untypedExpression =
-  error (show prefix ++ show typeDefinition ++ " - " ++ show untypedExpression)
+toTypedExpression' :: Prefix -> Stack -> TypeDefinition -> UntypedExpression -> AppStateMonad TypedExpression
+toTypedExpression' prefix stack typeDefinition (untypedExpression : restUntypedExpression) = do
+  return (TypedExpression (findType stack typeDefinition untypedExpression))
 
-addToVariableStack :: VariableStack -> [(LeftHandSide, TypedExpression)] -> VariableStack
+findType :: Stack -> TypeDefinition -> (UntypedExpression' -> StackHandler)
+findType stack = findType' (stack, stack)
+
+findType' :: (Stack, Stack) -> TypeDefinition -> (UntypedExpression' -> StackHandler)
+findType' ([], _) typeDefinition = error ("no corresponding type found " ++ show typeDefinition)
+findType' ((StackType stackEntry) : nextStack, allStack) typeDefinition =
+  case stackEntry allStack typeDefinition of
+    Just result -> result
+    Nothing -> findType' (nextStack, allStack) typeDefinition
+findType' (_ : nextStack, allStack) typeDefinition = findType' (nextStack, allStack) typeDefinition
+
+addToVariableStack :: Stack -> [(LeftHandSide, TypedExpression)] -> Stack
 addToVariableStack variableStack [] = variableStack
 addToVariableStack variableStack ((LeftHandSideHole, _) : restNewVariables) = addToVariableStack variableStack restNewVariables
-addToVariableStack variableStack ((LeftHandSideVariable name, (typedExpression)) : restNewVariables) = (name, typedExpression) : addToVariableStack variableStack restNewVariables
+addToVariableStack variableStack ((LeftHandSideVariable name, (typedExpression)) : restNewVariables) = (StackValue (name, typedExpression)) : addToVariableStack variableStack restNewVariables
 
 -- view
 
-render :: VariableStack -> [Statement] -> [Variable] -> Parent -> [Sibling] -> AppStateMonad ViewResult
+render :: Stack -> [Statement] -> [Variable] -> Parent -> [Sibling] -> AppStateMonad ViewResult
 render variableStack [] scope parent siblings = do
   return
     ViewResult {runViewCreate = [], runViewUpdate = [], runViewUnmount = [], runViewDelete = [], runSiblings = siblings}
@@ -97,10 +159,10 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName properti
         }
     )
 render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) scope parent siblings = do
-  typedResult <- toTypedExpression (TypeAlgebraicDataType "String" []) untypedExpression
+  TypedExpression typedResult <- toTypedExpression variableStack (TypeAlgebraicDataType "String" []) untypedExpression
   exprId <- getFreshExprId
   let textElement = scope ++ nameToVariable "text" exprId
-  (dependencies, textContent) <- runPrimitive typedResult variableStack
+  (dependencies, textContent) <- runPrimitive typedResult
   siblingResult <- render variableStack restUntypedBody scope parent (siblings ++ [textElement])
 
   return

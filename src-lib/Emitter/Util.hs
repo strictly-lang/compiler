@@ -1,6 +1,7 @@
 module Emitter.Util where
 
 import Control.Monad.State.Lazy (MonadState (state))
+import Data.Char (toUpper)
 import Emitter.Types
 import Types
 
@@ -33,3 +34,16 @@ nameToVariable name exprId = [DotNotation (name ++ show exprId)]
 
 variableToString :: [Variable] -> String
 variableToString ((DotNotation v) : vs) = concat (v : map show vs)
+
+slashToDash :: String -> String
+slashToDash [] = []
+slashToDash ('/' : ps) = '-' : slashToDash ps
+slashToDash (p : ps) = p : slashToDash ps
+
+slashToCamelCase :: String -> String
+slashToCamelCase (p : ps) = toUpper p : slashToCamelCase' ps
+
+slashToCamelCase' :: String -> String
+slashToCamelCase' [] = []
+slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
+slashToCamelCase' (p : ps) = p : slashToCamelCase' ps

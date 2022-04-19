@@ -1,7 +1,7 @@
 module Emitter.Types where
 
 import Control.Monad.State.Lazy (State)
-import Types (LeftHandSide, Statement, TypeDefinition)
+import Types (LeftHandSide, Statement, TypeDefinition, UntypedExpression')
 
 data Code = Ln String | Ind [Code] | Br
   deriving (Show)
@@ -26,14 +26,20 @@ data ViewResult = ViewResult
 
 type Parent = [Variable]
 
-data TypedExpression = TypedExpression
-  { runPrimitive :: VariableStack -> AppStateMonad ([Variable], [Code]),
-    runFunctionApplication :: VariableStack -> [TypedExpression] -> ([[Variable]], [Code]),
-    runView :: VariableStack -> [TypedExpression] -> [Variable] -> Parent -> [Sibling] -> AppStateMonad ViewResult,
-    runProperty :: VariableStack -> String -> AppStateMonad TypedExpression,
-    runResolvedType :: VariableStack -> TypeDefinition
+newtype TypedExpression = TypedExpression StackHandler
+
+data StackHandler = StackHandler
+  { runPrimitive :: AppStateMonad ([Variable], [Code]),
+    runFunctionApplication :: [TypedExpression] -> ([[Variable]], [Code]),
+    runView :: [TypedExpression] -> [Variable] -> Parent -> [Sibling] -> AppStateMonad ViewResult,
+    runProperty :: String -> AppStateMonad TypedExpression,
+    runResolvedType :: TypeDefinition
   }
 
-type VariableStack = [(String, TypedExpression)]
+type TypeHandler = Stack -> TypeDefinition -> Maybe (UntypedExpression' -> StackHandler)
+
+data StackEntry = StackValue (String, TypedExpression) | StackType TypeHandler
+
+type Stack = [StackEntry]
 
 type AppStateMonad = State AppState

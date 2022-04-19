@@ -5,7 +5,7 @@ import Control.Monad.State.Lazy (get, runState)
 
 import Data.Char (toUpper)
 import Data.List (find)
-import Emitter.Kinds.Expression (addToVariableStack, toTypedExpression, toTypedExpression')
+import Emitter.Kinds.Expression (addToVariableStack, prelude, toTypedExpression, toTypedExpression')
 import Emitter.Kinds.RootDeclaration (algebraicDataTypeConstructor)
 import Emitter.Types
 import Emitter.Util (getFreshExprId, nameToVariable, variableToString)
@@ -13,78 +13,24 @@ import Types
 
 compileRoot :: String -> [Root] -> String
 compileRoot componentName roots =
-  let code = compileRoot' [] roots
+  let code = compileRoot' prelude roots
       (result, _) = runState code (AppState componentName 0)
    in codeToString 0 True result
 
-compileRoot' :: VariableStack -> [Root] -> AppStateMonad [Code]
+compileRoot' :: Stack -> [Root] -> AppStateMonad [Code]
 compileRoot' variableStack [] = do return []
 compileRoot' variableStack (RootDataDeclaration _ dataDeclarations : restRoot) = do
   (result, variableStack') <- algebraicDataTypeConstructor dataDeclarations
   next <- compileRoot' (variableStack' ++ variableStack) restRoot
 
   return (result ++ next)
-compileRoot' variableStack ((RootTypeAssignment "main" typeDefinition@(TypeFunction [_, _] _)) : (RootAssignment "main" untypedExpression) : restRoot) = do
-  exprId <- getFreshExprId
-  let param = nameToVariable "main" exprId
+compileRoot' stack ((RootTypeAssignment name typeDefinition) : (RootAssignment name' untypedExpression) : restRoot) = do
+  result@(TypedExpression stackHandler) <- toTypedExpression stack typeDefinition untypedExpression
 
-  typedRenderFunction <- toTypedExpression typeDefinition untypedExpression
-  let (TypeFunction [propertyTypes, attributeTypes] _) = runResolvedType typedRenderFunction variableStack
-
-  appState <- get
-  exprId <- getFreshExprId
-  let scope = [DotNotation "this"]
-  let componentName' = componentName appState
-  let unscopedMounted = nameToVariable "mounted" exprId
-  let unscopedProperties = nameToVariable "properties" exprId
-  let scopedMounted = scope ++ unscopedMounted
-  let scopedProperties = scope ++ unscopedProperties
-  let typedProperties = typedOrigin scopedProperties propertyTypes
-
-  view <-
-    runView
-      typedRenderFunction
-      variableStack
-      [ typedProperties
-      ]
-      scope
-      (scope ++ [DotNotation "shadowRoot"])
-      []
-
-  next <- compileRoot' variableStack restRoot
-
-  return
-    ( [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
-        Ind
-          [ Ln (variableToString unscopedMounted ++ " = false;"),
-            Br,
-            Ln (variableToString unscopedProperties ++ " = {};"),
-            Br,
-            Ln "connectedCallback() {",
-            Ind
-              ( [ Ln "this.attachShadow({mode: 'open'});",
-                  Br,
-                  Ln (variableToString scopedMounted ++ " = true;"),
-                  Br
-                ]
-                  ++ runViewCreate view
-              ),
-            Br,
-            Ln "}"
-          ],
-        Ln "}",
-        Br,
-        Br,
-        Ln ("customElements.define(\"" ++ slashToDash componentName' ++ "\", " ++ slashToCamelCase componentName' ++ ");"),
-        Br
-      ]
-        ++ next
-    )
-
--- compileRoot' (RootAssignment name expression : restRoot) = do
---   result <- rootAssignment name expression
---   next <- compileRoot' restRoot
---   return (result ++ next)
+  (_, code) <- runPrimitive stackHandler
+  let stack' = StackValue (name, result) : stack
+  next <- compileRoot' stack' restRoot
+  return (code ++ next)
 compileRoot' variableStack (currentStatement : rest) = error ("not capable of" ++ show currentStatement)
 
 codeToString :: Int -> Bool -> [Code] -> String
@@ -101,31 +47,18 @@ codeToString indentationLevel first (Br : restCode) = '\n' : codeToString indent
 
 -- Utilities
 
-slashToDash :: String -> String
-slashToDash [] = []
-slashToDash ('/' : ps) = '-' : slashToDash ps
-slashToDash (p : ps) = p : slashToDash ps
-
-slashToCamelCase :: String -> String
-slashToCamelCase (p : ps) = toUpper p : slashToCamelCase' ps
-
-slashToCamelCase' :: String -> String
-slashToCamelCase' [] = []
-slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
-slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
-
-typedOrigin :: [Variable] -> TypeDefinition -> TypedExpression
-typedOrigin scope (TypeRecord records) =
-  let primitive = \variableStack -> do return ([], [Ln (variableToString scope)])
-   in TypedExpression
-        { runPrimitive = primitive,
-          runProperty = \variableStack propertyName ->
-            let property = find (\(heystackPropertyName, typeDefinition) -> heystackPropertyName == propertyName) records
-             in case property of
-                  Just (_, propertyTypeDefinition) -> do
-                    (_, prefix) <- primitive variableStack
-                    toTypedExpression' prefix propertyTypeDefinition [RightHandSideVariable propertyName]
-                  Nothing ->
-                    error ("Could not find property" ++ propertyName)
-        }
-typedOrigin scope typeDefinition = error (show typeDefinition)
+-- typedOrigin :: [Variable] -> TypeDefinition -> TypedExpression
+-- typedOrigin scope (TypeRecord records) =
+--   let primitive = \variableStack -> do return ([], [Ln (variableToString scope)])
+--    in TypedExpression
+--         { runPrimitive = primitive,
+--           runProperty = \variableStack propertyName ->
+--             let property = find (\(heystackPropertyName, typeDefinition) -> heystackPropertyName == propertyName) records
+--              in case property of
+--                   Just (_, propertyTypeDefinition) -> do
+--                     (_, prefix) <- primitive variableStack
+--                     toTypedExpression' prefix propertyTypeDefinition [RightHandSideVariable propertyName]
+--                   Nothing ->
+--                     error ("Could not find property" ++ propertyName)
+--         }
+-- typedOrigin scope typeDefinition = error (show typeDefinition)

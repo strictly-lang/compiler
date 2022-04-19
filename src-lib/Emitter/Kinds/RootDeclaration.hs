@@ -1,9 +1,9 @@
 module Emitter.Kinds.RootDeclaration where
 
-import Emitter.Types (AppStateMonad, Code (..), VariableStack)
+import Emitter.Types (AppStateMonad, Code (..), Stack)
 import Types
 
-algebraicDataTypeConstructor :: [DataDeclaration] -> AppStateMonad ([Code], VariableStack)
+algebraicDataTypeConstructor :: [DataDeclaration] -> AppStateMonad ([Code], Stack)
 algebraicDataTypeConstructor [] = do return ([], [])
 algebraicDataTypeConstructor (DataDeclaration (name, parameters) : adts) =
   do
