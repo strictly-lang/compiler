@@ -30,7 +30,7 @@ stringHandler stack typeDefinition@(TypeAlgebraicDataType "String" []) =
                             RightHandSideStringStatic static -> do
                               return ([], [Ln static])
                             RightHandSideStringDynamic untypedExpression -> do
-                              (TypedExpression typedExpression) <- toTypedExpression' stack typeDefinition untypedExpression
+                              (TypedExpression typedExpression) <- toTypedExpression stack typeDefinition untypedExpression
                               (dependencies, result) <- runPrimitive typedExpression
 
                               return (dependencies, Ln "${" : result ++ [Ln "}"])
@@ -59,7 +59,16 @@ recordHandler stack typeDefinition@(TypeRecord properties) =
                   Right _ ->
                     error (show untypedExpression),
             runFunctionApplication = \_ -> error "no function application implemented",
-            runProperty = \_ -> error "no property access implemented",
+            runProperty = \propertyName -> do
+              case find (\(propertyName', typeDefinition) -> propertyName == propertyName') properties of
+                Just (_, propertyType) ->
+                  case untypedExpression of
+                    Left (dependencies, code) -> do
+                      let property = (dependencies, code ++ [Ln ("." ++ propertyName)])
+                      return (TypedExpression (findType stack typeDefinition (Left property)))
+                    Right _ ->
+                      error (show untypedExpression)
+                Nothing -> error ("could not find " ++ propertyName),
             runResolvedType = typeDefinition
           }
     )
@@ -82,29 +91,48 @@ componentHandler stack typeDefinition@(TypeFunction [typedProperties, _] (TypeAl
                 let scopedProperties = scope ++ unscopedProperties
                 -- let typedProperties = typedOrigin scopedProperties propertyTypes
                 let stack' = addToVariableStack stack [(leftHandSideProperties, typedOrigin stack scopedProperties typedProperties)]
-
+                let TypeRecord propertyTypes = typedProperties
                 view <- render stack' body scope (scope ++ [DotNotation "shadowRoot"]) []
+                propertySetters <-
+                  ( mapM
+                      ( \(propertyName, _) -> do
+                          exprId <- getFreshExprId
+                          let propertyValue = nameToVariable "propertyValue" exprId
+                          return
+                            [ Ln
+                                ("set " ++ propertyName ++ "(" ++ variableToString propertyValue ++ ") {"),
+                              Ind
+                                [ Ln (variableToString (scopedProperties ++ ([DotNotation propertyName])) ++ " = " ++ variableToString propertyValue)
+                                ],
+                              Ln "}"
+                            ]
+                      )
+                      propertyTypes
+                    )
 
                 return
                   ( [],
                     [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
                       Ind
-                        [ Ln (variableToString unscopedMounted ++ " = false;"),
-                          Br,
-                          Ln (variableToString unscopedProperties ++ " = {};"),
-                          Br,
-                          Ln "connectedCallback() {",
-                          Ind
-                            ( [ Ln "this.attachShadow({mode: 'open'});",
-                                Br,
-                                Ln (variableToString scopedMounted ++ " = true;"),
-                                Br
-                              ]
-                                ++ runViewCreate view
-                            ),
-                          Br,
-                          Ln "}"
-                        ],
+                        ( [ Ln (variableToString unscopedMounted ++ " = false;"),
+                            Br,
+                            Ln (variableToString unscopedProperties ++ " = {};"),
+                            Br,
+                            Ln "connectedCallback() {",
+                            Ind
+                              ( [ Ln "this.attachShadow({mode: 'open'});",
+                                  Br,
+                                  Ln (variableToString scopedMounted ++ " = true;"),
+                                  Br
+                                ]
+                                  ++ runViewCreate view
+                              ),
+                            Br,
+                            Ln "}",
+                            Br
+                          ]
+                            ++ concat propertySetters
+                        ),
                       Ln "}",
                       Br,
                       Br,
@@ -127,10 +155,12 @@ prelude =
   ]
 
 toTypedExpression :: Stack -> TypeDefinition -> UntypedExpression -> AppStateMonad TypedExpression
-toTypedExpression = toTypedExpression'
+toTypedExpression stack typeDefinition (firstExpression : restUntypedExpression) = do
+  firstTypedExpression <- toTypedExpression' stack typeDefinition firstExpression
+  nestedTypedExpression stack firstTypedExpression restUntypedExpression
 
-toTypedExpression' :: Stack -> TypeDefinition -> UntypedExpression -> AppStateMonad TypedExpression
-toTypedExpression' stack typeDefinition ((RightHandSideVariable variableName) : restUntypedExpression) = do
+toTypedExpression' :: Stack -> TypeDefinition -> UntypedExpression' -> AppStateMonad TypedExpression
+toTypedExpression' stack typeDefinition ((RightHandSideVariable variableName)) = do
   case ( find
            ( \case
                (StackValue (variableName', _)) -> variableName' == variableName
@@ -140,8 +170,16 @@ toTypedExpression' stack typeDefinition ((RightHandSideVariable variableName) : 
        ) of
     Just (StackValue (_, typedExpression)) -> do return typedExpression
     Nothing -> error ("Could not find variable" ++ variableName)
-toTypedExpression' stack typeDefinition (untypedExpression : restUntypedExpression) = do
+toTypedExpression' stack typeDefinition (untypedExpression) = do
   return (TypedExpression (findType stack typeDefinition (Right untypedExpression)))
+
+nestedTypedExpression :: Stack -> TypedExpression -> UntypedExpression -> AppStateMonad TypedExpression
+nestedTypedExpression stack typedExpression [] = do return typedExpression
+nestedTypedExpression stack (TypedExpression typedExpression) ((RightHandSideVariable propertyName) : restUntypedExpression) = do
+  typedProperty <- runProperty typedExpression propertyName
+  (nestedTypedExpression stack (typedProperty)) restUntypedExpression
+nestedTypedExpression stack typedExpression untypedExpression = do
+  error ("cant nest " ++ show untypedExpression)
 
 findType :: Stack -> TypeDefinition -> (StackParameter -> StackHandler)
 findType stack = findType' (stack, stack)
