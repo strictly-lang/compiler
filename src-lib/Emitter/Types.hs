@@ -29,14 +29,15 @@ type Parent = [Variable]
 newtype TypedExpression = TypedExpression StackHandler
 
 data StackHandler = StackHandler
-  { runPrimitive :: AppStateMonad ([Variable], [Code]),
+  { runPrimitive :: AppStateMonad ([[Variable]], [Code]),
     runFunctionApplication :: [TypedExpression] -> ([[Variable]], [Code]),
-    runView :: [TypedExpression] -> [Variable] -> Parent -> [Sibling] -> AppStateMonad ViewResult,
     runProperty :: String -> AppStateMonad TypedExpression,
     runResolvedType :: TypeDefinition
   }
 
-type TypeHandler = Stack -> TypeDefinition -> Maybe (UntypedExpression' -> StackHandler)
+type StackParameter = Either ([[Variable]], [Code]) UntypedExpression'
+
+type TypeHandler = Stack -> TypeDefinition -> Maybe (StackParameter -> StackHandler)
 
 data StackEntry = StackValue (String, TypedExpression) | StackType TypeHandler
 

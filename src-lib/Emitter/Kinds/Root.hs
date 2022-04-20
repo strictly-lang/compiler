@@ -44,21 +44,3 @@ codeToString indentationLevel first (Ln code : restCode)
   where
     code' = code ++ codeToString indentationLevel False restCode
 codeToString indentationLevel first (Br : restCode) = '\n' : codeToString indentationLevel True restCode
-
--- Utilities
-
--- typedOrigin :: [Variable] -> TypeDefinition -> TypedExpression
--- typedOrigin scope (TypeRecord records) =
---   let primitive = \variableStack -> do return ([], [Ln (variableToString scope)])
---    in TypedExpression
---         { runPrimitive = primitive,
---           runProperty = \variableStack propertyName ->
---             let property = find (\(heystackPropertyName, typeDefinition) -> heystackPropertyName == propertyName) records
---              in case property of
---                   Just (_, propertyTypeDefinition) -> do
---                     (_, prefix) <- primitive variableStack
---                     toTypedExpression' prefix propertyTypeDefinition [RightHandSideVariable propertyName]
---                   Nothing ->
---                     error ("Could not find property" ++ propertyName)
---         }
--- typedOrigin scope typeDefinition = error (show typeDefinition)
