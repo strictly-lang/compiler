@@ -7,6 +7,7 @@ module Emitter.Kinds.Expression where
 
 import Control.Monad.State.Lazy (get)
 import Data.Foldable (find)
+import Data.List (intercalate)
 import Emitter.Types
 import Emitter.Util (getFreshExprId, nameToVariable, slashToCamelCase, slashToDash, variableToString)
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
@@ -30,12 +31,14 @@ stringHandler stack typeDefinition@(TypeAlgebraicDataType "String" []) =
                               return ([], [Ln static])
                             RightHandSideStringDynamic untypedExpression -> do
                               (TypedExpression typedExpression) <- toTypedExpression' stack typeDefinition untypedExpression
-                              runPrimitive typedExpression
+                              (dependencies, result) <- runPrimitive typedExpression
+
+                              return (dependencies, Ln "${" : result ++ [Ln "}"])
                         )
                         strings
                     Right (RightHandSideVariable variableName) ->
                       error (show untypedExpression)
-                return (concatMap fst result, Ln "\"" : concatMap snd result ++ [Ln "\""]),
+                return (concatMap fst result, Ln "`" : (concatMap snd result) ++ [Ln "`"]),
             runFunctionApplication = \_ -> error "no function application implemented",
             runProperty = \_ -> error "no property access implemented",
             runResolvedType = typeDefinition
@@ -50,13 +53,11 @@ recordHandler stack typeDefinition@(TypeRecord properties) =
         StackHandler
           { runPrimitive =
               do
-                result <-
-                  case untypedExpression of
-                    Left result -> do
-                      return [result]
-                    Right _ ->
-                      error (show untypedExpression)
-                return (concatMap fst result, Ln "\"" : concatMap snd result ++ [Ln "\""]),
+                case untypedExpression of
+                  Left result -> do
+                    return result
+                  Right _ ->
+                    error (show untypedExpression),
             runFunctionApplication = \_ -> error "no function application implemented",
             runProperty = \_ -> error "no property access implemented",
             runResolvedType = typeDefinition
@@ -82,7 +83,7 @@ componentHandler stack typeDefinition@(TypeFunction [typedProperties, _] (TypeAl
                 -- let typedProperties = typedOrigin scopedProperties propertyTypes
                 let stack' = addToVariableStack stack [(leftHandSideProperties, typedOrigin stack scopedProperties typedProperties)]
 
-                view <- render stack' body [] (scope ++ [DotNotation "shadowRoot"]) []
+                view <- render stack' body scope (scope ++ [DotNotation "shadowRoot"]) []
 
                 return
                   ( [],
