@@ -18,7 +18,7 @@ type Sibling = [Variable]
 
 data ViewResult = ViewResult
   { runViewCreate :: [Code],
-    runViewUpdate :: [([Variable], Code)],
+    runViewUpdate :: [([Variable], [Code])],
     runViewUnmount :: [Code],
     runViewDelete :: [Code],
     runSiblings :: [Sibling]
@@ -35,7 +35,7 @@ data StackHandler = StackHandler
     runResolvedType :: TypeDefinition
   }
 
-type StackParameter = Either ([[Variable]], [Code]) UntypedExpression'
+type StackParameter = Either ([Variable], [Code]) UntypedExpression'
 
 type TypeHandler = Stack -> TypeDefinition -> Maybe (StackParameter -> StackHandler)
 

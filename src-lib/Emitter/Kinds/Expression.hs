@@ -7,7 +7,7 @@ module Emitter.Kinds.Expression where
 
 import Control.Monad.State.Lazy (get)
 import Data.Foldable (find)
-import Data.List (intercalate)
+import Data.List (intercalate, isPrefixOf)
 import Emitter.Types
 import Emitter.Util (getFreshExprId, nameToVariable, slashToCamelCase, slashToDash, variableToString)
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
@@ -22,8 +22,8 @@ stringHandler stack typeDefinition@(TypeAlgebraicDataType "String" []) =
               do
                 result <-
                   case untypedExpression of
-                    Left (result) -> do
-                      return [result]
+                    Left ((selfDependency, code)) -> do
+                      return [([selfDependency], code)]
                     Right (RightHandSideString strings) -> do
                       mapM
                         ( \case
@@ -54,8 +54,8 @@ recordHandler stack typeDefinition@(TypeRecord properties) =
           { runPrimitive =
               do
                 case untypedExpression of
-                  Left result -> do
-                    return result
+                  Left ((selfDependency, code)) -> do
+                    return ([selfDependency], code)
                   Right _ ->
                     error (show untypedExpression),
             runFunctionApplication = \_ -> error "no function application implemented",
@@ -63,8 +63,8 @@ recordHandler stack typeDefinition@(TypeRecord properties) =
               case find (\(propertyName', typeDefinition) -> propertyName == propertyName') properties of
                 Just (_, propertyType) ->
                   case untypedExpression of
-                    Left (dependencies, code) -> do
-                      let property = (dependencies, code ++ [Ln ("." ++ propertyName)])
+                    Left (dependency, code) -> do
+                      let property = (dependency ++ [DotNotation propertyName], code ++ [Ln ("." ++ propertyName)])
                       return (TypedExpression (findType stack typeDefinition (Left property)))
                     Right _ ->
                       error (show untypedExpression)
@@ -93,17 +93,31 @@ componentHandler stack typeDefinition@(TypeFunction [typedProperties, _] (TypeAl
                 let stack' = addToVariableStack stack [(leftHandSideProperties, typedOrigin stack scopedProperties typedProperties)]
                 let TypeRecord propertyTypes = typedProperties
                 view <- render stack' body scope (scope ++ [DotNotation "shadowRoot"]) []
+                let dependencies = runViewUpdate view
+
                 propertySetters <-
                   ( mapM
                       ( \(propertyName, _) -> do
                           exprId <- getFreshExprId
                           let propertyValue = nameToVariable "propertyValue" exprId
+                          let propertyPath = (scopedProperties ++ ([DotNotation propertyName]))
+                          let dependency = filter ((isPrefixOf propertyPath) . fst) dependencies
                           return
                             [ Ln
                                 ("set " ++ propertyName ++ "(" ++ variableToString propertyValue ++ ") {"),
                               Ind
-                                [ Ln (variableToString (scopedProperties ++ ([DotNotation propertyName])) ++ " = " ++ variableToString propertyValue)
-                                ],
+                                ( [ Ln
+                                      ( variableToString propertyPath
+                                          ++ " = "
+                                          ++ variableToString propertyValue
+                                          ++ ";"
+                                      ),
+                                    Br,
+                                    Ln ("if (" ++ variableToString scopedMounted ++ ") {"),
+                                    Ind (concatMap snd dependency),
+                                    Ln "}"
+                                  ]
+                                ),
                               Ln "}"
                             ]
                       )
@@ -247,7 +261,17 @@ render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) s
                  ]
               ++ appendElement parent siblings textElement
               ++ runViewCreate siblingResult,
-          runViewUpdate = runViewUpdate siblingResult,
+          runViewUpdate =
+            ( concatMap
+                ( \dependency ->
+                    [ ( dependency,
+                        Ln (variableToString textElement ++ ".textContent = ") : textContent ++ ([Ln ";"])
+                      )
+                    ]
+                )
+                dependencies
+            )
+              ++ runViewUpdate siblingResult,
           runViewUnmount = runViewUnmount siblingResult,
           runViewDelete = runViewDelete siblingResult,
           runSiblings = runSiblings siblingResult
@@ -264,4 +288,4 @@ appendElement parent siblings element =
       )
 
 typedOrigin :: Stack -> [Variable] -> TypeDefinition -> TypedExpression
-typedOrigin stack variablePath typeDefinition = TypedExpression (findType stack typeDefinition (Left ([variablePath], [Ln (variableToString variablePath)])))
+typedOrigin stack variablePath typeDefinition = TypedExpression (findType stack typeDefinition (Left (variablePath, [Ln (variableToString variablePath)])))
