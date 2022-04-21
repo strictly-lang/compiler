@@ -13,6 +13,25 @@ import Emitter.Util (getFreshExprId, nameToVariable, slashToCamelCase, slashToDa
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
 import Types
 
+booleanHandler :: TypeHandler
+booleanHandler stack typeDefinition@(TypeAlgebraicDataType "Boolean" []) =
+  Just
+    ( \untypedExpression ->
+        StackHandler
+          { runPrimitive = do
+              do
+                case untypedExpression of
+                  Left ((selfDependency, code)) -> do
+                    return ([selfDependency], code)
+                  Right _ ->
+                    error (show untypedExpression),
+            runFunctionApplication = \_ -> error "no function application implemented",
+            runProperty = \_ -> error "no property access implemented",
+            runResolvedType = typeDefinition
+          }
+    )
+booleanHandler _ _ = Nothing
+
 stringHandler :: TypeHandler
 stringHandler stack typeDefinition@(TypeAlgebraicDataType "String" []) =
   Just
@@ -118,7 +137,8 @@ componentHandler stack typeDefinition@(TypeFunction [typedProperties, _] (TypeAl
                                     Ln "}"
                                   ]
                                 ),
-                              Ln "}"
+                              Ln "}",
+                              Br
                             ]
                       )
                       propertyTypes
@@ -163,7 +183,8 @@ componentHandler _ _ = Nothing
 
 prelude :: [StackEntry]
 prelude =
-  [ StackType stringHandler,
+  [ StackType booleanHandler,
+    StackType stringHandler,
     StackType recordHandler,
     StackType componentHandler
   ]
@@ -217,11 +238,31 @@ render :: Stack -> [Statement] -> [Variable] -> Parent -> [Sibling] -> AppStateM
 render variableStack [] scope parent siblings = do
   return
     ViewResult {runViewCreate = [], runViewUpdate = [], runViewUnmount = [], runViewDelete = [], runSiblings = siblings}
-render variableStack ((UntypedExpression [RightHandSideHost elementName properties children]) : restUntypedBody) scope parent siblings = do
+render variableStack ((UntypedExpression [RightHandSideHost elementName (properties, _) children]) : restUntypedBody) scope parent siblings = do
   exprId <- getFreshExprId
   let hostElement = scope ++ nameToVariable "element" exprId
   childrenResult <- render variableStack children scope hostElement []
   siblingResult <- render variableStack restUntypedBody scope parent (siblings ++ [hostElement])
+  propertiesResult <-
+    mapM
+      ( \(propertyName, RecordExpression _ propertyExpression) ->
+          if ("on" `isPrefixOf` propertyName)
+            then do
+              return ([], [])
+            else do
+              (TypedExpression typedPropertyExpression) <- toTypedExpression variableStack (TypeAlgebraicDataType "String" ([])) propertyExpression
+              (dependencies, code) <- runPrimitive typedPropertyExpression
+              return
+                ( dependencies,
+                  ( Ln (variableToString hostElement ++ ".setAttribute(\"" ++ propertyName ++ "\", ") :
+                    code
+                      ++ [ Ln ");",
+                           Br
+                         ]
+                  )
+                )
+      )
+      properties
 
   return
     ( ViewResult
@@ -229,11 +270,13 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName properti
             [ Ln (variableToString hostElement ++ " = document.createElement(\"" ++ elementName ++ "\");"),
               Br
             ]
+              ++ concatMap snd propertiesResult
               ++ appendElement parent siblings hostElement
               ++ runViewCreate childrenResult
               ++ runViewCreate siblingResult,
           runViewUpdate =
-            runViewUpdate childrenResult
+            [(dependency, code) | (dependencies, code) <- propertiesResult, dependency <- dependencies]
+              ++ runViewUpdate childrenResult
               ++ runViewUpdate siblingResult,
           runViewUnmount =
             runViewUnmount childrenResult
