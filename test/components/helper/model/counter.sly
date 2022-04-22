@@ -1,4 +1,4 @@
-dsata Action = Increment, Decrement;
+data Action = Increment, Decrement;
 
 store = {
 	init = 0

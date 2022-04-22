@@ -10,5 +10,5 @@ main = \_, _ ->
 	$input{
 		type = "text"
 		value = mainState
-		oninput = \String[value] -> mainDispatch(value)
+		oninput = \String(value) -> mainDispatch(value)
 	}

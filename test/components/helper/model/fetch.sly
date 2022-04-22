@@ -14,9 +14,9 @@ main = \props, _ ->
 		match stateState
 			case \Pending ->
 				"Loading..."
-			case \Done[Ok[ content] ] ->
+			case \Done(Ok( content))->
 				"${content}"
-			case \Done[Error[ _ ]] ->
+			case \Done(Error( _ ))->
 				"could not load"
 	else
 		"not to be loaded"
