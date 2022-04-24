@@ -14,7 +14,7 @@ data AppState = AppState
 data Variable = DotNotation String | BracketNotation String
   deriving (Eq)
 
-type Sibling = [Variable]
+data Sibling = SiblingAlways [Variable] | SiblingCondition [Code] [Sibling] [Sibling]
 
 data ViewResult = ViewResult
   { runViewCreate :: [Code],

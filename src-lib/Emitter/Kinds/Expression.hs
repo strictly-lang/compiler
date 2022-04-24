@@ -242,7 +242,7 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
   exprId <- getFreshExprId
   let hostElement = scope ++ nameToVariable "element" exprId
   childrenResult <- render variableStack children scope hostElement []
-  siblingResult <- render variableStack restUntypedBody scope parent (siblings ++ [hostElement])
+  siblingResult <- render variableStack restUntypedBody scope parent (SiblingAlways hostElement : siblings)
   propertiesResult <-
     mapM
       ( \(propertyName, RecordExpression _ propertyExpression) ->
@@ -282,9 +282,126 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
             runViewUnmount childrenResult
               ++ runViewUnmount siblingResult,
           runViewDelete =
-            runViewDelete childrenResult
-              ++ runViewDelete siblingResult,
+            Ln (variableToString hostElement ++ ".remove();") :
+            Br :
+            runViewDelete siblingResult,
           runSiblings = runSiblings siblingResult
+        }
+    )
+render variableStack ((UntypedExpression [RightHandSideCondition conditionExpression thenStatements elseStatements]) : restUntypedBody) scope parent siblings = do
+  exprId <- getFreshExprId
+  TypedExpression typedCondition <- toTypedExpression variableStack (TypeAlgebraicDataType "Boolean" []) conditionExpression
+  (dependencies, typedConditionResult) <- runPrimitive typedCondition
+
+  thenResult <- render variableStack thenStatements scope parent siblings
+  elseResult <- render variableStack elseStatements scope parent siblings
+
+  let thenCallback = scope ++ nameToVariable "thenCallback" exprId
+  let elseCallback = scope ++ nameToVariable "elseCallback" exprId
+  let conditionStorage = scope ++ nameToVariable "conditionStorage" exprId
+  let siblings' =
+        SiblingCondition [(Ln (variableToString conditionStorage))] (runSiblings thenResult) (runSiblings elseResult) :
+        siblings
+
+  siblingResult <-
+    render
+      variableStack
+      restUntypedBody
+      scope
+      parent
+      siblings'
+
+  return
+    ( ViewResult
+        { runViewCreate =
+            [ Ln (variableToString thenCallback ++ " = () => {"),
+              Ind (runViewCreate thenResult),
+              Ln "};",
+              Br,
+              Ln (variableToString elseCallback ++ " = () => {"),
+              Ind (runViewCreate elseResult),
+              Ln "};",
+              Br,
+              Ln (variableToString conditionStorage ++ " = ")
+            ]
+              ++ typedConditionResult
+              ++ [ Ln ";",
+                   Br,
+                   Ln ("if (" ++ variableToString conditionStorage ++ ") {"),
+                   Ind
+                     [ Ln (variableToString thenCallback ++ "();")
+                     ],
+                   Ln "} else {",
+                   Ind
+                     [ Ln (variableToString elseCallback ++ "();")
+                     ],
+                   Ln "}",
+                   Br
+                 ]
+              ++ runViewCreate siblingResult,
+          runViewUpdate =
+            [ ( dependency,
+                Ln
+                  ( "if ("
+                      ++ variableToString conditionStorage
+                      ++ " !== "
+                  ) :
+                typedConditionResult
+                  ++ [ Ln ") {",
+                       Ind
+                         [ Ln (variableToString conditionStorage ++ " = !" ++ variableToString conditionStorage ++ ";"),
+                           Br,
+                           Ln ("if (" ++ variableToString conditionStorage ++ ") {"),
+                           Ind
+                             ( runViewUnmount
+                                 elseResult
+                                 ++ runViewDelete
+                                   elseResult
+                                 ++ [ Ln (variableToString thenCallback ++ "();")
+                                    ]
+                             ),
+                           Ln "} else {",
+                           Ind
+                             ( runViewUnmount
+                                 thenResult
+                                 ++ runViewDelete
+                                   thenResult
+                                 ++ [ Ln (variableToString elseCallback ++ "();")
+                                    ]
+                             ),
+                           Ln "}",
+                           Br
+                         ],
+                       Ln "}",
+                       Br
+                     ]
+              )
+              | dependency <- dependencies
+            ]
+              ++ [ (dependency, [Ln ("if (" ++ variableToString conditionStorage ++ ") {"), Ind update, Ln "}", Br]) | (dependency, update) <- runViewUpdate thenResult
+                 ]
+              ++ [ (dependency, [Ln ("if (" ++ variableToString conditionStorage ++ " === false) {"), Ind update, Ln "}", Br]) | (dependency, update) <- runViewUpdate elseResult
+                 ]
+              ++ runViewUpdate siblingResult,
+          runViewUnmount =
+            [ Ln ("if (" ++ variableToString conditionStorage ++ ") {"),
+              Ind (runViewUnmount thenResult),
+              Ln "} else {",
+              Ind (runViewUnmount elseResult),
+              Ln "}",
+              Br
+            ]
+              ++ runViewUnmount siblingResult,
+          runViewDelete =
+            [ Ln ("if (" ++ variableToString conditionStorage ++ ") {"),
+              Ind (runViewDelete thenResult),
+              Ln "} else {",
+              Ind (runViewDelete elseResult),
+              Ln "}",
+              Br
+            ]
+              ++ runViewDelete siblingResult,
+          runSiblings = siblings'
         }
     )
 render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) scope parent siblings = do
@@ -292,7 +409,7 @@ render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) s
   exprId <- getFreshExprId
   let textElement = scope ++ nameToVariable "text" exprId
   (dependencies, textContent) <- runPrimitive typedResult
-  siblingResult <- render variableStack restUntypedBody scope parent (siblings ++ [textElement])
+  siblingResult <- render variableStack restUntypedBody scope parent (SiblingAlways textElement : siblings)
 
   return
     ( ViewResult
@@ -316,19 +433,104 @@ render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) s
             )
               ++ runViewUpdate siblingResult,
           runViewUnmount = runViewUnmount siblingResult,
-          runViewDelete = runViewDelete siblingResult,
+          runViewDelete = Ln (variableToString textElement ++ ".remove();") : Br : runViewDelete siblingResult,
           runSiblings = runSiblings siblingResult
         }
     )
 render variableStack untypedBody scope parent siblings = error "mep"
 
+data Predecessor = PredecessorNone | PredecessorAlways [Code] | PredecessorMaybe [Code] [Code]
+
 appendElement :: Parent -> [Sibling] -> [Variable] -> [Code]
-appendElement parent [] element =
-  Ln (variableToString parent ++ ".append(") : [Ln (variableToString element), Ln ");", Br]
-appendElement parent siblings element =
-  let lastSibling = last siblings
-   in ( Ln (variableToString lastSibling ++ ".after(") : [Ln (variableToString element), Ln ");", Br]
-      )
+appendElement parent siblings target =
+  let result = appendElement' siblings
+      parent' = variableToString parent
+      target' = variableToString target
+      siblingsAfter = \sibling -> sibling ++ [Ln (".after(" ++ target' ++ ");")]
+      siblingsNone = [Ln (parent' ++ ".append(" ++ target' ++ ");")]
+   in case result of
+        PredecessorAlways predecessor ->
+          siblingsAfter predecessor
+        PredecessorMaybe condition predecessor ->
+          ( Ln "if (" :
+            condition
+              ++ [ Ln ") {",
+                   Ind (siblingsAfter predecessor),
+                   Ln "} else {",
+                   Ind siblingsNone,
+                   Ln "}",
+                   Br
+                 ]
+          )
+        PredecessorNone ->
+          siblingsNone
+
+appendElement' :: [Sibling] -> Predecessor
+appendElement' [] = PredecessorNone
+appendElement' ((SiblingAlways sibling) : restSiblings) = PredecessorAlways [Ln (variableToString sibling)]
+appendElement' ((SiblingCondition condition thenSiblings elseSiblings) : restSiblings) =
+  let thenResult = appendElement' thenSiblings
+      elseResult = appendElement' elseSiblings
+   in case thenResult of
+        PredecessorAlways thenResult' ->
+          case elseResult of
+            PredecessorAlways elseResult' ->
+              PredecessorAlways
+                ( Ln "(" :
+                  condition ++ [Ln " ? "]
+                    ++ thenResult'
+                    ++ [Ln " : "]
+                    ++ elseResult'
+                    ++ [Ln ")"]
+                )
+            PredecessorMaybe elseCondition elseResult' ->
+              PredecessorMaybe
+                (Ln "(" : condition ++ [Ln " || "] ++ elseCondition ++ [Ln ")"])
+                (Ln "(" : condition ++ [Ln " ? "] ++ thenResult' ++ Ln " : " : elseResult' ++ [Ln ")"])
+            PredecessorNone ->
+              PredecessorMaybe condition thenResult'
+        PredecessorMaybe thenCondition thenResult' ->
+          case elseResult of
+            PredecessorAlways elseResult' ->
+              PredecessorMaybe
+                ( Ln "(" :
+                  condition
+                    ++ [Ln " === false || "]
+                    ++ thenCondition
+                    ++ [Ln ")"]
+                )
+                ( Ln "(" :
+                  condition ++ [Ln " ? "] ++ thenResult' ++ [Ln " ? "] ++ elseResult' ++ [Ln ")"]
+                )
+            PredecessorMaybe elseCondition elseResult' ->
+              PredecessorMaybe
+                ( Ln "((" :
+                  condition ++ [Ln " && "] ++ thenCondition
+                    ++ [Ln ") || ("]
+                    ++ condition
+                    ++ [Ln " === false && "]
+                    ++ elseCondition
+                    ++ [Ln "))"]
+                )
+                ( Ln "(" :
+                  condition ++ [Ln " ? "] ++ thenResult' ++ [Ln " ? "] ++ elseResult' ++ [Ln ")"]
+                )
+            PredecessorNone ->
+              PredecessorMaybe
+                (Ln "(" : condition ++ [Ln " && "] ++ thenCondition ++ [Ln ")"])
+                thenResult'
+        PredecessorNone ->
+          case elseResult of
+            PredecessorAlways elseResult' ->
+              PredecessorMaybe
+                (Ln "(" : condition ++ [Ln " === false)"])
+                elseResult'
+            PredecessorMaybe elseCondition elseResult' ->
+              PredecessorMaybe
+                (Ln "(" : condition ++ [Ln " === false && "] ++ elseCondition ++ [Ln ")"])
+                elseResult'
+            PredecessorNone ->
+              PredecessorNone
 
 typedOrigin :: Stack -> [Variable] -> TypeDefinition -> TypedExpression
 typedOrigin stack variablePath typeDefinition = TypedExpression (findType stack typeDefinition (Left (variablePath, [Ln (variableToString variablePath)])))
