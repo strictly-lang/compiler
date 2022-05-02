@@ -26,20 +26,18 @@ data ViewResult = ViewResult
 
 type Parent = [Variable]
 
-newtype TypedExpression = TypedExpression StackHandler
-
 data StackHandler = StackHandler
   { runPrimitive :: AppStateMonad ([[Variable]], [Code]),
-    runFunctionApplication :: [TypedExpression] -> ([[Variable]], [Code]),
-    runProperty :: String -> AppStateMonad TypedExpression,
-    runResolvedType :: TypeDefinition
+    runFunctionApplication :: [StackHandler] -> ([[Variable]], [Code]),
+    runProperty :: String -> AppStateMonad StackHandler,
+    runResolvedType :: Maybe TypeDefinition
   }
 
 type StackParameter = Either ([Variable], [Code]) UntypedExpression'
 
-type TypeHandler = Stack -> TypeDefinition -> Maybe (StackParameter -> StackHandler)
+type TypeHandler = Stack -> Maybe TypeDefinition -> StackParameter -> Maybe StackHandler
 
-data StackEntry = StackValue (String, TypedExpression) | StackType TypeHandler
+data StackEntry = StackValue (String, StackHandler) | StackType TypeHandler
 
 type Stack = [StackEntry]
 
