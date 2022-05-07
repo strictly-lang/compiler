@@ -3,5 +3,5 @@ main = \props, _ ->
 	$input{
 		type = "text"
 		value = props.value
-		oninput = \String(value) -> props.oninput(value)
+		oninput = \value -> props.oninput(value)
 	}

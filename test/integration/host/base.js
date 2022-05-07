@@ -65,7 +65,7 @@ describe("host element handling", () => {
     expect(element.shadowRoot.childNodes[0].title).toBe("combined foofoo text");
   });
 
-  xdescribe("input", () => {
+  describe("input", () => {
     it("text change", () => {
       const element = document.createElement("test-components-host-events");
       element.value = "foo";

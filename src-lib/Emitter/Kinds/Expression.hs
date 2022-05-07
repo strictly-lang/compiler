@@ -8,7 +8,7 @@ module Emitter.Kinds.Expression where
 import Control.Applicative ((<|>))
 import Control.Monad.State.Lazy (get)
 import Data.Foldable (find)
-import Data.List (intercalate, isPrefixOf)
+import Data.List (intercalate, intersperse, isPrefixOf)
 import Emitter.Types
 import Emitter.Util (getFreshExprId, nameToVariable, slashToCamelCase, slashToDash, variableToString)
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
@@ -27,7 +27,7 @@ booleanHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "String" 
         { runPrimitive =
             do
               return ([selfDependency], code),
-          runFunctionApplication = \_ -> error "no function application implemented",
+          runFunctionApplication = \_ -> error "no function application implemented in boolean",
           runProperty = \_ -> error "no property access implemented",
           runResolvedType = typeDefinition
         }
@@ -60,7 +60,7 @@ stringHandlerByLiteral stack typeDefinition (Right (RightHandSideString strings)
                   )
                   strings
               return (concatMap fst result, Ln "`" : (concatMap snd result) ++ [Ln "`"]),
-          runFunctionApplication = \_ -> error "no function application implemented",
+          runFunctionApplication = \_ -> error "no function application implemented in stringliteral",
           runProperty = \_ -> error "no property access implemented",
           runResolvedType = typeDefinition
         }
@@ -74,7 +74,7 @@ stringHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "String" [
         { runPrimitive =
             do
               return ([selfDependency], code),
-          runFunctionApplication = \_ -> error "no function application implemented",
+          runFunctionApplication = \_ -> error "no function application implemented in stringreference",
           runProperty = \_ -> error "no property access implemented",
           runResolvedType = typeDefinition
         }
@@ -96,14 +96,14 @@ recordHandler stack typeDefinition@(Just (TypeRecord properties)) untypedExpress
                 return ([selfDependency], code)
               Right _ ->
                 error (show untypedExpression),
-        runFunctionApplication = \_ -> error "no function application implemented",
+        runFunctionApplication = \_ -> error "no function application implemented in record",
         runProperty = \propertyName -> do
           case find (\(propertyName', typeDefinition) -> propertyName == propertyName') properties of
             Just (_, propertyType) ->
               case untypedExpression of
                 Left (dependency, code) -> do
                   let property = (dependency ++ [DotNotation propertyName], code ++ [Ln ("." ++ propertyName)])
-                  return ((findType stack typeDefinition (Left property)))
+                  return ((findType stack (Just propertyType) (Left property)))
                 Right _ ->
                   error (show untypedExpression)
             Nothing -> error ("could not find " ++ propertyName),
@@ -122,14 +122,23 @@ functionHandlerByLiteral stack typeDefinition@(Just (TypeFunction typeParameters
   Just
     StackHandler
       { runPrimitive = do
-          result <- code stack body
+          parameterNames <-
+            mapM
+              ( const
+                  (nameToVariable "param" <$> getFreshExprId)
+              )
+              typeParameters
+          let stack' = addToVariableStack stack (zip parameters [typedOrigin stack parameterName (Just typeDefinition) | (typeDefinition, parameterName) <- zip typeParameters parameterNames])
+
+          result <- code stack' body
           return
             ( [],
-              ( [ Ln "((",
-                  Ln ") => {",
-                  Ind result,
-                  Ln "})"
-                ]
+              ( Ln "((" :
+                (intersperse (Ln ",") (map (Ln <$> variableToString) parameterNames))
+                  ++ [ Ln ") => {",
+                       Ind result,
+                       Ln "})"
+                     ]
               )
             ),
         runFunctionApplication = \parameters -> do
@@ -141,13 +150,32 @@ functionHandlerByLiteral _ _ _ = Nothing
 
 functionHandlerByType :: TypeHandler
 functionHandlerByType stack typeDefinition@(Just (TypeFunction typeParameters typeReturn)) (Left ((selfDependency, code))) =
-  Just
-    StackHandler
-      { runPrimitive = do return ([selfDependency], code),
-        runFunctionApplication = \parameters -> error "function application not yet implemented in reference",
-        runProperty = \_ -> error "no property access implemented",
-        runResolvedType = typeDefinition
-      }
+  let stackHandler =
+        StackHandler
+          { runPrimitive = do return ([selfDependency], code),
+            runFunctionApplication = \parameters -> do
+              (primitive, code) <- runPrimitive stackHandler
+              parameterPrimitives <- mapM runPrimitive parameters
+              return
+                ( ( findType
+                      stack
+                      (Just typeReturn)
+                      ( Left
+                          ( [],
+                            code
+                              ++ [ Ln "("
+                                 ]
+                              ++ intercalate [Ln ","] (map snd parameterPrimitives)
+                              ++ [ Ln ")"
+                                 ]
+                          )
+                      )
+                  )
+                ),
+            runProperty = \_ -> error "no property access implemented",
+            runResolvedType = typeDefinition
+          }
+   in Just stackHandler
 functionHandlerByType _ _ _ = Nothing
 
 code :: Stack -> [Statement] -> AppStateMonad [Code]
@@ -156,7 +184,24 @@ code stack ((UntypedExpression untypedExpression) : restStatements) = do
   typedExpression <- toTypedExpression stack Nothing untypedExpression
   (dependencies, result) <- runPrimitive typedExpression
   nextCode <- code stack restStatements
-  return (result ++ nextCode)
+  return (result ++ [Ln ";"] ++ nextCode)
+
+---------------------
+-- Void Handler --
+---------------------
+voidHandler :: TypeHandler
+voidHandler stack typeDefinition@(Just (TypeAlgebraicDataType "Void" [])) (Left ((selfDependency, code))) =
+  Just
+    ( StackHandler
+        { runPrimitive =
+            do
+              return ([selfDependency], code),
+          runFunctionApplication = \_ -> error "no function application implemented in void",
+          runProperty = \_ -> error "no property access implemented",
+          runResolvedType = typeDefinition
+        }
+    )
+voidHandler _ _ _ = Nothing
 
 -----------------------
 -- Component Handler --
@@ -255,7 +300,8 @@ prelude =
     StackType stringHandler,
     StackType recordHandler,
     StackType componentHandler,
-    StackType functionHandler
+    StackType functionHandler,
+    StackType voidHandler
   ]
 
 ------------------------------
@@ -277,7 +323,7 @@ toTypedExpression' stack typeDefinition ((RightHandSideVariable variableName)) =
            stack
        ) of
     Just (StackValue (_, typedExpression)) -> do return typedExpression
-    Nothing -> error ("Could not find variable" ++ variableName)
+    Nothing -> error ("Could not find variable: " ++ variableName)
 toTypedExpression' stack typeDefinition (untypedExpression) = do
   return ((findType stack typeDefinition (Right untypedExpression)))
 
