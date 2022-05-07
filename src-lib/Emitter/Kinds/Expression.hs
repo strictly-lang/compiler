@@ -21,7 +21,7 @@ booleanHandler :: TypeHandler
 booleanHandler = booleanHandlerByType
 
 booleanHandlerByType :: TypeHandler
-booleanHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "String" [])) (Left ((selfDependency, code))) =
+booleanHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "Boolean" [])) (Left ((selfDependency, code))) =
   Just
     ( StackHandler
         { runPrimitive =
