@@ -35,7 +35,7 @@ data UntypedExpression'
   | RightHandSideRange Int (Maybe Int)
   | RightHandSideString [RightHandSideString]
   | RightHandSideFunctionDefinition [LeftHandSide] [Statement]
-  | RightHandSideFunctionCall UntypedExpression [UntypedExpression]
+  | RightHandSideFunctionCall [UntypedExpression]
   | RightHandSideOperator Operator UntypedExpression UntypedExpression
   | RightHandSideCondition UntypedExpression [Statement] [Statement]
   | RightHandSideMatch UntypedExpression [(LeftHandSide, [Statement])]

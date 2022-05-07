@@ -55,8 +55,8 @@ expressionParser indentationLevel = do
 
   result' <- case hasFunctionCall of
     Just _ -> do
-      functionCall <- RightHandSideFunctionCall result <$> blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
-      return [functionCall]
+      functionCall <- RightHandSideFunctionCall <$> blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
+      return (result ++ [functionCall])
     Nothing -> do
       return result
 
@@ -65,9 +65,9 @@ expressionParser indentationLevel = do
   case operator of
     Just operator -> do
       nextExpression <- expressionParser indentationLevel
-      return [RightHandSideOperator operator result nextExpression]
+      return [RightHandSideOperator operator result' nextExpression]
     Nothing -> do
-      return result
+      return result'
 
 expressionParser' :: IndentationLevel -> Parser UntypedExpression'
 expressionParser' indentationLevel = do

@@ -28,7 +28,7 @@ type Parent = [Variable]
 
 data StackHandler = StackHandler
   { runPrimitive :: AppStateMonad ([[Variable]], [Code]),
-    runFunctionApplication :: [StackHandler] -> ([[Variable]], [Code]),
+    runFunctionApplication :: [StackHandler] -> AppStateMonad StackHandler,
     runProperty :: String -> AppStateMonad StackHandler,
     runResolvedType :: Maybe TypeDefinition
   }

@@ -14,55 +14,76 @@ import Emitter.Util (getFreshExprId, nameToVariable, slashToCamelCase, slashToDa
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
 import Types
 
+---------------------
+-- Boolean Handler --
+---------------------
 booleanHandler :: TypeHandler
-booleanHandler stack typeDefinition@(Just (TypeAlgebraicDataType "Boolean" [])) untypedExpression =
+booleanHandler = booleanHandlerByType
+
+booleanHandlerByType :: TypeHandler
+booleanHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "String" [])) (Left ((selfDependency, code))) =
   Just
     ( StackHandler
-        { runPrimitive = do
+        { runPrimitive =
             do
-              case untypedExpression of
-                Left ((selfDependency, code)) -> do
-                  return ([selfDependency], code)
-                Right _ ->
-                  error (show untypedExpression),
+              return ([selfDependency], code),
           runFunctionApplication = \_ -> error "no function application implemented",
           runProperty = \_ -> error "no property access implemented",
           runResolvedType = typeDefinition
         }
     )
-booleanHandler _ _ _ = Nothing
+booleanHandlerByType _ _ _ = Nothing
+
+--------------------
+-- String Handler --
+--------------------
 
 stringHandler :: TypeHandler
-stringHandler stack typeDefinition@(Just (TypeAlgebraicDataType "String" [])) untypedExpression =
+stringHandler stack typeDefinition stackParameter = stringHandlerByLiteral stack typeDefinition stackParameter <|> stringHandlerByType stack typeDefinition stackParameter
+
+stringHandlerByLiteral :: TypeHandler
+stringHandlerByLiteral stack typeDefinition (Right (RightHandSideString strings)) =
   Just
     ( StackHandler
         { runPrimitive =
             do
               result <-
-                case untypedExpression of
-                  Left ((selfDependency, code)) -> do
-                    return [([selfDependency], code)]
-                  Right (RightHandSideString strings) -> do
-                    mapM
-                      ( \case
-                          RightHandSideStringStatic static -> do
-                            return ([], [Ln static])
-                          RightHandSideStringDynamic untypedExpression -> do
-                            (typedExpression) <- toTypedExpression stack typeDefinition untypedExpression
-                            (dependencies, result) <- runPrimitive typedExpression
+                mapM
+                  ( \case
+                      RightHandSideStringStatic static -> do
+                        return ([], [Ln static])
+                      RightHandSideStringDynamic untypedExpression -> do
+                        (typedExpression) <- toTypedExpression stack typeDefinition untypedExpression
+                        (dependencies, result) <- runPrimitive typedExpression
 
-                            return (dependencies, Ln "${" : result ++ [Ln "}"])
-                      )
-                      strings
-                  Right (RightHandSideVariable variableName) ->
-                    error (show untypedExpression)
+                        return (dependencies, Ln "${" : result ++ [Ln "}"])
+                  )
+                  strings
               return (concatMap fst result, Ln "`" : (concatMap snd result) ++ [Ln "`"]),
           runFunctionApplication = \_ -> error "no function application implemented",
           runProperty = \_ -> error "no property access implemented",
           runResolvedType = typeDefinition
         }
     )
-stringHandler _ _ _ = Nothing
+stringHandlerByLiteral _ _ _ = Nothing
+
+stringHandlerByType :: TypeHandler
+stringHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "String" [])) (Left ((selfDependency, code))) =
+  Just
+    ( StackHandler
+        { runPrimitive =
+            do
+              return ([selfDependency], code),
+          runFunctionApplication = \_ -> error "no function application implemented",
+          runProperty = \_ -> error "no property access implemented",
+          runResolvedType = typeDefinition
+        }
+    )
+stringHandlerByType _ _ _ = Nothing
+
+--------------------
+-- Record Handler --
+--------------------
 
 recordHandler :: TypeHandler
 recordHandler stack typeDefinition@(Just (TypeRecord properties)) untypedExpression =
@@ -89,6 +110,57 @@ recordHandler stack typeDefinition@(Just (TypeRecord properties)) untypedExpress
         runResolvedType = typeDefinition
       }
 recordHandler _ _ _ = Nothing
+
+----------------------
+-- Function Handler --
+----------------------
+functionHandler :: TypeHandler
+functionHandler stack typeDefinition stackParameter = functionHandlerByLiteral stack typeDefinition stackParameter <|> functionHandlerByType stack typeDefinition stackParameter
+
+functionHandlerByLiteral :: TypeHandler
+functionHandlerByLiteral stack typeDefinition@(Just (TypeFunction typeParameters typeReturn)) (Right (RightHandSideFunctionDefinition parameters body)) =
+  Just
+    StackHandler
+      { runPrimitive = do
+          result <- code stack body
+          return
+            ( [],
+              ( [ Ln "((",
+                  Ln ") => {",
+                  Ind result,
+                  Ln "})"
+                ]
+              )
+            ),
+        runFunctionApplication = \parameters -> do
+          error "function application not yet implemented in literal",
+        runProperty = \_ -> error "no property access implemented",
+        runResolvedType = typeDefinition
+      }
+functionHandlerByLiteral _ _ _ = Nothing
+
+functionHandlerByType :: TypeHandler
+functionHandlerByType stack typeDefinition@(Just (TypeFunction typeParameters typeReturn)) (Left ((selfDependency, code))) =
+  Just
+    StackHandler
+      { runPrimitive = do return ([selfDependency], code),
+        runFunctionApplication = \parameters -> error "function application not yet implemented in reference",
+        runProperty = \_ -> error "no property access implemented",
+        runResolvedType = typeDefinition
+      }
+functionHandlerByType _ _ _ = Nothing
+
+code :: Stack -> [Statement] -> AppStateMonad [Code]
+code stack [] = do return []
+code stack ((UntypedExpression untypedExpression) : restStatements) = do
+  typedExpression <- toTypedExpression stack Nothing untypedExpression
+  (dependencies, result) <- runPrimitive typedExpression
+  nextCode <- code stack restStatements
+  return (result ++ nextCode)
+
+-----------------------
+-- Component Handler --
+-----------------------
 
 componentHandler :: TypeHandler
 componentHandler stack typeDefinition@(Just (TypeFunction [typedProperties, _] (TypeAlgebraicDataType "View" []))) (Right (RightHandSideFunctionDefinition [leftHandSideProperties, leftHandSideAttributes] body)) =
@@ -182,8 +254,13 @@ prelude =
   [ StackType booleanHandler,
     StackType stringHandler,
     StackType recordHandler,
-    StackType componentHandler
+    StackType componentHandler,
+    StackType functionHandler
   ]
+
+------------------------------
+-- TypedExpression handling --
+------------------------------
 
 toTypedExpression :: Stack -> Maybe TypeDefinition -> UntypedExpression -> AppStateMonad StackHandler
 toTypedExpression stack typeDefinition (firstExpression : restUntypedExpression) = do
@@ -208,6 +285,10 @@ nestedTypedExpression :: Stack -> StackHandler -> UntypedExpression -> AppStateM
 nestedTypedExpression stack typedExpression [] = do return typedExpression
 nestedTypedExpression stack (typedExpression) ((RightHandSideVariable propertyName) : restUntypedExpression) = do
   typedProperty <- runProperty typedExpression propertyName
+  (nestedTypedExpression stack (typedProperty)) restUntypedExpression
+nestedTypedExpression stack (typedExpression) ((RightHandSideFunctionCall (parameters)) : restUntypedExpression) = do
+  typedParameters <- mapM (toTypedExpression stack Nothing) parameters
+  typedProperty <- runFunctionApplication typedExpression typedParameters
   (nestedTypedExpression stack (typedProperty)) restUntypedExpression
 nestedTypedExpression stack typedExpression untypedExpression = do
   error ("cant nest " ++ show untypedExpression)
@@ -242,21 +323,32 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
   propertiesResult <-
     mapM
       ( \(propertyName, RecordExpression _ propertyExpression) ->
-          if ("on" `isPrefixOf` propertyName)
-            then do
-              return ([], [])
-            else do
-              (typedPropertyExpression) <- toTypedExpression variableStack (Just ((TypeAlgebraicDataType "String" ([])))) propertyExpression
-              (dependencies, code) <- runPrimitive typedPropertyExpression
-              return
-                ( dependencies,
-                  ( Ln (variableToString hostElement ++ ".setAttribute(\"" ++ propertyName ++ "\", ") :
-                    code
-                      ++ [ Ln ");",
-                           Br
-                         ]
-                  )
-                )
+          let eventPrefix = "on"
+           in if (eventPrefix `isPrefixOf` propertyName)
+                then do
+                  (typedPropertyExpression) <- toTypedExpression variableStack (Just (TypeFunction [TypeRecord []] (TypeAlgebraicDataType "Void" ([])))) propertyExpression
+                  (dependencies, code) <- runPrimitive typedPropertyExpression
+                  return
+                    ( [],
+                      ( Ln (variableToString hostElement ++ ".addEventListener(\"" ++ drop (length eventPrefix) propertyName ++ "\", ") :
+                        code
+                          ++ [ Ln ");",
+                               Br
+                             ]
+                      )
+                    )
+                else do
+                  (typedPropertyExpression) <- toTypedExpression variableStack (Just ((TypeAlgebraicDataType "String" ([])))) propertyExpression
+                  (dependencies, code) <- runPrimitive typedPropertyExpression
+                  return
+                    ( dependencies,
+                      ( Ln (variableToString hostElement ++ ".setAttribute(\"" ++ propertyName ++ "\", ") :
+                        code
+                          ++ [ Ln ");",
+                               Br
+                             ]
+                      )
+                    )
       )
       properties
 
@@ -421,7 +513,7 @@ render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) s
             ( concatMap
                 ( \dependency ->
                     [ ( dependency,
-                        Ln (variableToString textElement ++ ".textContent = ") : textContent ++ ([Ln ";"])
+                        Ln (variableToString textElement ++ ".textContent = ") : textContent ++ ([Ln ";", Br])
                       )
                     ]
                 )
@@ -442,8 +534,8 @@ appendElement parent siblings target =
   let result = appendElement' siblings
       parent' = variableToString parent
       target' = variableToString target
-      siblingsAfter sibling = sibling ++ [Ln (".after(" ++ target' ++ ");")]
-      siblingsNone = [Ln (parent' ++ ".append(" ++ target' ++ ");")]
+      siblingsAfter sibling = sibling ++ [Ln (".after(" ++ target' ++ ");"), Br]
+      siblingsNone = [Ln (parent' ++ ".append(" ++ target' ++ ");"), Br]
    in case result of
         PredecessorAlways predecessor ->
           siblingsAfter predecessor
