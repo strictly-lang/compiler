@@ -1,7 +1,7 @@
 module Emitter.Types where
 
 import Control.Monad.State.Lazy (State)
-import Types (LeftHandSide, Statement, TypeDefinition, UntypedExpression')
+import Types (LeftHandSide, Statement, TypeDefinition, UntypedExpression)
 
 data Code = Ln String | Ind [Code] | Br
   deriving (Show)
@@ -33,7 +33,7 @@ data StackHandler = StackHandler
     runResolvedType :: Maybe TypeDefinition
   }
 
-type StackParameter = Either ([Variable], [Code]) UntypedExpression'
+type StackParameter = Either ([Variable], [Code]) [UntypedExpression]
 
 type TypeHandler = Stack -> Maybe TypeDefinition -> StackParameter -> Maybe StackHandler
 

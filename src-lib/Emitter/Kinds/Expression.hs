@@ -42,7 +42,7 @@ stringHandler :: TypeHandler
 stringHandler stack typeDefinition stackParameter = stringHandlerByLiteral stack typeDefinition stackParameter <|> stringHandlerByType stack typeDefinition stackParameter
 
 stringHandlerByLiteral :: TypeHandler
-stringHandlerByLiteral stack typeDefinition (Right (RightHandSideString strings)) =
+stringHandlerByLiteral stack typeDefinition (Right [[RightHandSideString strings]]) =
   Just
     ( StackHandler
         { runPrimitive =
@@ -53,7 +53,7 @@ stringHandlerByLiteral stack typeDefinition (Right (RightHandSideString strings)
                       RightHandSideStringStatic static -> do
                         return ([], [Ln static])
                       RightHandSideStringDynamic untypedExpression -> do
-                        (typedExpression) <- toTypedExpression stack typeDefinition untypedExpression
+                        (typedExpression) <- toTypedExpression stack typeDefinition [untypedExpression]
                         (dependencies, result) <- runPrimitive typedExpression
 
                         return (dependencies, Ln "${" : result ++ [Ln "}"])
@@ -86,29 +86,22 @@ stringHandlerByType _ _ _ = Nothing
 --------------------
 
 recordHandler :: TypeHandler
-recordHandler stack typeDefinition@(Just (TypeRecord properties)) untypedExpression =
-  Just
-    StackHandler
-      { runPrimitive =
-          do
-            case untypedExpression of
-              Left ((selfDependency, code)) -> do
-                return ([selfDependency], code)
-              Right _ ->
-                error (show untypedExpression),
-        runFunctionApplication = \_ -> error "no function application implemented in record",
-        runProperty = \propertyName -> do
-          case find (\(propertyName', typeDefinition) -> propertyName == propertyName') properties of
-            Just (_, propertyType) ->
-              case untypedExpression of
-                Left (dependency, code) -> do
-                  let property = (dependency ++ [DotNotation propertyName], code ++ [Ln ("." ++ propertyName)])
+recordHandler stack typeDefinition@(Just (TypeRecord properties)) (Left ((selfDependency, code))) =
+  let stackHandler =
+        StackHandler
+          { runPrimitive =
+              do
+                return ([selfDependency], code),
+            runFunctionApplication = \_ -> error "no function application implemented in record",
+            runProperty = \propertyName -> do
+              case find (\(propertyName', typeDefinition) -> propertyName == propertyName') properties of
+                Just (_, propertyType) -> do
+                  let property = (selfDependency ++ [DotNotation propertyName], code ++ [Ln ("." ++ propertyName)])
                   return ((findType stack (Just propertyType) (Left property)))
-                Right _ ->
-                  error (show untypedExpression)
-            Nothing -> error ("could not find " ++ propertyName),
-        runResolvedType = typeDefinition
-      }
+                Nothing -> error ("could not find " ++ propertyName),
+            runResolvedType = typeDefinition
+          }
+   in Just (stackHandler)
 recordHandler _ _ _ = Nothing
 
 ----------------------
@@ -118,7 +111,7 @@ functionHandler :: TypeHandler
 functionHandler stack typeDefinition stackParameter = functionHandlerByLiteral stack typeDefinition stackParameter <|> functionHandlerByType stack typeDefinition stackParameter
 
 functionHandlerByLiteral :: TypeHandler
-functionHandlerByLiteral stack typeDefinition@(Just (TypeFunction typeParameters typeReturn)) (Right (RightHandSideFunctionDefinition parameters body)) =
+functionHandlerByLiteral stack typeDefinition@(Just (TypeFunction typeParameters typeReturn)) (Right ([[RightHandSideFunctionDefinition parameters body]])) =
   Just
     StackHandler
       { runPrimitive = do
@@ -181,7 +174,7 @@ functionHandlerByType _ _ _ = Nothing
 code :: Stack -> [Statement] -> AppStateMonad [Code]
 code stack [] = do return []
 code stack ((UntypedExpression untypedExpression) : restStatements) = do
-  typedExpression <- toTypedExpression stack Nothing untypedExpression
+  typedExpression <- toTypedExpression stack Nothing [untypedExpression]
   (dependencies, result) <- runPrimitive typedExpression
   nextCode <- code stack restStatements
   return (result ++ [Ln ";"] ++ nextCode)
@@ -208,7 +201,7 @@ voidHandler _ _ _ = Nothing
 -----------------------
 
 componentHandler :: TypeHandler
-componentHandler stack typeDefinition@(Just (TypeFunction [typedProperties, _] (TypeAlgebraicDataType "View" []))) (Right (RightHandSideFunctionDefinition [leftHandSideProperties, leftHandSideAttributes] body)) =
+componentHandler stack typeDefinition@(Just (TypeFunction [typedProperties, _] (TypeAlgebraicDataType "View" []))) (Right ([[RightHandSideFunctionDefinition [leftHandSideProperties, leftHandSideAttributes] body]])) =
   Just
     ( StackHandler
         { runPrimitive =
@@ -308,13 +301,12 @@ prelude =
 -- TypedExpression handling --
 ------------------------------
 
-toTypedExpression :: Stack -> Maybe TypeDefinition -> UntypedExpression -> AppStateMonad StackHandler
-toTypedExpression stack typeDefinition (firstExpression : restUntypedExpression) = do
-  firstTypedExpression <- toTypedExpression' stack typeDefinition firstExpression
-  nestedTypedExpression stack firstTypedExpression restUntypedExpression
+toTypedExpression :: Stack -> Maybe TypeDefinition -> [UntypedExpression] -> AppStateMonad StackHandler
+toTypedExpression stack typeDefinition (untypedExpression) = do
+  toTypedExpression' stack typeDefinition untypedExpression
 
-toTypedExpression' :: Stack -> Maybe TypeDefinition -> UntypedExpression' -> AppStateMonad StackHandler
-toTypedExpression' stack typeDefinition ((RightHandSideVariable variableName)) = do
+toTypedExpression' :: Stack -> Maybe TypeDefinition -> [UntypedExpression] -> AppStateMonad StackHandler
+toTypedExpression' stack typeDefinition [(RightHandSideVariable variableName) : nestedExpressions] = do
   case ( find
            ( \case
                (StackValue (variableName', _)) -> variableName' == variableName
@@ -322,7 +314,7 @@ toTypedExpression' stack typeDefinition ((RightHandSideVariable variableName)) =
            )
            stack
        ) of
-    Just (StackValue (_, typedExpression)) -> do return typedExpression
+    Just (StackValue (_, typedExpression)) -> do (nestedTypedExpression stack typedExpression nestedExpressions)
     Nothing -> error ("Could not find variable: " ++ variableName)
 toTypedExpression' stack typeDefinition (untypedExpression) = do
   return ((findType stack typeDefinition (Right untypedExpression)))
@@ -333,7 +325,7 @@ nestedTypedExpression stack (typedExpression) ((RightHandSideVariable propertyNa
   typedProperty <- runProperty typedExpression propertyName
   (nestedTypedExpression stack (typedProperty)) restUntypedExpression
 nestedTypedExpression stack (typedExpression) ((RightHandSideFunctionCall (parameters)) : restUntypedExpression) = do
-  typedParameters <- mapM (toTypedExpression stack Nothing) parameters
+  typedParameters <- mapM (toTypedExpression stack Nothing) [parameters]
   typedProperty <- runFunctionApplication typedExpression typedParameters
   (nestedTypedExpression stack (typedProperty)) restUntypedExpression
 nestedTypedExpression stack typedExpression untypedExpression = do
@@ -372,7 +364,7 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
           let eventPrefix = "on"
            in if (eventPrefix `isPrefixOf` propertyName)
                 then do
-                  (typedPropertyExpression) <- toTypedExpression variableStack (Just (TypeFunction [TypeRecord []] (TypeAlgebraicDataType "Void" ([])))) propertyExpression
+                  (typedPropertyExpression) <- toTypedExpression variableStack (Just (TypeFunction [TypeRecord []] (TypeAlgebraicDataType "Void" ([])))) [propertyExpression]
                   (dependencies, code) <- runPrimitive typedPropertyExpression
                   return
                     ( [],
@@ -384,7 +376,7 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
                       )
                     )
                 else do
-                  (typedPropertyExpression) <- toTypedExpression variableStack (Just ((TypeAlgebraicDataType "String" ([])))) propertyExpression
+                  (typedPropertyExpression) <- toTypedExpression variableStack (Just ((TypeAlgebraicDataType "String" ([])))) [propertyExpression]
                   (dependencies, code) <- runPrimitive typedPropertyExpression
                   return
                     ( dependencies,
@@ -424,7 +416,7 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
     )
 render variableStack ((UntypedExpression [RightHandSideCondition conditionExpression thenStatements elseStatements]) : restUntypedBody) scope parent siblings = do
   exprId <- getFreshExprId
-  typedCondition <- toTypedExpression variableStack (Just (TypeAlgebraicDataType "Boolean" [])) conditionExpression
+  typedCondition <- toTypedExpression variableStack (Just (TypeAlgebraicDataType "Boolean" [])) [conditionExpression]
   (dependencies, typedConditionResult) <- runPrimitive typedCondition
 
   thenResult <- render variableStack thenStatements scope parent siblings
@@ -539,7 +531,7 @@ render variableStack ((UntypedExpression [RightHandSideCondition conditionExpres
         }
     )
 render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) scope parent siblings = do
-  typedResult <- toTypedExpression variableStack (Just (TypeAlgebraicDataType "String" [])) untypedExpression
+  typedResult <- toTypedExpression variableStack (Just (TypeAlgebraicDataType "String" [])) [untypedExpression]
   exprId <- getFreshExprId
   let textElement = scope ++ nameToVariable "text" exprId
   (dependencies, textContent) <- runPrimitive typedResult

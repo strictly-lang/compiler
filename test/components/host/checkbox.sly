@@ -3,5 +3,5 @@ main = \props, _ ->
 	$input{
 		type = "checkbox"
 		value = props.value
-		oninput = \Boolean(value) -> props.oninput(value)
+		oninput = \value -> props.oninput(value)
 	}
