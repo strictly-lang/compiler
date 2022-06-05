@@ -98,7 +98,7 @@ recordHandler stack typeDefinition@(Just (TypeRecord properties)) (Left ((selfDe
                 Just (_, propertyType) -> do
                   let property = (selfDependency ++ [DotNotation propertyName], code ++ [Ln ("." ++ propertyName)])
                   return ((findType stack (Just propertyType) (Left property)))
-                Nothing -> error ("could not find " ++ propertyName),
+                Nothing -> error ("could not find " ++ propertyName ++ show typeDefinition),
             runResolvedType = typeDefinition
           }
    in Just (stackHandler)
@@ -360,33 +360,32 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
   siblingResult <- render variableStack restUntypedBody scope parent (SiblingAlways hostElement : siblings)
   propertiesResult <-
     mapM
-      ( \((propertyName, typeDefinition, groupedProperties)) ->
+      ( \((propertyName, typeDefinition, groupedProperties)) -> do
           let eventPrefix = "on"
-           in if (eventPrefix `isPrefixOf` propertyName)
-                then do
-                  (typedPropertyExpression) <- toTypedExpression variableStack (Just (TypeFunction [TypeRecord []] (TypeAlgebraicDataType "Void" ([])))) groupedProperties
-                  (dependencies, code) <- runPrimitive typedPropertyExpression
-                  return
-                    ( [],
-                      ( Ln (variableToString hostElement ++ ".addEventListener(\"" ++ drop (length eventPrefix) propertyName ++ "\", ") :
-                        code
-                          ++ [ Ln ");",
-                               Br
-                             ]
-                      )
+
+          (typedPropertyExpression) <- toTypedExpression variableStack (typeDefinition) groupedProperties
+          (dependencies, code) <- runPrimitive typedPropertyExpression
+          return
+            ( if (eventPrefix `isPrefixOf` propertyName)
+                then
+                  ( [],
+                    ( Ln (variableToString hostElement ++ ".addEventListener(\"" ++ drop (length eventPrefix) propertyName ++ "\", ") :
+                      code
+                        ++ [ Ln ");",
+                             Br
+                           ]
                     )
-                else do
-                  (typedPropertyExpression) <- toTypedExpression variableStack (typeDefinition) groupedProperties
-                  (dependencies, code) <- runPrimitive typedPropertyExpression
-                  return
-                    ( dependencies,
-                      ( Ln (variableToString hostElement ++ ".setAttribute(\"" ++ propertyName ++ "\", ") :
-                        code
-                          ++ [ Ln ");",
-                               Br
-                             ]
-                      )
+                  )
+                else
+                  ( dependencies,
+                    ( Ln (variableToString hostElement ++ ".setAttribute(\"" ++ propertyName ++ "\", ") :
+                      code
+                        ++ [ Ln ");",
+                             Br
+                           ]
                     )
+                  )
+            )
       )
       (groupProperties properties)
 
