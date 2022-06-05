@@ -8,9 +8,9 @@ module Emitter.Kinds.Expression where
 import Control.Applicative ((<|>))
 import Control.Monad.State.Lazy (get)
 import Data.Foldable (find)
-import Data.List (intercalate, intersperse, isPrefixOf)
+import Data.List (groupBy, intercalate, intersperse, isPrefixOf)
 import Emitter.Types
-import Emitter.Util (getFreshExprId, nameToVariable, slashToCamelCase, slashToDash, variableToString)
+import Emitter.Util (getFreshExprId, groupProperties, nameToVariable, slashToCamelCase, slashToDash, variableToString)
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
 import Types
 
@@ -360,11 +360,11 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
   siblingResult <- render variableStack restUntypedBody scope parent (SiblingAlways hostElement : siblings)
   propertiesResult <-
     mapM
-      ( \(propertyName, RecordExpression _ propertyExpression) ->
+      ( \((propertyName, typeDefinition, groupedProperties)) ->
           let eventPrefix = "on"
            in if (eventPrefix `isPrefixOf` propertyName)
                 then do
-                  (typedPropertyExpression) <- toTypedExpression variableStack (Just (TypeFunction [TypeRecord []] (TypeAlgebraicDataType "Void" ([])))) [propertyExpression]
+                  (typedPropertyExpression) <- toTypedExpression variableStack (Just (TypeFunction [TypeRecord []] (TypeAlgebraicDataType "Void" ([])))) groupedProperties
                   (dependencies, code) <- runPrimitive typedPropertyExpression
                   return
                     ( [],
@@ -376,7 +376,7 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
                       )
                     )
                 else do
-                  (typedPropertyExpression) <- toTypedExpression variableStack (Just ((TypeAlgebraicDataType "String" ([])))) [propertyExpression]
+                  (typedPropertyExpression) <- toTypedExpression variableStack (typeDefinition) groupedProperties
                   (dependencies, code) <- runPrimitive typedPropertyExpression
                   return
                     ( dependencies,
@@ -388,7 +388,7 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
                       )
                     )
       )
-      properties
+      (groupProperties properties)
 
   return
     ( ViewResult

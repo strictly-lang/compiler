@@ -47,3 +47,24 @@ slashToCamelCase' :: String -> String
 slashToCamelCase' [] = []
 slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
+
+type GroupedProperty = (String, Maybe TypeDefinition, [UntypedExpression])
+
+groupProperties :: [(String, RecordValue)] -> [GroupedProperty]
+groupProperties = groupProperties' Nothing
+
+groupProperties' :: Maybe GroupedProperty -> [(String, RecordValue)] -> [GroupedProperty]
+groupProperties' Nothing [] = []
+groupProperties' Nothing ((name, RecordType recordType) : nextProperties) = groupProperties' (Just (name, Just recordType, [])) nextProperties
+groupProperties' Nothing ((name, RecordExpression Nothing untypedExpression) : nextProperties) = groupProperties' (Just (name, Nothing, [untypedExpression])) nextProperties
+groupProperties' (Just groupedProperty) [] = [groupedProperty]
+groupProperties' (Just previous@(groupedPropertyName, groupedPropertyType, groupedPropertyExpressions)) ((name, RecordExpression Nothing untypedExpression) : nextProperties)
+  | groupedPropertyName == name =
+    groupProperties' (Just (name, groupedPropertyType, groupedPropertyExpressions ++ [untypedExpression])) nextProperties
+  | otherwise =
+    previous : groupProperties' (Just (name, Nothing, [untypedExpression])) nextProperties
+groupProperties' (Just previous@(groupedPropertyName, groupedPropertyType, groupedPropertyExpressions)) ((name, RecordType recordType) : nextProperties)
+  | groupedPropertyName == name =
+    error ("cant have to types for " ++ name)
+  | otherwise =
+    previous : groupProperties' (Just (name, Just recordType, [])) nextProperties
