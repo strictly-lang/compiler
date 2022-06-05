@@ -2,7 +2,7 @@ main : \{ value: Boolean, oninput: \Boolean -> Void }, {} -> View
 main = \props, _ ->
 	$input{
 		type = "checkbox"
-		value = props.value
+		checked = props.value
 		oninput : \{currentTarget: { checked: Boolean }} -> Void
 		oninput = \evt -> props.oninput(evt.currentTarget.checked)
 	}

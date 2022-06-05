@@ -87,7 +87,7 @@ describe("host element handling", () => {
       expect(element.shadowRoot.childNodes[0].value).toBe("fooa");
     });
 
-    it("text non-change", () => {
+    xit("text non-change", () => {
       const element = document.createElement("test-components-host-events");
       element.value = "foo";
       element.oninput = (_evt) => {
@@ -108,7 +108,7 @@ describe("host element handling", () => {
       expect(element.shadowRoot.childNodes[0].value).toBe("foo");
     });
 
-    it("text different-change", () => {
+    xit("text different-change", () => {
       const element = document.createElement("test-components-host-events");
       element.value = "foo";
       element.oninput = (_evt) => {
@@ -150,7 +150,7 @@ describe("host element handling", () => {
       expect(element.shadowRoot.childNodes[0].checked).toBe(false);
     });
 
-    it("checkbox non-change", () => {
+    xit("checkbox non-change", () => {
       const element = document.createElement("test-components-host-checkbox");
       element.value = true;
       element.oninput = (_evt) => {
