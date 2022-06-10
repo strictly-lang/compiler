@@ -41,6 +41,15 @@ module.exports = function (config) {
         pattern: "test/integration/helper/if.js",
         type: "module",
       },
+      // {
+      //   pattern: "test/components/helper/each/*.sly",
+      //   type: "module",
+      //   included: false,
+      // },
+      // {
+      //   pattern: "test/integration/helper/each.js",
+      //   type: "module",
+      // },
     ],
     exclude: [
       "test/components/host/namespace.sly",

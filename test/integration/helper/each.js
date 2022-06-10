@@ -24,7 +24,9 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[1].textContent).toBe("0-foo-mep");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).toBe("1-bar-mep");
+    expect(element.shadowRoot.childNodes[3].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).toBe("2-baz-mep");
     expect(element.shadowRoot.childNodes[4].tagName).toBe("FOOTER");
 
@@ -34,7 +36,9 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[1].textContent).toBe("0-foo2-mep");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).toBe("1-bar2-mep");
+    expect(element.shadowRoot.childNodes[3].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).toBe("2-baz2-mep");
     expect(element.shadowRoot.childNodes[4].tagName).toBe("FOOTER");
   });
@@ -69,7 +73,9 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[1].textContent).toBe("0-foo-bob");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).toBe("1-bar-bob");
+    expect(element.shadowRoot.childNodes[3].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).toBe("2-baz-bob");
     expect(element.shadowRoot.childNodes[4].tagName).toBe("FOOTER");
 
@@ -79,7 +85,9 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[1].textContent).toBe("0-foo-alice");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).toBe("1-bar-alice");
+    expect(element.shadowRoot.childNodes[3].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).toBe("2-baz-alice");
     expect(element.shadowRoot.childNodes[4].tagName).toBe("FOOTER");
   });
@@ -96,7 +104,9 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[1].textContent).toBe("0-foo-alice");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).toBe("1-bar-alice");
+    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).toBe("2-baz-alice");
     expect(element.shadowRoot.childNodes[4].tagName).toBe("FOOTER");
 
@@ -182,7 +192,9 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[1].textContent).toBe("0-foo-alice");
+    expect(element.shadowRoot.childNodes[2].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).toBe("1-bar-alice");
+    expect(element.shadowRoot.childNodes[3].tagName).toBe("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).toBe("2-baz-alice");
     expect(element.shadowRoot.childNodes[4].tagName).toBe("FOOTER");
 

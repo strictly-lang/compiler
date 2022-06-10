@@ -1,10 +1,10 @@
-main : \{ foo: String[], baz: Boolean, bar: String }
+main : \{ foo: String[], baz: Boolean, bar: String }, {} -> View
 main = \props, _ ->
 	$header
 	if props.baz then
 		if props.foo.length == 0 then
 			$span
-					"Empty list ${props.bar}"
+				"Empty list ${props.bar}"
 		else
 			let [value, index] <- zip(props.foo, [0..]);
 			$div

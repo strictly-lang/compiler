@@ -35,7 +35,7 @@ data StackHandler = StackHandler
 
 type StackParameter = Either ([Variable], [Code]) [UntypedExpression]
 
-type TypeHandler = Stack -> Maybe TypeDefinition -> StackParameter -> Maybe StackHandler
+type TypeHandler = Stack -> Maybe TypeDefinition -> StackParameter -> Maybe (AppStateMonad StackHandler)
 
 data StackEntry = StackValue (String, StackHandler) | StackType TypeHandler
 

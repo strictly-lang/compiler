@@ -40,37 +40,41 @@ letParser indentationLevel = do
 
 expressionParser :: IndentationLevel -> Parser UntypedExpression
 expressionParser indentationLevel = do
-  expression <- expressionParser' indentationLevel
-
-  nested <- optional (char '.')
-
-  result <- case nested of
-    Just _ -> do
-      nextExpressionPart <- expressionParser indentationLevel
-      return (expression : nextExpressionPart)
-    Nothing -> do
-      return [expression]
-
-  hasFunctionCall <- optional (lookAhead functionCallOpenParser)
-
-  result' <- case hasFunctionCall of
-    Just _ -> do
-      functionCall <- RightHandSideFunctionCall <$> blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
-      return (result ++ [functionCall])
-    Nothing -> do
-      return result
+  result <- expressionParser' indentationLevel
 
   operator <- optional operatorParser
 
   case operator of
     Just operator -> do
       nextExpression <- expressionParser indentationLevel
-      return [RightHandSideOperator operator result' nextExpression]
+      return [RightHandSideOperator operator result nextExpression]
     Nothing -> do
-      return result'
+      return result
 
-expressionParser' :: IndentationLevel -> Parser UntypedExpression'
+expressionParser' :: IndentationLevel -> Parser UntypedExpression
 expressionParser' indentationLevel = do
+  expression <- expressionParser'' indentationLevel
+
+  nested <- optional (char '.')
+
+  result <- case nested of
+    Just _ -> do
+      nextExpressionPart <- expressionParser' indentationLevel
+      return (expression : nextExpressionPart)
+    Nothing -> do
+      return [expression]
+
+  hasFunctionCall <- optional (lookAhead functionCallOpenParser)
+
+  case hasFunctionCall of
+    Just _ -> do
+      functionCall <- RightHandSideFunctionCall <$> blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
+      return (result ++ [functionCall])
+    Nothing -> do
+      return result
+
+expressionParser'' :: IndentationLevel -> Parser UntypedExpression'
+expressionParser'' indentationLevel = do
   rightHandSideFunctionDefinitionParser indentationLevel
     <|> rightHandSideConditionParser indentationLevel
     <|> rightHandSideMatchParser indentationLevel

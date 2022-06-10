@@ -23,14 +23,16 @@ booleanHandler = booleanHandlerByType
 booleanHandlerByType :: TypeHandler
 booleanHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "Boolean" [])) (Left ((selfDependency, code))) =
   Just
-    ( StackHandler
-        { runPrimitive =
-            do
-              return ([selfDependency], code),
-          runFunctionApplication = \_ -> error "no function application implemented in boolean",
-          runProperty = \_ -> error "no property access implemented",
-          runResolvedType = typeDefinition
-        }
+    ( do
+        return
+          StackHandler
+            { runPrimitive =
+                do
+                  return ([selfDependency], code),
+              runFunctionApplication = \_ -> error "no function application implemented in boolean",
+              runProperty = \_ -> error "no property access implemented",
+              runResolvedType = typeDefinition
+            }
     )
 booleanHandlerByType _ _ _ = Nothing
 
@@ -44,40 +46,48 @@ stringHandler stack typeDefinition stackParameter = stringHandlerByLiteral stack
 stringHandlerByLiteral :: TypeHandler
 stringHandlerByLiteral stack typeDefinition (Right [[RightHandSideString strings]]) =
   Just
-    ( StackHandler
-        { runPrimitive =
-            do
-              result <-
-                mapM
-                  ( \case
-                      RightHandSideStringStatic static -> do
-                        return ([], [Ln static])
-                      RightHandSideStringDynamic untypedExpression -> do
-                        (typedExpression) <- toTypedExpression stack typeDefinition [untypedExpression]
-                        (dependencies, result) <- runPrimitive typedExpression
+    ( do
+        ( return
+            ( StackHandler
+                { runPrimitive =
+                    do
+                      result <-
+                        mapM
+                          ( \case
+                              RightHandSideStringStatic static -> do
+                                return ([], [Ln static])
+                              RightHandSideStringDynamic untypedExpression -> do
+                                (typedExpression) <- toTypedExpression stack typeDefinition [untypedExpression]
+                                (dependencies, result) <- runPrimitive typedExpression
 
-                        return (dependencies, Ln "${" : result ++ [Ln "}"])
-                  )
-                  strings
-              return (concatMap fst result, Ln "`" : (concatMap snd result) ++ [Ln "`"]),
-          runFunctionApplication = \_ -> error "no function application implemented in stringliteral",
-          runProperty = \_ -> error "no property access implemented",
-          runResolvedType = typeDefinition
-        }
+                                return (dependencies, Ln "${" : result ++ [Ln "}"])
+                          )
+                          strings
+                      return (concatMap fst result, Ln "`" : (concatMap snd result) ++ [Ln "`"]),
+                  runFunctionApplication = \_ -> error "no function application implemented in stringliteral",
+                  runProperty = \_ -> error "no property access implemented",
+                  runResolvedType = typeDefinition
+                }
+            )
+          )
     )
 stringHandlerByLiteral _ _ _ = Nothing
 
 stringHandlerByType :: TypeHandler
 stringHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "String" [])) (Left ((selfDependency, code))) =
   Just
-    ( StackHandler
-        { runPrimitive =
-            do
-              return ([selfDependency], code),
-          runFunctionApplication = \_ -> error "no function application implemented in stringreference",
-          runProperty = \_ -> error "no property access implemented",
-          runResolvedType = typeDefinition
-        }
+    ( do
+        ( return
+            ( StackHandler
+                { runPrimitive =
+                    do
+                      return ([selfDependency], code),
+                  runFunctionApplication = \_ -> error "no function application implemented in stringreference",
+                  runProperty = \_ -> error "no property access implemented",
+                  runResolvedType = typeDefinition
+                }
+            )
+          )
     )
 stringHandlerByType _ _ _ = Nothing
 
@@ -97,11 +107,11 @@ recordHandler stack typeDefinition@(Just (TypeRecord properties)) (Left ((selfDe
               case find (\(propertyName', typeDefinition) -> propertyName == propertyName') properties of
                 Just (_, propertyType) -> do
                   let property = (selfDependency ++ [DotNotation propertyName], code ++ [Ln ("." ++ propertyName)])
-                  return ((findType stack (Just propertyType) (Left property)))
+                  ((findType stack (Just propertyType) (Left property)))
                 Nothing -> error ("could not find " ++ propertyName ++ show typeDefinition),
             runResolvedType = typeDefinition
           }
-   in Just (stackHandler)
+   in Just (return stackHandler)
 recordHandler _ _ _ = Nothing
 
 ----------------------
@@ -113,32 +123,38 @@ functionHandler stack typeDefinition stackParameter = functionHandlerByLiteral s
 functionHandlerByLiteral :: TypeHandler
 functionHandlerByLiteral stack typeDefinition@(Just (TypeFunction typeParameters typeReturn)) (Right ([[RightHandSideFunctionDefinition parameters body]])) =
   Just
-    StackHandler
-      { runPrimitive = do
-          parameterNames <-
-            mapM
-              ( const
-                  (nameToVariable "param" <$> getFreshExprId)
-              )
-              typeParameters
-          let stack' = addToVariableStack stack (zip parameters [typedOrigin stack parameterName (Just typeDefinition) | (typeDefinition, parameterName) <- zip typeParameters parameterNames])
+    ( do
+        ( return
+            ( StackHandler
+                { runPrimitive = do
+                    parameterNames <-
+                      mapM
+                        ( const
+                            (nameToVariable "param" <$> getFreshExprId)
+                        )
+                        typeParameters
+                    parameterStackHandlers <- mapM (\(typeDefinition, parameterName) -> typedOrigin stack parameterName (Just typeDefinition)) (zip typeParameters parameterNames)
+                    let stack' = addToVariableStack stack ((zip parameters parameterStackHandlers))
 
-          result <- code stack' body
-          return
-            ( [],
-              ( Ln "((" :
-                (intersperse (Ln ",") (map (Ln <$> variableToString) parameterNames))
-                  ++ [ Ln ") => {",
-                       Ind result,
-                       Ln "})"
-                     ]
-              )
-            ),
-        runFunctionApplication = \parameters -> do
-          error "function application not yet implemented in literal",
-        runProperty = \_ -> error "no property access implemented",
-        runResolvedType = typeDefinition
-      }
+                    result <- code stack' body
+                    return
+                      ( [],
+                        ( Ln "((" :
+                          (intersperse (Ln ",") (map (Ln <$> variableToString) parameterNames))
+                            ++ [ Ln ") => {",
+                                 Ind result,
+                                 Ln "})"
+                               ]
+                        )
+                      ),
+                  runFunctionApplication = \parameters -> do
+                    error "function application not yet implemented in literal",
+                  runProperty = \_ -> error "no property access implemented",
+                  runResolvedType = typeDefinition
+                }
+            )
+          )
+    )
 functionHandlerByLiteral _ _ _ = Nothing
 
 functionHandlerByType :: TypeHandler
@@ -149,26 +165,26 @@ functionHandlerByType stack typeDefinition@(Just (TypeFunction typeParameters ty
             runFunctionApplication = \parameters -> do
               (primitive, code) <- runPrimitive stackHandler
               parameterPrimitives <- mapM runPrimitive parameters
-              return
-                ( ( findType
-                      stack
-                      (Just typeReturn)
-                      ( Left
-                          ( [],
-                            code
-                              ++ [ Ln "("
-                                 ]
-                              ++ intercalate [Ln ","] (map snd parameterPrimitives)
-                              ++ [ Ln ")"
-                                 ]
-                          )
-                      )
-                  )
+
+              ( ( findType
+                    stack
+                    (Just typeReturn)
+                    ( Left
+                        ( [],
+                          code
+                            ++ [ Ln "("
+                               ]
+                            ++ intercalate [Ln ","] (map snd parameterPrimitives)
+                            ++ [ Ln ")"
+                               ]
+                        )
+                    )
+                )
                 ),
             runProperty = \_ -> error "no property access implemented",
             runResolvedType = typeDefinition
           }
-   in Just stackHandler
+   in Just (return stackHandler)
 functionHandlerByType _ _ _ = Nothing
 
 code :: Stack -> [Statement] -> AppStateMonad [Code]
@@ -185,14 +201,18 @@ code stack ((UntypedExpression untypedExpression) : restStatements) = do
 voidHandler :: TypeHandler
 voidHandler stack typeDefinition@(Just (TypeAlgebraicDataType "Void" [])) (Left ((selfDependency, code))) =
   Just
-    ( StackHandler
-        { runPrimitive =
-            do
-              return ([selfDependency], code),
-          runFunctionApplication = \_ -> error "no function application implemented in void",
-          runProperty = \_ -> error "no property access implemented",
-          runResolvedType = typeDefinition
-        }
+    ( do
+        ( return
+            ( StackHandler
+                { runPrimitive =
+                    do
+                      return ([selfDependency], code),
+                  runFunctionApplication = \_ -> error "no function application implemented in void",
+                  runProperty = \_ -> error "no property access implemented",
+                  runResolvedType = typeDefinition
+                }
+            )
+          )
     )
 voidHandler _ _ _ = Nothing
 
@@ -203,87 +223,92 @@ voidHandler _ _ _ = Nothing
 componentHandler :: TypeHandler
 componentHandler stack typeDefinition@(Just (TypeFunction [typedProperties, _] (TypeAlgebraicDataType "View" []))) (Right ([[RightHandSideFunctionDefinition [leftHandSideProperties, leftHandSideAttributes] body]])) =
   Just
-    ( StackHandler
-        { runPrimitive =
-            do
-              appState <- get
-              exprId <- getFreshExprId
-              let scope = [DotNotation "this"]
-              let componentName' = componentName appState
-              let unscopedMounted = nameToVariable "mounted" exprId
-              let unscopedProperties = nameToVariable "properties" exprId
-              let scopedMounted = scope ++ unscopedMounted
-              let scopedProperties = scope ++ unscopedProperties
-              -- let typedProperties = typedOrigin scopedProperties propertyTypes
-              let stack' = addToVariableStack stack [(leftHandSideProperties, typedOrigin stack scopedProperties (Just typedProperties))]
-              let TypeRecord propertyTypes = typedProperties
-              view <- render stack' body scope (scope ++ [DotNotation "shadowRoot"]) []
-              let dependencies = runViewUpdate view
+    ( do
+        ( return
+            ( StackHandler
+                { runPrimitive =
+                    do
+                      appState <- get
+                      exprId <- getFreshExprId
+                      let scope = [DotNotation "this"]
+                      let componentName' = componentName appState
+                      let unscopedMounted = nameToVariable "mounted" exprId
+                      let unscopedProperties = nameToVariable "properties" exprId
+                      let scopedMounted = scope ++ unscopedMounted
+                      let scopedProperties = scope ++ unscopedProperties
+                      -- let typedProperties = typedOrigin scopedProperties propertyTypes
+                      propertiesStackHandler <- typedOrigin stack scopedProperties (Just typedProperties)
+                      let stack' = addToVariableStack stack [(leftHandSideProperties, propertiesStackHandler)]
+                      let TypeRecord propertyTypes = typedProperties
+                      view <- render stack' body scope (scope ++ [DotNotation "shadowRoot"]) []
+                      let dependencies = runViewUpdate view
 
-              propertySetters <-
-                ( mapM
-                    ( \(propertyName, _) -> do
-                        exprId <- getFreshExprId
-                        let propertyValue = nameToVariable "propertyValue" exprId
-                        let propertyPath = (scopedProperties ++ ([DotNotation propertyName]))
-                        let dependency = filter ((isPrefixOf propertyPath) . fst) dependencies
-                        return
-                          [ Ln
-                              ("set " ++ propertyName ++ "(" ++ variableToString propertyValue ++ ") {"),
+                      propertySetters <-
+                        ( mapM
+                            ( \(propertyName, _) -> do
+                                exprId <- getFreshExprId
+                                let propertyValue = nameToVariable "propertyValue" exprId
+                                let propertyPath = (scopedProperties ++ ([DotNotation propertyName]))
+                                let dependency = filter ((isPrefixOf propertyPath) . fst) dependencies
+                                return
+                                  [ Ln
+                                      ("set " ++ propertyName ++ "(" ++ variableToString propertyValue ++ ") {"),
+                                    Ind
+                                      ( [ Ln
+                                            ( variableToString propertyPath
+                                                ++ " = "
+                                                ++ variableToString propertyValue
+                                                ++ ";"
+                                            ),
+                                          Br,
+                                          Ln ("if (" ++ variableToString scopedMounted ++ ") {"),
+                                          Ind (concatMap snd dependency),
+                                          Ln "}"
+                                        ]
+                                      ),
+                                    Ln "}",
+                                    Br
+                                  ]
+                            )
+                            propertyTypes
+                          )
+
+                      return
+                        ( [],
+                          [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
                             Ind
-                              ( [ Ln
-                                    ( variableToString propertyPath
-                                        ++ " = "
-                                        ++ variableToString propertyValue
-                                        ++ ";"
+                              ( [ Ln (variableToString unscopedMounted ++ " = false;"),
+                                  Br,
+                                  Ln (variableToString unscopedProperties ++ " = {};"),
+                                  Br,
+                                  Ln "connectedCallback() {",
+                                  Ind
+                                    ( [ Ln "this.attachShadow({mode: 'open'});",
+                                        Br,
+                                        Ln (variableToString scopedMounted ++ " = true;"),
+                                        Br
+                                      ]
+                                        ++ runViewCreate view
                                     ),
                                   Br,
-                                  Ln ("if (" ++ variableToString scopedMounted ++ ") {"),
-                                  Ind (concatMap snd dependency),
-                                  Ln "}"
+                                  Ln "}",
+                                  Br
                                 ]
+                                  ++ concat propertySetters
                               ),
                             Ln "}",
+                            Br,
+                            Br,
+                            Ln ("customElements.define(\"" ++ slashToDash componentName' ++ "\", " ++ slashToCamelCase componentName' ++ ");"),
                             Br
                           ]
-                    )
-                    propertyTypes
-                  )
-
-              return
-                ( [],
-                  [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
-                    Ind
-                      ( [ Ln (variableToString unscopedMounted ++ " = false;"),
-                          Br,
-                          Ln (variableToString unscopedProperties ++ " = {};"),
-                          Br,
-                          Ln "connectedCallback() {",
-                          Ind
-                            ( [ Ln "this.attachShadow({mode: 'open'});",
-                                Br,
-                                Ln (variableToString scopedMounted ++ " = true;"),
-                                Br
-                              ]
-                                ++ runViewCreate view
-                            ),
-                          Br,
-                          Ln "}",
-                          Br
-                        ]
-                          ++ concat propertySetters
-                      ),
-                    Ln "}",
-                    Br,
-                    Br,
-                    Ln ("customElements.define(\"" ++ slashToDash componentName' ++ "\", " ++ slashToCamelCase componentName' ++ ");"),
-                    Br
-                  ]
-                ),
-          runFunctionApplication = \_ -> error "no function application implemented",
-          runProperty = \_ -> error "no property access implemented",
-          runResolvedType = typeDefinition
-        }
+                        ),
+                  runFunctionApplication = \_ -> error "no function application implemented",
+                  runProperty = \_ -> error "no property access implemented",
+                  runResolvedType = typeDefinition
+                }
+            )
+          )
     )
 componentHandler _ _ _ = Nothing
 
@@ -317,7 +342,7 @@ toTypedExpression' stack typeDefinition [(RightHandSideVariable variableName) : 
     Just (StackValue (_, typedExpression)) -> do (nestedTypedExpression stack typedExpression nestedExpressions)
     Nothing -> error ("Could not find variable: " ++ variableName)
 toTypedExpression' stack typeDefinition (untypedExpression) = do
-  return ((findType stack typeDefinition (Right untypedExpression)))
+  ((findType stack typeDefinition (Right untypedExpression)))
 
 nestedTypedExpression :: Stack -> StackHandler -> UntypedExpression -> AppStateMonad StackHandler
 nestedTypedExpression stack typedExpression [] = do return typedExpression
@@ -331,11 +356,11 @@ nestedTypedExpression stack (typedExpression) ((RightHandSideFunctionCall (param
 nestedTypedExpression stack typedExpression untypedExpression = do
   error ("cant nest " ++ show untypedExpression)
 
-findType :: Stack -> Maybe TypeDefinition -> StackParameter -> StackHandler
+findType :: Stack -> Maybe TypeDefinition -> StackParameter -> AppStateMonad StackHandler
 findType stack = findType' (stack, stack)
 
-findType' :: (Stack, Stack) -> Maybe TypeDefinition -> StackParameter -> StackHandler
-findType' ([], _) typeDefinition stackParameter = error ("no corresponding type found " ++ show typeDefinition)
+findType' :: (Stack, Stack) -> Maybe TypeDefinition -> StackParameter -> AppStateMonad StackHandler
+findType' ([], _) typeDefinition stackParameter = error ("no corresponding type found " ++ show typeDefinition ++ " + " ++ show stackParameter)
 findType' ((StackType stackEntry) : nextStack, allStack) typeDefinition stackParameter =
   case stackEntry allStack typeDefinition stackParameter of
     Just result -> result
@@ -657,5 +682,5 @@ appendElement' ((SiblingCondition condition thenSiblings elseSiblings) : restSib
             PredecessorNone ->
               PredecessorNone
 
-typedOrigin :: Stack -> [Variable] -> Maybe TypeDefinition -> StackHandler
+typedOrigin :: Stack -> [Variable] -> Maybe TypeDefinition -> AppStateMonad StackHandler
 typedOrigin stack variablePath typeDefinition = (findType stack typeDefinition (Left (variablePath, [Ln (variableToString variablePath)])))
