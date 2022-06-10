@@ -41,7 +41,7 @@ operatorEqualOperator stack typeDefinition (Right ([[RightHandSideOperator Equal
 operatorEqualOperator _ _ _ = Nothing
 
 ---------------------
--- Boolean Handler --
+-- Number Handler --
 ---------------------
 numberHandler :: TypeHandler
 numberHandler stack typeDefinition stackParameter = numberHandlerByLiteral stack typeDefinition stackParameter <|> numberHandlerByType stack typeDefinition stackParameter
@@ -71,7 +71,7 @@ numberHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "Number" [
           StackHandler
             { runPrimitive =
                 do
-                  return ([selfDependency], code),
+                  return (selfDependency, code),
               runFunctionApplication = \_ -> error "no function application implemented in number",
               runProperty = \_ -> error "no property access implemented",
               runResolvedType = typeDefinition
@@ -93,7 +93,7 @@ booleanHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "Boolean"
           StackHandler
             { runPrimitive =
                 do
-                  return ([selfDependency], code),
+                  return (selfDependency, code),
               runFunctionApplication = \_ -> error "no function application implemented in boolean",
               runProperty = \_ -> error "no property access implemented",
               runResolvedType = typeDefinition
@@ -146,7 +146,7 @@ stringHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "String" [
             ( StackHandler
                 { runPrimitive =
                     do
-                      return ([selfDependency], code),
+                      return (selfDependency, code),
                   runFunctionApplication = \_ -> error "no function application implemented in stringreference",
                   runProperty = \_ -> error "no property access implemented",
                   runResolvedType = typeDefinition
@@ -161,7 +161,7 @@ stringHandlerByType _ _ _ = Nothing
 --------------------
 
 recordHandler :: TypeHandler
-recordHandler stack typeDefinition@(Just (TypeRecord properties)) (Left ((selfDependency, code))) =
+recordHandler stack typeDefinition@(Just (TypeRecord properties)) (Left (([selfDependency], code))) =
   let stackHandler =
         StackHandler
           { runPrimitive =
@@ -171,13 +171,66 @@ recordHandler stack typeDefinition@(Just (TypeRecord properties)) (Left ((selfDe
             runProperty = \propertyName -> do
               case find (\(propertyName', typeDefinition) -> propertyName == propertyName') properties of
                 Just (_, propertyType) -> do
-                  let property = (selfDependency ++ [DotNotation propertyName], code ++ [Ln ("." ++ propertyName)])
+                  let property = ([selfDependency ++ [DotNotation propertyName]], code ++ [Ln ("." ++ propertyName)])
                   ((findType stack (Just propertyType) (Left property)))
                 Nothing -> error ("could not find " ++ propertyName ++ show typeDefinition),
             runResolvedType = typeDefinition
           }
    in Just (return stackHandler)
 recordHandler _ _ _ = Nothing
+
+---------------------
+-- List Handler --
+---------------------
+listHandler :: TypeHandler
+listHandler stack typeDefinition stackParameter = listHandlerByLiteral stack typeDefinition stackParameter <|> listHandlerByType stack typeDefinition stackParameter
+
+listHandlerByLiteral :: TypeHandler
+listHandlerByLiteral stack typeDefinition (Right [[RightHandSideList listEntities []]]) =
+  Just
+    ( do
+        let stackHandler =
+              StackHandler
+                { runPrimitive =
+                    do
+                      let listEntityType =
+                            ( case typeDefinition of
+                                (Just (TypeList listEntityType)) -> Just listEntityType
+                                _ -> Nothing
+                            )
+                      stackHandler <- mapM (\listEntity -> toTypedExpression stack listEntityType [listEntity]) listEntities
+                      primitives <- mapM runPrimitive stackHandler
+                      return (concatMap fst primitives, Ln ("[") : intercalate [Ln ","] (map snd primitives) ++ [Ln "]"]),
+                  runFunctionApplication = \_ -> error "no function application implemented in list",
+                  runProperty = (listHandlerRunProperty stack stackHandler),
+                  runResolvedType = typeDefinition
+                }
+        return
+          stackHandler
+    )
+listHandlerByLiteral _ _ _ = Nothing
+
+listHandlerByType :: TypeHandler
+listHandlerByType stack typeDefinition@(Just (TypeList listEntityType)) (Left ((selfDependency, code))) =
+  Just
+    ( do
+        let stackHandler =
+              StackHandler
+                { runPrimitive =
+                    do
+                      return (selfDependency, code),
+                  runFunctionApplication = \_ -> error "no function application implemented in list",
+                  runProperty = (listHandlerRunProperty stack stackHandler),
+                  runResolvedType = typeDefinition
+                }
+        return stackHandler
+    )
+listHandlerByType _ _ _ = Nothing
+
+listHandlerRunProperty :: Stack -> StackHandler -> String -> AppStateMonad StackHandler
+listHandlerRunProperty stack listStackHandler "length" = do
+  (dependencies, code) <- runPrimitive listStackHandler
+  findType stack (Just (TypeAlgebraicDataType "Number" [])) (Left (dependencies, code ++ [Ln ".length"]))
 
 ----------------------
 -- Function Handler --
@@ -226,7 +279,7 @@ functionHandlerByType :: TypeHandler
 functionHandlerByType stack typeDefinition@(Just (TypeFunction typeParameters typeReturn)) (Left ((selfDependency, code))) =
   let stackHandler =
         StackHandler
-          { runPrimitive = do return ([selfDependency], code),
+          { runPrimitive = do return (selfDependency, code),
             runFunctionApplication = \parameters -> do
               (primitive, code) <- runPrimitive stackHandler
               parameterPrimitives <- mapM runPrimitive parameters
@@ -271,7 +324,7 @@ voidHandler stack typeDefinition@(Just (TypeAlgebraicDataType "Void" [])) (Left 
             ( StackHandler
                 { runPrimitive =
                     do
-                      return ([selfDependency], code),
+                      return (selfDependency, code),
                   runFunctionApplication = \_ -> error "no function application implemented in void",
                   runProperty = \_ -> error "no property access implemented",
                   runResolvedType = typeDefinition
@@ -384,6 +437,7 @@ prelude =
     StackType numberHandler,
     StackType stringHandler,
     StackType recordHandler,
+    StackType listHandler,
     StackType componentHandler,
     StackType functionHandler,
     StackType voidHandler
@@ -750,4 +804,4 @@ appendElement' ((SiblingCondition condition thenSiblings elseSiblings) : restSib
               PredecessorNone
 
 typedOrigin :: Stack -> [Variable] -> Maybe TypeDefinition -> AppStateMonad StackHandler
-typedOrigin stack variablePath typeDefinition = (findType stack typeDefinition (Left (variablePath, [Ln (variableToString variablePath)])))
+typedOrigin stack variablePath typeDefinition = (findType stack typeDefinition (Left ([variablePath], [Ln (variableToString variablePath)])))

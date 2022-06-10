@@ -33,7 +33,7 @@ data StackHandler = StackHandler
     runResolvedType :: Maybe TypeDefinition
   }
 
-type StackParameter = Either ([Variable], [Code]) [UntypedExpression]
+type StackParameter = Either ([[Variable]], [Code]) [UntypedExpression]
 
 type TypeHandler = Stack -> Maybe TypeDefinition -> StackParameter -> Maybe (AppStateMonad StackHandler)
 
