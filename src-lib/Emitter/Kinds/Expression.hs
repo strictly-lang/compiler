@@ -15,6 +15,71 @@ import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
 import Types
 
 ---------------------
+-- Operator Handler --
+---------------------
+operatorHandler :: TypeHandler
+operatorHandler = operatorEqualOperator
+
+operatorEqualOperator :: TypeHandler
+operatorEqualOperator stack typeDefinition (Right ([[RightHandSideOperator Equal firstExpression secondExpression]])) =
+  Just
+    ( do
+        return
+          StackHandler
+            { runPrimitive =
+                do
+                  firstExpressionHandler <- toTypedExpression stack Nothing [firstExpression]
+                  firstExpressionPrimitive <- runPrimitive firstExpressionHandler
+                  secondExpressionHandler <- toTypedExpression stack Nothing [secondExpression]
+                  secondExpressionPrimitive <- runPrimitive secondExpressionHandler
+                  return (fst firstExpressionPrimitive ++ fst secondExpressionPrimitive, snd firstExpressionPrimitive ++ [Ln " == "] ++ snd secondExpressionPrimitive),
+              runFunctionApplication = \_ -> error "no function application implemented in boolean",
+              runProperty = \_ -> error "no property access implemented",
+              runResolvedType = typeDefinition
+            }
+    )
+operatorEqualOperator _ _ _ = Nothing
+
+---------------------
+-- Boolean Handler --
+---------------------
+numberHandler :: TypeHandler
+numberHandler stack typeDefinition stackParameter = numberHandlerByLiteral stack typeDefinition stackParameter <|> numberHandlerByType stack typeDefinition stackParameter
+
+numberHandlerByLiteral :: TypeHandler
+numberHandlerByLiteral stack typeDefinition (Right [[RightHandSideNumber int]]) =
+  Just
+    ( do
+        ( return
+            StackHandler
+              { runPrimitive =
+                  do
+                    return ([], [Ln (show int)]),
+                runFunctionApplication = \_ -> error "no function application implemented in number",
+                runProperty = \_ -> error "no property access implemented",
+                runResolvedType = typeDefinition
+              }
+          )
+    )
+numberHandlerByLiteral _ _ _ = Nothing
+
+numberHandlerByType :: TypeHandler
+numberHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "Number" [])) (Left ((selfDependency, code))) =
+  Just
+    ( do
+        return
+          StackHandler
+            { runPrimitive =
+                do
+                  return ([selfDependency], code),
+              runFunctionApplication = \_ -> error "no function application implemented in number",
+              runProperty = \_ -> error "no property access implemented",
+              runResolvedType = typeDefinition
+            }
+    )
+numberHandlerByType _ _ _ = Nothing
+
+---------------------
 -- Boolean Handler --
 ---------------------
 booleanHandler :: TypeHandler
@@ -314,7 +379,9 @@ componentHandler _ _ _ = Nothing
 
 prelude :: [StackEntry]
 prelude =
-  [ StackType booleanHandler,
+  [ StackType operatorHandler,
+    StackType booleanHandler,
+    StackType numberHandler,
     StackType stringHandler,
     StackType recordHandler,
     StackType componentHandler,
