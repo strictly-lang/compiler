@@ -264,8 +264,12 @@ listHandlerRunViewStream stackHandler stack scope parent siblings leftHandSide b
             ]
               ++ iterableCode
               ++ [ Br,
-                   Ln "for() {",
-                   Ind [],
+                   Ln ("for(let " ++ variableToString index ++ " = 0; " ++ variableToString index ++ " < " ++ variableToString iterable ++ ".length; " ++ variableToString index ++ " += 1) {"),
+                   Ind
+                     [ Ln (variableToString (scopeContainer ++ [BracketNotation (variableToString index)]) ++ " = {};"),
+                       Br,
+                       Ln (variableToString eachCallback ++ "(" ++ variableToString index ++ ");")
+                     ],
                    Ln "}",
                    Br
                  ],
