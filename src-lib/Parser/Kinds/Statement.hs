@@ -114,10 +114,10 @@ caseParser indentationLevel = do
 rightHandSideAgebraicDataTypeParser :: IndentationLevel -> Parser UntypedExpression'
 rightHandSideAgebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser
-  hasParameter <- optional (lookAhead listOpenParser)
+  hasParameter <- optional (lookAhead functionCallOpenParser)
   parameters <- case hasParameter of
     Just _ -> do
-      blockParser listOpenParser listCloseParser expressionParser indentationLevel
+      blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
     Nothing -> do return []
   return (RightHandSideAlgebraicDataType name parameters)
 

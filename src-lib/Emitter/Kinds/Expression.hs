@@ -35,6 +35,7 @@ operatorEqualOperator stack typeDefinition (Right ([[RightHandSideOperator Equal
                   return (fst firstExpressionPrimitive ++ fst secondExpressionPrimitive, snd firstExpressionPrimitive ++ [Ln " == "] ++ snd secondExpressionPrimitive),
               runFunctionApplication = \_ -> error "no function application implemented in boolean",
               runProperty = \_ -> error "no property access implemented",
+              runViewStream = \_ -> error "no streaming",
               runResolvedType = typeDefinition
             }
     )
@@ -57,6 +58,7 @@ numberHandlerByLiteral stack typeDefinition (Right [[RightHandSideNumber int]]) 
                     return ([], [Ln (show int)]),
                 runFunctionApplication = \_ -> error "no function application implemented in number",
                 runProperty = \_ -> error "no property access implemented",
+                runViewStream = \_ -> error "no streaming",
                 runResolvedType = typeDefinition
               }
           )
@@ -74,6 +76,7 @@ numberHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "Number" [
                   return (selfDependency, code),
               runFunctionApplication = \_ -> error "no function application implemented in number",
               runProperty = \_ -> error "no property access implemented",
+              runViewStream = \_ -> error "no streaming",
               runResolvedType = typeDefinition
             }
     )
@@ -96,6 +99,7 @@ booleanHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "Boolean"
                   return (selfDependency, code),
               runFunctionApplication = \_ -> error "no function application implemented in boolean",
               runProperty = \_ -> error "no property access implemented",
+              runViewStream = \_ -> error "no streaming",
               runResolvedType = typeDefinition
             }
     )
@@ -131,6 +135,7 @@ stringHandlerByLiteral stack typeDefinition (Right [[RightHandSideString strings
                       return (concatMap fst result, Ln "`" : (concatMap snd result) ++ [Ln "`"]),
                   runFunctionApplication = \_ -> error "no function application implemented in stringliteral",
                   runProperty = \_ -> error "no property access implemented",
+                  runViewStream = \_ -> error "no streaming",
                   runResolvedType = typeDefinition
                 }
             )
@@ -149,6 +154,7 @@ stringHandlerByType stack typeDefinition@(Just (TypeAlgebraicDataType "String" [
                       return (selfDependency, code),
                   runFunctionApplication = \_ -> error "no function application implemented in stringreference",
                   runProperty = \_ -> error "no property access implemented",
+                  runViewStream = \_ -> error "no streaming",
                   runResolvedType = typeDefinition
                 }
             )
@@ -174,6 +180,7 @@ recordHandler stack typeDefinition@(Just (TypeRecord properties)) (Left (([selfD
                   let property = ([selfDependency ++ [DotNotation propertyName]], code ++ [Ln ("." ++ propertyName)])
                   ((findType stack (Just propertyType) (Left property)))
                 Nothing -> error ("could not find " ++ propertyName ++ show typeDefinition),
+            runViewStream = \_ -> error "no streaming",
             runResolvedType = typeDefinition
           }
    in Just (return stackHandler)
@@ -200,9 +207,10 @@ listHandlerByLiteral stack typeDefinition (Right [[RightHandSideList listEntitie
                             )
                       stackHandler <- mapM (\listEntity -> toTypedExpression stack listEntityType [listEntity]) listEntities
                       primitives <- mapM runPrimitive stackHandler
-                      return (concatMap fst primitives, Ln ("[") : intercalate [Ln ","] (map snd primitives) ++ [Ln "]"]),
+                      return (concatMap fst primitives, Ln ("[") : intercalate [Ln ", "] (map snd primitives) ++ [Ln "]"]),
                   runFunctionApplication = \_ -> error "no function application implemented in list",
-                  runProperty = (listHandlerRunProperty stack stackHandler),
+                  runProperty = (listHandlerRunProperty stackHandler stack),
+                  runViewStream = (listHandlerRunViewStream stackHandler stack),
                   runResolvedType = typeDefinition
                 }
         return
@@ -220,17 +228,53 @@ listHandlerByType stack typeDefinition@(Just (TypeList listEntityType)) (Left ((
                     do
                       return (selfDependency, code),
                   runFunctionApplication = \_ -> error "no function application implemented in list",
-                  runProperty = (listHandlerRunProperty stack stackHandler),
+                  runProperty = (listHandlerRunProperty stackHandler stack),
+                  runViewStream = (listHandlerRunViewStream stackHandler stack),
                   runResolvedType = typeDefinition
                 }
         return stackHandler
     )
 listHandlerByType _ _ _ = Nothing
 
-listHandlerRunProperty :: Stack -> StackHandler -> String -> AppStateMonad StackHandler
-listHandlerRunProperty stack listStackHandler "length" = do
+listHandlerRunProperty :: StackHandler -> Stack -> String -> AppStateMonad StackHandler
+listHandlerRunProperty listStackHandler stack "length" = do
   (dependencies, code) <- runPrimitive listStackHandler
   findType stack (Just (TypeAlgebraicDataType "Number" [])) (Left (dependencies, code ++ [Ln ".length"]))
+
+listHandlerRunViewStream :: StackHandler -> Stack -> [Variable] -> Parent -> [Sibling] -> LeftHandSide -> [Statement] -> AppStateMonad ViewResult
+listHandlerRunViewStream stackHandler stack scope parent siblings leftHandSide body = do
+  exprId <- getFreshExprId
+  let scopeContainer = scope ++ nameToVariable "scopeContainer" exprId
+  let eachCallback = scope ++ nameToVariable "eachCallback" exprId
+  let index = nameToVariable "index" exprId
+  let iterable = scope ++ nameToVariable "iterable" exprId
+
+  (dependencies, iterableCode) <- runPrimitive stackHandler
+
+  return
+    ( ViewResult
+        { runViewCreate =
+            [ Ln (variableToString scopeContainer ++ " = {};"),
+              Br,
+              Ln (variableToString eachCallback ++ " = (" ++ variableToString index ++ ") => {"),
+              Ind [],
+              Ln "};",
+              Br,
+              Ln (variableToString iterable ++ " = ")
+            ]
+              ++ iterableCode
+              ++ [ Br,
+                   Ln "for() {",
+                   Ind [],
+                   Ln "}",
+                   Br
+                 ],
+          runViewUpdate = [],
+          runViewUnmount = [],
+          runViewDelete = [],
+          runSiblings = siblings
+        }
+    )
 
 ----------------------
 -- Function Handler --
@@ -268,6 +312,7 @@ functionHandlerByLiteral stack typeDefinition@(Just (TypeFunction typeParameters
                   runFunctionApplication = \parameters -> do
                     error "function application not yet implemented in literal",
                   runProperty = \_ -> error "no property access implemented",
+                  runViewStream = \_ -> error "no streaming",
                   runResolvedType = typeDefinition
                 }
             )
@@ -300,6 +345,7 @@ functionHandlerByType stack typeDefinition@(Just (TypeFunction typeParameters ty
                 )
                 ),
             runProperty = \_ -> error "no property access implemented",
+            runViewStream = \_ -> error "no streaming",
             runResolvedType = typeDefinition
           }
    in Just (return stackHandler)
@@ -327,6 +373,7 @@ voidHandler stack typeDefinition@(Just (TypeAlgebraicDataType "Void" [])) (Left 
                       return (selfDependency, code),
                   runFunctionApplication = \_ -> error "no function application implemented in void",
                   runProperty = \_ -> error "no property access implemented",
+                  runViewStream = \_ -> error "no streaming",
                   runResolvedType = typeDefinition
                 }
             )
@@ -423,6 +470,7 @@ componentHandler stack typeDefinition@(Just (TypeFunction [typedProperties, _] (
                         ),
                   runFunctionApplication = \_ -> error "no function application implemented",
                   runProperty = \_ -> error "no property access implemented",
+                  runViewStream = \_ -> error "no streaming",
                   runResolvedType = typeDefinition
                 }
             )
@@ -430,9 +478,22 @@ componentHandler stack typeDefinition@(Just (TypeFunction [typedProperties, _] (
     )
 componentHandler _ _ _ = Nothing
 
+zipHandler :: StackHandler
+zipHandler =
+  StackHandler
+    { runPrimitive =
+        do
+          return ([], []),
+      runFunctionApplication = \_ -> error "no function application implemented in list",
+      runProperty = \_ -> error "no property access implemented",
+      runViewStream = \_ -> error "no streaming",
+      runResolvedType = Nothing
+    }
+
 prelude :: [StackEntry]
 prelude =
-  [ StackType operatorHandler,
+  [ StackValue ("zip", zipHandler),
+    StackType operatorHandler,
     StackType booleanHandler,
     StackType numberHandler,
     StackType stringHandler,
@@ -559,6 +620,9 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
           runSiblings = runSiblings siblingResult
         }
     )
+render stack ((Stream leftHandSide untypedExpression) : restUntypedBody) scope parent siblings = do
+  result <- toTypedExpression stack Nothing [untypedExpression]
+  runViewStream result scope parent siblings leftHandSide restUntypedBody
 render variableStack ((UntypedExpression [RightHandSideCondition conditionExpression thenStatements elseStatements]) : restUntypedBody) scope parent siblings = do
   exprId <- getFreshExprId
   typedCondition <- toTypedExpression variableStack (Just (TypeAlgebraicDataType "Boolean" [])) [conditionExpression]

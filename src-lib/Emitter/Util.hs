@@ -18,9 +18,37 @@ pathToComponentName (p : ps) (a : as)
 getFreshExprId :: AppStateMonad Int
 getFreshExprId =
   state
-    ( \(AppState componentPath expressionId) ->
-        (expressionId, AppState componentPath (expressionId + 1))
+    ( \(AppState {componentName = componentName, expressionIdCounter = expressionIdCounter, modules = modules}) ->
+        ( expressionIdCounter,
+          AppState
+            { componentName = componentName,
+              expressionIdCounter = expressionIdCounter + 1,
+              modules = modules
+            }
+        )
     )
+
+getModule :: String -> String -> AppStateMonad String
+getModule moduleName importName =
+  state
+    ( \(AppState {componentName = componentName, expressionIdCounter = expressionIdCounter, modules = modules}) ->
+        let (expressionIdCounter', importName, modules') = addModule moduleName importName expressionIdCounter modules
+         in ( importName,
+              AppState
+                { componentName = componentName,
+                  expressionIdCounter = expressionIdCounter',
+                  modules = modules'
+                }
+            )
+    )
+
+type Modules = [(String, [(String, String)])]
+
+addModule :: String -> String -> Int -> Modules -> (Int, String, Modules)
+addModule moduleName importName expressionIdCounter [] =
+  let expressionIdCounter' = expressionIdCounter + 1
+      importName' = importName ++ show expressionIdCounter
+   in (expressionIdCounter', importName', [(moduleName, [(importName, importName')])])
 
 removeFileExtension :: String -> String
 removeFileExtension p = take (length p - length ".sly") p

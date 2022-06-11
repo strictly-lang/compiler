@@ -17,15 +17,15 @@ dataParser = do
   dataDeclarations <- blockParser assignParser statementTerminationParser algebraicDataTypeParser 0
   return (RootDataDeclaration name dataDeclarations)
 
-algebraicDataTypeParser :: IndentationLevel -> Parser DataDeclaration
+algebraicDataTypeParser :: IndentationLevel -> Parser (String, [TypeDefinition])
 algebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser <* sc
   hasParameter <- optional (lookAhead functionCallOpenParser)
   parameters <-
     case hasParameter of
-      Just _ -> do blockParser functionCallOpenParser functionCallCloseParser algebraicDataTypeParser indentationLevel
+      Just _ -> do blockParser functionCallOpenParser functionCallCloseParser typeDefinitionParser indentationLevel
       Nothing -> do return []
-  return (DataDeclaration (name, parameters))
+  return (name, parameters)
 
 assignmentParser :: Parser Root
 assignmentParser = do

@@ -8,7 +8,8 @@ data Code = Ln String | Ind [Code] | Br
 
 data AppState = AppState
   { componentName :: String,
-    expressionIdCounter :: Int
+    expressionIdCounter :: Int,
+    modules :: [(String, [(String, String)])]
   }
 
 data Variable = DotNotation String | BracketNotation String
@@ -30,6 +31,7 @@ data StackHandler = StackHandler
   { runPrimitive :: AppStateMonad ([[Variable]], [Code]),
     runFunctionApplication :: [StackHandler] -> AppStateMonad StackHandler,
     runProperty :: String -> AppStateMonad StackHandler,
+    runViewStream :: [Variable] -> Parent -> [Sibling] -> LeftHandSide -> [Statement] -> AppStateMonad ViewResult,
     runResolvedType :: Maybe TypeDefinition
   }
 

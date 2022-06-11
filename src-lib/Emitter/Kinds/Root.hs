@@ -14,7 +14,7 @@ import Types
 compileRoot :: String -> [Root] -> String
 compileRoot componentName roots =
   let code = compileRoot' prelude roots
-      (result, _) = runState code (AppState componentName 0)
+      (result, _) = runState code (AppState {componentName = componentName, expressionIdCounter = 0, modules = []})
    in codeToString 0 True result
 
 compileRoot' :: Stack -> [Root] -> AppStateMonad [Code]

@@ -1,13 +1,10 @@
 module Types where
 
 data Root
-  = RootDataDeclaration String [DataDeclaration]
+  = RootDataDeclaration String [(String, [TypeDefinition])]
   | RootTypeAlias String TypeDefinition
   | RootTypeAssignment String TypeDefinition
   | RootAssignment String UntypedExpression
-  deriving (Show)
-
-newtype DataDeclaration = DataDeclaration (String, [DataDeclaration])
   deriving (Show)
 
 data TypeDefinition
