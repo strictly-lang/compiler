@@ -14,7 +14,7 @@ algebraicDataTypeTypeHandler name parameterTypes stack typeDefinition (Right [[R
                 StackHandler
                   { runPrimitive =
                       do
-                        parameterStackHandlers <- mapM (\(typeDefinition, parameterExpression) -> toTypedExpression stack (Just typeDefinition) [parameterExpression]) (zip parameterTypes untypedParameterExpressions)
+                        parameterStackHandlers <- mapM (\(typeDefinition, parameterExpression) -> toTypedExpression stack typeDefinition [parameterExpression]) (zip parameterTypes untypedParameterExpressions)
                         parameterResult <- mapM runPrimitive parameterStackHandlers
                         return
                           ( concatMap fst parameterResult,
@@ -26,7 +26,8 @@ algebraicDataTypeTypeHandler name parameterTypes stack typeDefinition (Right [[R
                     runFunctionApplication = \_ -> error "no function application implemented in stringreference",
                     runProperty = \_ -> error "no property access implemented",
                     runViewStream = \_ -> error "no streaming",
-                    runResolvedType = typeDefinition
+                    runResolvedType = typeDefinition,
+                    runPatternMatching = \leftHandSide -> return []
                   }
           return
             stackHandler

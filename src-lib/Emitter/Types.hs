@@ -32,12 +32,13 @@ data StackHandler = StackHandler
     runFunctionApplication :: [StackHandler] -> AppStateMonad StackHandler,
     runProperty :: String -> AppStateMonad StackHandler,
     runViewStream :: [Variable] -> Parent -> [Sibling] -> LeftHandSide -> [Statement] -> AppStateMonad ViewResult,
-    runResolvedType :: Maybe TypeDefinition
+    runResolvedType :: TypeDefinition,
+    runPatternMatching :: LeftHandSide -> AppStateMonad Stack
   }
 
 type StackParameter = Either ([[Variable]], [Code]) [UntypedExpression]
 
-type TypeHandler = Stack -> Maybe TypeDefinition -> StackParameter -> Maybe (AppStateMonad StackHandler)
+type TypeHandler = Stack -> TypeDefinition -> StackParameter -> Maybe (AppStateMonad StackHandler)
 
 data StackEntry = StackValue (String, StackHandler) | StackType TypeHandler
 

@@ -13,6 +13,7 @@ data TypeDefinition
   | TypeRecord [(String, TypeDefinition)]
   | TypeTuple [TypeDefinition]
   | TypeList TypeDefinition
+  | TypeUnknown
   deriving (Show)
 
 data Statement

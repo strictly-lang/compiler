@@ -25,7 +25,7 @@ compileRoot' variableStack (RootDataDeclaration _ dataDeclarations : restRoot) =
 
   return (result ++ next)
 compileRoot' stack ((RootTypeAssignment name typeDefinition) : (RootAssignment name' untypedExpression) : restRoot) = do
-  result@stackHandler <- toTypedExpression stack (Just typeDefinition) [untypedExpression]
+  result@stackHandler <- toTypedExpression stack typeDefinition [untypedExpression]
 
   (_, code) <- runPrimitive stackHandler
   let stack' = StackValue (name, result) : stack
