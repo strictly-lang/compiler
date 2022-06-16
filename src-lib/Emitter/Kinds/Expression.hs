@@ -1,7 +1,4 @@
 {-# LANGUAGE LambdaCase #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
-{-# HLINT ignore "Redundant bracket" #-}
 
 module Emitter.Kinds.Expression where
 
@@ -9,6 +6,7 @@ import Control.Applicative ((<|>))
 import Control.Monad.State.Lazy (get)
 import Data.Foldable (find)
 import Data.List (groupBy, intercalate, intersperse, isPrefixOf)
+import Data.Maybe (isJust)
 import Emitter.Types
 import Emitter.Util (getFreshExprId, groupProperties, nameToVariable, slashToCamelCase, slashToDash, variableToString)
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
@@ -21,7 +19,7 @@ operatorHandler :: TypeHandler
 operatorHandler = operatorEqualOperator
 
 operatorEqualOperator :: TypeHandler
-operatorEqualOperator stack typeDefinition (Right ([[RightHandSideOperator Equal firstExpression secondExpression]])) =
+operatorEqualOperator stack typeDefinition (Right [[RightHandSideOperator Equal firstExpression secondExpression]]) =
   Just
     ( do
         return
@@ -52,23 +50,22 @@ numberHandlerByLiteral :: TypeHandler
 numberHandlerByLiteral stack typeDefinition (Right [[RightHandSideNumber int]]) =
   Just
     ( do
-        ( return
-            StackHandler
-              { runPrimitive =
-                  do
-                    return ([], [Ln (show int)]),
-                runFunctionApplication = \_ -> error "no function application implemented in number",
-                runProperty = \_ -> error "no property access implemented",
-                runViewStream = \_ -> error "no streaming",
-                runResolvedType = typeDefinition `infers` (TypeAlgebraicDataType "Number" []),
-                runPatternMatching = \_ -> error "no pattern access implemented"
-              }
-          )
+        return
+          StackHandler
+            { runPrimitive =
+                do
+                  return ([], [Ln (show int)]),
+              runFunctionApplication = \_ -> error "no function application implemented in number",
+              runProperty = \_ -> error "no property access implemented",
+              runViewStream = \_ -> error "no streaming",
+              runResolvedType = typeDefinition `infers` TypeAlgebraicDataType "Number" [],
+              runPatternMatching = \_ -> error "no pattern access implemented"
+            }
     )
 numberHandlerByLiteral _ _ _ = Nothing
 
 numberHandlerByType :: TypeHandler
-numberHandlerByType stack typeDefinition@((TypeAlgebraicDataType "Number" [])) (Left ((selfDependency, code))) =
+numberHandlerByType stack typeDefinition@((TypeAlgebraicDataType "Number" [])) (Left (selfDependency, code)) =
   Just
     ( do
         return
@@ -92,7 +89,7 @@ booleanHandler :: TypeHandler
 booleanHandler = booleanHandlerByType
 
 booleanHandlerByType :: TypeHandler
-booleanHandlerByType stack typeDefinition@((TypeAlgebraicDataType "Boolean" [])) (Left ((selfDependency, code))) =
+booleanHandlerByType stack typeDefinition@((TypeAlgebraicDataType "Boolean" [])) (Left (selfDependency, code)) =
   Just
     ( do
         return
@@ -120,50 +117,48 @@ stringHandlerByLiteral :: TypeHandler
 stringHandlerByLiteral stack typeDefinition (Right [[RightHandSideString strings]]) =
   Just
     ( do
-        ( return
-            ( StackHandler
-                { runPrimitive =
-                    do
-                      result <-
-                        mapM
-                          ( \case
-                              RightHandSideStringStatic static -> do
-                                return ([], [Ln static])
-                              RightHandSideStringDynamic untypedExpression -> do
-                                (typedExpression) <- toTypedExpression stack typeDefinition [untypedExpression]
-                                (dependencies, result) <- runPrimitive typedExpression
+        return
+          ( StackHandler
+              { runPrimitive =
+                  do
+                    result <-
+                      mapM
+                        ( \case
+                            RightHandSideStringStatic static -> do
+                              return ([], [Ln static])
+                            RightHandSideStringDynamic untypedExpression -> do
+                              typedExpression <- toTypedExpression stack typeDefinition [untypedExpression]
+                              (dependencies, result) <- runPrimitive typedExpression
 
-                                return (dependencies, Ln "${" : result ++ [Ln "}"])
-                          )
-                          strings
-                      return (concatMap fst result, Ln "`" : (concatMap snd result) ++ [Ln "`"]),
-                  runFunctionApplication = \_ -> error "no function application implemented in stringliteral",
-                  runProperty = \_ -> error "no property access implemented",
-                  runViewStream = \_ -> error "no streaming",
-                  runResolvedType = typeDefinition `infers` (TypeAlgebraicDataType "String" []),
-                  runPatternMatching = \_ -> error "no pattern access implemented"
-                }
-            )
+                              return (dependencies, Ln "${" : result ++ [Ln "}"])
+                        )
+                        strings
+                    return (concatMap fst result, Ln "`" : concatMap snd result ++ [Ln "`"]),
+                runFunctionApplication = \_ -> error "no function application implemented in stringliteral",
+                runProperty = \_ -> error "no property access implemented",
+                runViewStream = \_ -> error "no streaming",
+                runResolvedType = typeDefinition `infers` TypeAlgebraicDataType "String" [],
+                runPatternMatching = \_ -> error "no pattern access implemented"
+              }
           )
     )
 stringHandlerByLiteral _ _ _ = Nothing
 
 stringHandlerByType :: TypeHandler
-stringHandlerByType stack typeDefinition@((TypeAlgebraicDataType "String" [])) (Left ((selfDependency, code))) =
+stringHandlerByType stack typeDefinition@((TypeAlgebraicDataType "String" [])) (Left (selfDependency, code)) =
   Just
     ( do
-        ( return
-            ( StackHandler
-                { runPrimitive =
-                    do
-                      return (selfDependency, code),
-                  runFunctionApplication = \_ -> error "no function application implemented in stringreference",
-                  runProperty = \_ -> error "no property access implemented",
-                  runViewStream = \_ -> error "no streaming",
-                  runResolvedType = typeDefinition,
-                  runPatternMatching = \_ -> error "no pattern access implemented"
-                }
-            )
+        return
+          ( StackHandler
+              { runPrimitive =
+                  do
+                    return (selfDependency, code),
+                runFunctionApplication = \_ -> error "no function application implemented in stringreference",
+                runProperty = \_ -> error "no property access implemented",
+                runViewStream = \_ -> error "no streaming",
+                runResolvedType = typeDefinition,
+                runPatternMatching = \_ -> error "no pattern access implemented"
+              }
           )
     )
 stringHandlerByType _ _ _ = Nothing
@@ -173,7 +168,7 @@ stringHandlerByType _ _ _ = Nothing
 --------------------
 
 recordHandler :: TypeHandler
-recordHandler stack typeDefinition@((TypeRecord properties)) (Left (([selfDependency], code))) =
+recordHandler stack typeDefinition@((TypeRecord properties)) (Left ([selfDependency], code)) =
   let stackHandler =
         StackHandler
           { runPrimitive =
@@ -184,7 +179,7 @@ recordHandler stack typeDefinition@((TypeRecord properties)) (Left (([selfDepend
               case find (\(propertyName', typeDefinition) -> propertyName == propertyName') properties of
                 Just (_, propertyType) -> do
                   let property = ([selfDependency ++ [DotNotation propertyName]], code ++ [Ln ("." ++ propertyName)])
-                  ((findType stack (propertyType) (Left property)))
+                  findType stack propertyType (Left property)
                 Nothing -> error ("could not find " ++ propertyName ++ show typeDefinition),
             runViewStream = \_ -> error "no streaming",
             runResolvedType = typeDefinition,
@@ -214,10 +209,10 @@ listHandlerByLiteral stack typeDefinition (Right [[RightHandSideList listEntitie
                       do
                         stackHandler <- mapM (\listEntity -> toTypedExpression stack listEntityType [listEntity]) listEntities
                         primitives <- mapM runPrimitive stackHandler
-                        return (concatMap fst primitives, Ln ("[") : intercalate [Ln ", "] (map snd primitives) ++ [Ln "]"]),
+                        return (concatMap fst primitives, Ln "[" : intercalate [Ln ", "] (map snd primitives) ++ [Ln "]"]),
                     runFunctionApplication = \_ -> error "no function application implemented in list",
-                    runProperty = (listHandlerRunProperty stackHandler stack),
-                    runViewStream = (listHandlerRunViewStream stackHandler stack),
+                    runProperty = listHandlerRunProperty stackHandler stack,
+                    runViewStream = listHandlerRunViewStream stackHandler stack,
                     runResolvedType = typeDefinition `infers` TypeList listEntityType,
                     runPatternMatching = \_ -> error "no pattern access implemented"
                   }
@@ -227,7 +222,7 @@ listHandlerByLiteral stack typeDefinition (Right [[RightHandSideList listEntitie
 listHandlerByLiteral _ _ _ = Nothing
 
 listHandlerByType :: TypeHandler
-listHandlerByType stack typeDefinition@((TypeList listEntityType)) (Left ((selfDependency, code))) =
+listHandlerByType stack typeDefinition@((TypeList listEntityType)) (Left (selfDependency, code)) =
   Just
     ( do
         let stackHandler =
@@ -236,8 +231,8 @@ listHandlerByType stack typeDefinition@((TypeList listEntityType)) (Left ((selfD
                     do
                       return (selfDependency, code),
                   runFunctionApplication = \_ -> error "no function application implemented in list",
-                  runProperty = (listHandlerRunProperty stackHandler stack),
-                  runViewStream = (listHandlerRunViewStream stackHandler stack),
+                  runProperty = listHandlerRunProperty stackHandler stack,
+                  runViewStream = listHandlerRunViewStream stackHandler stack,
                   runResolvedType = typeDefinition,
                   runPatternMatching = \_ -> error "no pattern access implemented"
                 }
@@ -248,7 +243,7 @@ listHandlerByType _ _ _ = Nothing
 listHandlerRunProperty :: StackHandler -> Stack -> String -> AppStateMonad StackHandler
 listHandlerRunProperty listStackHandler stack "length" = do
   (dependencies, code) <- runPrimitive listStackHandler
-  findType stack ((TypeAlgebraicDataType "Number" [])) (Left (dependencies, code ++ [Ln ".length"]))
+  findType stack (TypeAlgebraicDataType "Number" []) (Left (dependencies, code ++ [Ln ".length"]))
 
 listHandlerRunViewStream :: StackHandler -> Stack -> [Variable] -> Parent -> [Sibling] -> LeftHandSide -> [Statement] -> AppStateMonad ViewResult
 listHandlerRunViewStream stackHandler stack scope parent siblings leftHandSide body = do
@@ -283,7 +278,7 @@ listHandlerRunViewStream stackHandler stack scope parent siblings leftHandSide b
               ++ [ Br,
                    Ln ("for(let " ++ variableToString index ++ " = 0; " ++ variableToString index ++ " < " ++ variableToString iterable ++ ".length; " ++ variableToString index ++ " += 1) {"),
                    Ind
-                     [ Ln (variableToString (entityScope) ++ " = {};"),
+                     [ Ln (variableToString entityScope ++ " = {};"),
                        Br,
                        Ln (variableToString eachCallback ++ "(" ++ variableToString index ++ ");")
                      ],
@@ -304,46 +299,44 @@ functionHandler :: TypeHandler
 functionHandler stack typeDefinition stackParameter = functionHandlerByLiteral stack typeDefinition stackParameter <|> functionHandlerByType stack typeDefinition stackParameter
 
 functionHandlerByLiteral :: TypeHandler
-functionHandlerByLiteral stack typeDefinition@((TypeFunction typeParameters typeReturn)) (Right ([[RightHandSideFunctionDefinition parameters body]])) =
+functionHandlerByLiteral stack typeDefinition@((TypeFunction typeParameters typeReturn)) (Right [[RightHandSideFunctionDefinition parameters body]]) =
   Just
     ( do
-        ( return
-            ( StackHandler
-                { runPrimitive = do
-                    parameterNames <-
-                      mapM
-                        ( const
-                            (nameToVariable "param" <$> getFreshExprId)
-                        )
-                        typeParameters
-                    parameterStackHandlers <- mapM (\(typeDefinition, parameterName) -> typedOrigin stack parameterName (typeDefinition)) (zip typeParameters parameterNames)
-                    stack' <- addToVariableStack stack ((zip parameters parameterStackHandlers))
+        return
+          ( StackHandler
+              { runPrimitive = do
+                  parameterNames <-
+                    mapM
+                      ( const
+                          (nameToVariable "param" <$> getFreshExprId)
+                      )
+                      typeParameters
+                  parameterStackHandlers <- mapM (\(typeDefinition, parameterName) -> typedOrigin stack parameterName typeDefinition) (zip typeParameters parameterNames)
+                  stack' <- addToVariableStack stack (zip parameters parameterStackHandlers)
 
-                    result <- code stack' body
-                    return
-                      ( [],
-                        ( Ln "((" :
-                          (intersperse (Ln ",") (map (Ln <$> variableToString) parameterNames))
-                            ++ [ Ln ") => {",
-                                 Ind result,
-                                 Ln "})"
-                               ]
-                        )
-                      ),
-                  runFunctionApplication = \parameters -> do
-                    error "function application not yet implemented in literal",
-                  runProperty = \_ -> error "no property access implemented",
-                  runViewStream = \_ -> error "no streaming",
-                  runResolvedType = typeDefinition `infers` TypeFunction [] TypeUnknown,
-                  runPatternMatching = \_ -> error "no pattern access implemented"
-                }
-            )
+                  result <- code stack' body
+                  return
+                    ( [],
+                      Ln "((" :
+                      intersperse (Ln ",") (map (Ln <$> variableToString) parameterNames)
+                        ++ [ Ln ") => {",
+                             Ind result,
+                             Ln "})"
+                           ]
+                    ),
+                runFunctionApplication = \parameters -> do
+                  error "function application not yet implemented in literal",
+                runProperty = \_ -> error "no property access implemented",
+                runViewStream = \_ -> error "no streaming",
+                runResolvedType = typeDefinition `infers` TypeFunction [] TypeUnknown,
+                runPatternMatching = \_ -> error "no pattern access implemented"
+              }
           )
     )
 functionHandlerByLiteral _ _ _ = Nothing
 
 functionHandlerByType :: TypeHandler
-functionHandlerByType stack typeDefinition@((TypeFunction typeParameters typeReturn)) (Left ((selfDependency, code))) =
+functionHandlerByType stack typeDefinition@((TypeFunction typeParameters typeReturn)) (Left (selfDependency, code)) =
   let stackHandler =
         StackHandler
           { runPrimitive = do return (selfDependency, code),
@@ -351,20 +344,18 @@ functionHandlerByType stack typeDefinition@((TypeFunction typeParameters typeRet
               (primitive, code) <- runPrimitive stackHandler
               parameterPrimitives <- mapM runPrimitive parameters
 
-              ( ( findType
-                    stack
-                    (typeReturn)
-                    ( Left
-                        ( [],
-                          code
-                            ++ [ Ln "("
-                               ]
-                            ++ intercalate [Ln ","] (map snd parameterPrimitives)
-                            ++ [ Ln ")"
-                               ]
-                        )
+              findType
+                stack
+                typeReturn
+                ( Left
+                    ( [],
+                      code
+                        ++ [ Ln "("
+                           ]
+                        ++ intercalate [Ln ","] (map snd parameterPrimitives)
+                        ++ [ Ln ")"
+                           ]
                     )
-                )
                 ),
             runProperty = \_ -> error "no property access implemented",
             runViewStream = \_ -> error "no streaming",
@@ -386,21 +377,20 @@ code stack ((UntypedExpression untypedExpression) : restStatements) = do
 -- Void Handler --
 ---------------------
 voidHandler :: TypeHandler
-voidHandler stack typeDefinition@((TypeAlgebraicDataType "Void" [])) (Left ((selfDependency, code))) =
+voidHandler stack typeDefinition@((TypeAlgebraicDataType "Void" [])) (Left (selfDependency, code)) =
   Just
     ( do
-        ( return
-            ( StackHandler
-                { runPrimitive =
-                    do
-                      return (selfDependency, code),
-                  runFunctionApplication = \_ -> error "no function application implemented in void",
-                  runProperty = \_ -> error "no property access implemented",
-                  runViewStream = \_ -> error "no streaming",
-                  runResolvedType = typeDefinition,
-                  runPatternMatching = \_ -> error "no pattern access implemented"
-                }
-            )
+        return
+          ( StackHandler
+              { runPrimitive =
+                  do
+                    return (selfDependency, code),
+                runFunctionApplication = \_ -> error "no function application implemented in void",
+                runProperty = \_ -> error "no property access implemented",
+                runViewStream = \_ -> error "no streaming",
+                runResolvedType = typeDefinition,
+                runPatternMatching = \_ -> error "no pattern access implemented"
+              }
           )
     )
 voidHandler _ _ _ = Nothing
@@ -410,115 +400,116 @@ voidHandler _ _ _ = Nothing
 -----------------------
 
 componentHandler :: TypeHandler
-componentHandler stack typeDefinition@((TypeFunction [typedProperties, _] (TypeAlgebraicDataType "View" []))) (Right ([[RightHandSideFunctionDefinition [leftHandSideProperties, leftHandSideAttributes] body]])) =
+componentHandler stack typeDefinition@((TypeFunction [typedProperties, _] (TypeAlgebraicDataType "View" []))) (Right [[RightHandSideFunctionDefinition [leftHandSideProperties, leftHandSideAttributes] body]]) =
   Just
     ( do
-        ( return
-            ( StackHandler
-                { runPrimitive =
-                    do
-                      appState <- get
-                      exprId <- getFreshExprId
-                      let scope = [DotNotation "this"]
-                      let componentName' = componentName appState
-                      let unscopedMounted = nameToVariable "mounted" exprId
-                      let unscopedProperties = nameToVariable "properties" exprId
-                      let scopedMounted = scope ++ unscopedMounted
-                      let scopedProperties = scope ++ unscopedProperties
-                      -- let typedProperties = typedOrigin scopedProperties propertyTypes
-                      propertiesStackHandler <- typedOrigin stack scopedProperties (typedProperties)
-                      stack' <- addToVariableStack stack [(leftHandSideProperties, propertiesStackHandler)]
-                      let TypeRecord propertyTypes = typedProperties
-                      view <- render stack' body scope (scope ++ [DotNotation "shadowRoot"]) []
-                      let dependencies = runViewUpdate view
+        return
+          ( StackHandler
+              { runPrimitive =
+                  do
+                    appState <- get
+                    exprId <- getFreshExprId
+                    let scope = [DotNotation "this"]
+                    let componentName' = componentName appState
+                    let unscopedMounted = nameToVariable "mounted" exprId
+                    let unscopedProperties = nameToVariable "properties" exprId
+                    let scopedMounted = scope ++ unscopedMounted
+                    let scopedProperties = scope ++ unscopedProperties
+                    -- let typedProperties = typedOrigin scopedProperties propertyTypes
+                    propertiesStackHandler <- typedOrigin stack scopedProperties typedProperties
+                    stack' <- addToVariableStack stack [(leftHandSideProperties, propertiesStackHandler)]
+                    let TypeRecord propertyTypes = typedProperties
+                    view <- render stack' body scope (scope ++ [DotNotation "shadowRoot"]) []
+                    let dependencies = runViewUpdate view
 
-                      propertySetters <-
-                        ( mapM
-                            ( \(propertyName, _) -> do
-                                exprId <- getFreshExprId
-                                let propertyValue = nameToVariable "propertyValue" exprId
-                                let propertyPath = (scopedProperties ++ ([DotNotation propertyName]))
-                                let dependency = filter ((isPrefixOf propertyPath) . fst) dependencies
-                                return
+                    propertySetters <-
+                      mapM
+                        ( \(propertyName, _) -> do
+                            exprId <- getFreshExprId
+                            let propertyValue = nameToVariable "propertyValue" exprId
+                            let propertyPath = scopedProperties ++ [DotNotation propertyName]
+                            let dependency = filter (isPrefixOf propertyPath . fst) dependencies
+                            return
+                              [ Ln
+                                  ("set " ++ propertyName ++ "(" ++ variableToString propertyValue ++ ") {"),
+                                Ind
                                   [ Ln
-                                      ("set " ++ propertyName ++ "(" ++ variableToString propertyValue ++ ") {"),
-                                    Ind
-                                      ( [ Ln
-                                            ( variableToString propertyPath
-                                                ++ " = "
-                                                ++ variableToString propertyValue
-                                                ++ ";"
-                                            ),
-                                          Br,
-                                          Ln ("if (" ++ variableToString scopedMounted ++ ") {"),
-                                          Ind (concatMap snd dependency),
-                                          Ln "}"
-                                        ]
+                                      ( variableToString propertyPath
+                                          ++ " = "
+                                          ++ variableToString propertyValue
+                                          ++ ";"
                                       ),
-                                    Ln "}",
-                                    Br
-                                  ]
-                            )
-                            propertyTypes
-                          )
+                                    Br,
+                                    Ln ("if (" ++ variableToString scopedMounted ++ ") {"),
+                                    Ind (concatMap snd dependency),
+                                    Ln "}"
+                                  ],
+                                Ln "}",
+                                Br
+                              ]
+                        )
+                        propertyTypes
 
-                      return
-                        ( [],
-                          [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
-                            Ind
-                              ( [ Ln (variableToString unscopedMounted ++ " = false;"),
-                                  Br,
-                                  Ln (variableToString unscopedProperties ++ " = {};"),
-                                  Br,
-                                  Ln "connectedCallback() {",
-                                  Ind
-                                    ( [ Ln "this.attachShadow({mode: 'open'});",
-                                        Br,
-                                        Ln (variableToString scopedMounted ++ " = true;"),
-                                        Br
-                                      ]
-                                        ++ runViewCreate view
-                                    ),
-                                  Br,
-                                  Ln "}",
-                                  Br
-                                ]
-                                  ++ concat propertySetters
-                              ),
-                            Ln "}",
-                            Br,
-                            Br,
-                            Ln ("customElements.define(\"" ++ slashToDash componentName' ++ "\", " ++ slashToCamelCase componentName' ++ ");"),
-                            Br
-                          ]
-                        ),
-                  runFunctionApplication = \_ -> error "no function application implemented",
-                  runProperty = \_ -> error "no property access implemented",
-                  runViewStream = \_ -> error "no streaming",
-                  runResolvedType = typeDefinition,
-                  runPatternMatching = \_ -> error "no pattern access implemented"
-                }
-            )
+                    return
+                      ( [],
+                        [ Ln ("class " ++ slashToCamelCase componentName' ++ " extends HTMLElement {"),
+                          Ind
+                            ( [ Ln (variableToString unscopedMounted ++ " = false;"),
+                                Br,
+                                Ln (variableToString unscopedProperties ++ " = {};"),
+                                Br,
+                                Ln "connectedCallback() {",
+                                Ind
+                                  ( [ Ln "this.attachShadow({mode: 'open'});",
+                                      Br,
+                                      Ln (variableToString scopedMounted ++ " = true;"),
+                                      Br
+                                    ]
+                                      ++ runViewCreate view
+                                  ),
+                                Br,
+                                Ln "}",
+                                Br
+                              ]
+                                ++ concat propertySetters
+                            ),
+                          Ln "}",
+                          Br,
+                          Br,
+                          Ln ("customElements.define(\"" ++ slashToDash componentName' ++ "\", " ++ slashToCamelCase componentName' ++ ");"),
+                          Br
+                        ]
+                      ),
+                runFunctionApplication = \_ -> error "no function application implemented",
+                runProperty = \_ -> error "no property access implemented",
+                runViewStream = \_ -> error "no streaming",
+                runResolvedType = typeDefinition,
+                runPatternMatching = \_ -> error "no pattern access implemented"
+              }
           )
     )
 componentHandler _ _ _ = Nothing
 
-zipHandler :: StackHandler
-zipHandler =
-  StackHandler
-    { runPrimitive =
-        do
-          return ([], []),
-      runFunctionApplication = \_ -> error "no function application implemented in list",
-      runProperty = \_ -> error "no property access implemented",
-      runViewStream = \_ -> error "no streaming",
-      runResolvedType = TypeUnknown,
-      runPatternMatching = \_ -> error "no pattern access implemented"
-    }
+zipHandler :: StackValueContainer
+zipHandler "zip" =
+  Just
+    ( ( StackHandler
+          { runPrimitive =
+              do
+                return ([], []),
+            runFunctionApplication = \_ -> error "no function application implemented in list",
+            runProperty = \_ -> error "no property access implemented",
+            runViewStream = \_ -> error "no streaming",
+            runResolvedType = TypeUnknown,
+            runPatternMatching = \_ -> error "no pattern access implemented"
+          }
+      )
+    )
+zipHandler _ = Nothing
 
 prelude :: [StackEntry]
 prelude =
-  [ StackValue ("zip", zipHandler),
+  [ StackValue zipHandler,
     StackType operatorHandler,
     StackType booleanHandler,
     StackType numberHandler,
@@ -535,32 +526,28 @@ prelude =
 ------------------------------
 
 toTypedExpression :: Stack -> TypeDefinition -> [UntypedExpression] -> AppStateMonad StackHandler
-toTypedExpression stack typeDefinition (untypedExpression) = do
+toTypedExpression stack typeDefinition untypedExpression = do
   toTypedExpression' stack typeDefinition untypedExpression
 
 toTypedExpression' :: Stack -> TypeDefinition -> [UntypedExpression] -> AppStateMonad StackHandler
 toTypedExpression' stack typeDefinition [(RightHandSideVariable variableName) : nestedExpressions] = do
-  case ( find
-           ( \case
-               (StackValue (variableName', _)) -> variableName' == variableName
-               _ -> False
-           )
-           stack
-       ) of
-    Just (StackValue (_, typedExpression)) -> do (nestedTypedExpression stack typedExpression nestedExpressions)
-    Nothing -> error ("Could not find variable: " ++ variableName)
-toTypedExpression' stack typeDefinition (untypedExpression) = do
-  ((findType stack typeDefinition (Right untypedExpression)))
+  let stackValueContainers = [result' | StackValue stackValueContainer <- stack, let result = stackValueContainer variableName, isJust result, let Just result' = result]
+  if null stackValueContainers
+    then error ("Could not find variable: " ++ variableName)
+    else do
+      nestedTypedExpression stack (head stackValueContainers) nestedExpressions
+toTypedExpression' stack typeDefinition untypedExpression = do
+  findType stack typeDefinition (Right untypedExpression)
 
 nestedTypedExpression :: Stack -> StackHandler -> UntypedExpression -> AppStateMonad StackHandler
 nestedTypedExpression stack typedExpression [] = do return typedExpression
-nestedTypedExpression stack (typedExpression) ((RightHandSideVariable propertyName) : restUntypedExpression) = do
+nestedTypedExpression stack typedExpression ((RightHandSideVariable propertyName) : restUntypedExpression) = do
   typedProperty <- runProperty typedExpression propertyName
-  (nestedTypedExpression stack (typedProperty)) restUntypedExpression
-nestedTypedExpression stack (typedExpression) ((RightHandSideFunctionCall (parameters)) : restUntypedExpression) = do
+  nestedTypedExpression stack typedProperty restUntypedExpression
+nestedTypedExpression stack typedExpression ((RightHandSideFunctionCall parameters) : restUntypedExpression) = do
   typedParameters <- mapM (toTypedExpression stack TypeUnknown) [parameters]
   typedProperty <- runFunctionApplication typedExpression typedParameters
-  (nestedTypedExpression stack (typedProperty)) restUntypedExpression
+  nestedTypedExpression stack typedProperty restUntypedExpression
 nestedTypedExpression stack typedExpression untypedExpression = do
   error ("cant nest " ++ show untypedExpression)
 
@@ -580,7 +567,7 @@ addToVariableStack variableStack [] = return variableStack
 addToVariableStack variableStack ((LeftHandSideHole, _) : restNewVariables) = addToVariableStack variableStack restNewVariables
 addToVariableStack variableStack ((LeftHandSideVariable name, typedExpression) : restNewVariables) = do
   next <- addToVariableStack variableStack restNewVariables
-  return ((StackValue (name, typedExpression)) : next)
+  return (StackValue (\name' -> if name == name' then Just typedExpression else Nothing) : next)
 addToVariableStack variableStack ((leftHandSide, stackHandler) : restNewVariables) = do
   result <- runPatternMatching stackHandler leftHandSide
   next <- addToVariableStack variableStack restNewVariables
@@ -599,30 +586,28 @@ render variableStack ((UntypedExpression [RightHandSideHost elementName (propert
   siblingResult <- render variableStack restUntypedBody scope parent (SiblingAlways hostElement : siblings)
   propertiesResult <-
     mapM
-      ( \((propertyName, typeDefinition, groupedProperties)) -> do
+      ( \(propertyName, typeDefinition, groupedProperties) -> do
           let eventPrefix = "on"
 
-          (typedPropertyExpression) <- toTypedExpression variableStack (typeDefinition) groupedProperties
+          typedPropertyExpression <- toTypedExpression variableStack typeDefinition groupedProperties
           (dependencies, code) <- runPrimitive typedPropertyExpression
           return
-            ( if (eventPrefix `isPrefixOf` propertyName)
+            ( if eventPrefix `isPrefixOf` propertyName
                 then
                   ( [],
-                    ( Ln (variableToString hostElement ++ ".addEventListener(\"" ++ drop (length eventPrefix) propertyName ++ "\", ") :
-                      code
-                        ++ [ Ln ");",
-                             Br
-                           ]
-                    )
+                    Ln (variableToString hostElement ++ ".addEventListener(\"" ++ drop (length eventPrefix) propertyName ++ "\", ") :
+                    code
+                      ++ [ Ln ");",
+                           Br
+                         ]
                   )
                 else
                   ( dependencies,
-                    ( Ln (variableToString hostElement ++ ".setAttribute(\"" ++ propertyName ++ "\", ") :
-                      code
-                        ++ [ Ln ");",
-                             Br
-                           ]
-                    )
+                    Ln (variableToString hostElement ++ ".setAttribute(\"" ++ propertyName ++ "\", ") :
+                    code
+                      ++ [ Ln ");",
+                           Br
+                         ]
                   )
             )
       )
@@ -657,7 +642,7 @@ render stack ((Stream leftHandSide untypedExpression) : restUntypedBody) scope p
   runViewStream result scope parent siblings leftHandSide restUntypedBody
 render variableStack ((UntypedExpression [RightHandSideCondition conditionExpression thenStatements elseStatements]) : restUntypedBody) scope parent siblings = do
   exprId <- getFreshExprId
-  typedCondition <- toTypedExpression variableStack ((TypeAlgebraicDataType "Boolean" [])) [conditionExpression]
+  typedCondition <- toTypedExpression variableStack (TypeAlgebraicDataType "Boolean" []) [conditionExpression]
   (dependencies, typedConditionResult) <- runPrimitive typedCondition
 
   thenResult <- render variableStack thenStatements scope parent siblings
@@ -667,7 +652,7 @@ render variableStack ((UntypedExpression [RightHandSideCondition conditionExpres
   let elseCallback = scope ++ nameToVariable "elseCallback" exprId
   let conditionStorage = scope ++ nameToVariable "conditionStorage" exprId
   let siblings' =
-        SiblingCondition [(Ln (variableToString conditionStorage))] (runSiblings thenResult) (runSiblings elseResult) :
+        SiblingCondition [Ln (variableToString conditionStorage)] (runSiblings thenResult) (runSiblings elseResult) :
         siblings
 
   siblingResult <-
@@ -772,7 +757,7 @@ render variableStack ((UntypedExpression [RightHandSideCondition conditionExpres
         }
     )
 render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) scope parent siblings = do
-  typedResult <- toTypedExpression variableStack ((TypeAlgebraicDataType "String" [])) [untypedExpression]
+  typedResult <- toTypedExpression variableStack (TypeAlgebraicDataType "String" []) [untypedExpression]
   exprId <- getFreshExprId
   let textElement = scope ++ nameToVariable "text" exprId
   (dependencies, textContent) <- runPrimitive typedResult
@@ -789,15 +774,14 @@ render variableStack ((UntypedExpression untypedExpression) : restUntypedBody) s
               ++ appendElement parent siblings textElement
               ++ runViewCreate siblingResult,
           runViewUpdate =
-            ( concatMap
-                ( \dependency ->
-                    [ ( dependency,
-                        Ln (variableToString textElement ++ ".textContent = ") : textContent ++ ([Ln ";", Br])
-                      )
-                    ]
-                )
-                dependencies
-            )
+            concatMap
+              ( \dependency ->
+                  [ ( dependency,
+                      Ln (variableToString textElement ++ ".textContent = ") : textContent ++ [Ln ";", Br]
+                    )
+                  ]
+              )
+              dependencies
               ++ runViewUpdate siblingResult,
           runViewUnmount = runViewUnmount siblingResult,
           runViewDelete = Ln (variableToString textElement ++ ".remove();") : Br : runViewDelete siblingResult,
@@ -819,16 +803,15 @@ appendElement parent siblings target =
         PredecessorAlways predecessor ->
           siblingsAfter predecessor
         PredecessorMaybe condition predecessor ->
-          ( Ln "if (" :
-            condition
-              ++ [ Ln ") {",
-                   Ind (siblingsAfter predecessor),
-                   Ln "} else {",
-                   Ind siblingsNone,
-                   Ln "}",
-                   Br
-                 ]
-          )
+          Ln "if (" :
+          condition
+            ++ [ Ln ") {",
+                 Ind (siblingsAfter predecessor),
+                 Ln "} else {",
+                 Ind siblingsNone,
+                 Ln "}",
+                 Br
+               ]
         PredecessorNone ->
           siblingsNone
 
@@ -900,7 +883,7 @@ appendElement' ((SiblingCondition condition thenSiblings elseSiblings) : restSib
               PredecessorNone
 
 typedOrigin :: Stack -> [Variable] -> TypeDefinition -> AppStateMonad StackHandler
-typedOrigin stack variablePath typeDefinition = (findType stack typeDefinition (Left ([variablePath], [Ln (variableToString variablePath)])))
+typedOrigin stack variablePath typeDefinition = findType stack typeDefinition (Left ([variablePath], [Ln (variableToString variablePath)]))
 
 infers :: TypeDefinition -> TypeDefinition -> TypeDefinition
 infers TypeUnknown r = r

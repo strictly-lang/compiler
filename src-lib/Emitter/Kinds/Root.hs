@@ -28,7 +28,7 @@ compileRoot' stack ((RootTypeAssignment name typeDefinition) : (RootAssignment n
   result@stackHandler <- toTypedExpression stack typeDefinition [untypedExpression]
 
   (_, code) <- runPrimitive stackHandler
-  let stack' = StackValue (name, result) : stack
+  stack' <- addToVariableStack stack [(LeftHandSideVariable name, result)]
   next <- compileRoot' stack' restRoot
   return (code ++ next)
 compileRoot' variableStack (currentStatement : rest) = error ("not capable of" ++ show currentStatement)

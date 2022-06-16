@@ -40,7 +40,9 @@ type StackParameter = Either ([[Variable]], [Code]) [UntypedExpression]
 
 type TypeHandler = Stack -> TypeDefinition -> StackParameter -> Maybe (AppStateMonad StackHandler)
 
-data StackEntry = StackValue (String, StackHandler) | StackType TypeHandler
+type StackValueContainer = (String -> Maybe StackHandler)
+
+data StackEntry = StackValue StackValueContainer | StackType TypeHandler
 
 type Stack = [StackEntry]
 
