@@ -573,9 +573,9 @@ addToVariableStack variableStack ((LeftHandSideVariable name, typedExpression) :
   next <- addToVariableStack variableStack restNewVariables
   return (StackValue (\stack name' -> if name == name' then Just typedExpression else Nothing) : next)
 addToVariableStack variableStack ((leftHandSide, stackHandler) : restNewVariables) = do
-  result <- runPatternMatching stackHandler leftHandSide
   next <- addToVariableStack variableStack restNewVariables
-  return (next ++ next)
+  result <- runPatternMatching stackHandler leftHandSide
+  return (next ++ result)
 
 -- view
 
