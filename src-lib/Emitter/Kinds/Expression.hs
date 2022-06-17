@@ -269,7 +269,7 @@ listHandlerRunViewStream stackHandler stack scope parent siblings leftHandSide b
             [ Ln (variableToString scopeContainer ++ " = {};"),
               Br,
               Ln (variableToString eachCallback ++ " = (" ++ variableToString index ++ ") => {"),
-              Ind [],
+              Ind (runViewCreate entityViewResult),
               Ln "};",
               Br,
               Ln (variableToString iterable ++ " = ")
@@ -491,13 +491,17 @@ componentHandler stack typeDefinition@((TypeFunction [typedProperties, _] (TypeA
 componentHandler _ _ _ = Nothing
 
 zipHandler :: StackValueContainer
-zipHandler "zip" =
+zipHandler stack "zip" =
   Just
     ( ( StackHandler
           { runPrimitive =
               do
                 return ([], []),
-            runFunctionApplication = \_ -> error "no function application implemented in list",
+            runFunctionApplication = \parameters -> do
+              parameterPrimitives <- mapM runPrimitive parameters
+              let parameterTypes = map runResolvedType parameters
+
+              findType stack (TypeList (TypeTuple parameterTypes)) (Left (concatMap fst parameterPrimitives, Ln "[" : intercalate [Ln ", "] (map snd parameterPrimitives) ++ [Ln "]"])),
             runProperty = \_ -> error "no property access implemented",
             runViewStream = \_ -> error "no streaming",
             runResolvedType = TypeUnknown,
@@ -505,7 +509,7 @@ zipHandler "zip" =
           }
       )
     )
-zipHandler _ = Nothing
+zipHandler _ _ = Nothing
 
 prelude :: [StackEntry]
 prelude =
@@ -531,7 +535,7 @@ toTypedExpression stack typeDefinition untypedExpression = do
 
 toTypedExpression' :: Stack -> TypeDefinition -> [UntypedExpression] -> AppStateMonad StackHandler
 toTypedExpression' stack typeDefinition [(RightHandSideVariable variableName) : nestedExpressions] = do
-  let stackValueContainers = [result' | StackValue stackValueContainer <- stack, let result = stackValueContainer variableName, isJust result, let Just result' = result]
+  let stackValueContainers = [result' | StackValue stackValueContainer <- stack, let result = stackValueContainer stack variableName, isJust result, let Just result' = result]
   if null stackValueContainers
     then error ("Could not find variable: " ++ variableName)
     else do
@@ -545,7 +549,7 @@ nestedTypedExpression stack typedExpression ((RightHandSideVariable propertyName
   typedProperty <- runProperty typedExpression propertyName
   nestedTypedExpression stack typedProperty restUntypedExpression
 nestedTypedExpression stack typedExpression ((RightHandSideFunctionCall parameters) : restUntypedExpression) = do
-  typedParameters <- mapM (toTypedExpression stack TypeUnknown) [parameters]
+  typedParameters <- mapM (\parameter -> toTypedExpression stack TypeUnknown [parameter]) parameters
   typedProperty <- runFunctionApplication typedExpression typedParameters
   nestedTypedExpression stack typedProperty restUntypedExpression
 nestedTypedExpression stack typedExpression untypedExpression = do
@@ -567,11 +571,11 @@ addToVariableStack variableStack [] = return variableStack
 addToVariableStack variableStack ((LeftHandSideHole, _) : restNewVariables) = addToVariableStack variableStack restNewVariables
 addToVariableStack variableStack ((LeftHandSideVariable name, typedExpression) : restNewVariables) = do
   next <- addToVariableStack variableStack restNewVariables
-  return (StackValue (\name' -> if name == name' then Just typedExpression else Nothing) : next)
+  return (StackValue (\stack name' -> if name == name' then Just typedExpression else Nothing) : next)
 addToVariableStack variableStack ((leftHandSide, stackHandler) : restNewVariables) = do
   result <- runPatternMatching stackHandler leftHandSide
   next <- addToVariableStack variableStack restNewVariables
-  return (next ++ result)
+  return (next ++ next)
 
 -- view
 
