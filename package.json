@@ -3,24 +3,22 @@
   "description": "a compiler for the programming language strictly",
   "version": "0.0.0-semantically-released",
   "devDependencies": {
+    "@esm-bundle/chai": "^4.3.4-fix.0",
     "@semantic-release/changelog": "^6.0.0",
     "@semantic-release/commit-analyzer": "^9.0.1",
     "@semantic-release/github": "^8.0.0",
     "@semantic-release/npm": "^9.0.0",
     "@semantic-release/release-notes-generator": "^10.0.2",
+    "@web/test-runner": "^0.13.31",
     "eslint": "^8.1.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "karma": "^6.3.4",
-    "karma-chrome-launcher": "^3.1.0",
-    "karma-firefox-launcher": "^2.1.1",
-    "karma-jasmine": "^4.0.1",
     "prettier": "^2.4.1",
     "semantic-release": "^19.0.2"
   },
   "scripts": {
-    "test": "cabal v2-build && karma start karma.conf.js",
-    "test:watch": "cabal v2-build && karma start karma.conf.js --no-single-run --auto-watch",
+    "test": "cabal v2-build && yarn run web-test-runner",
+    "test:watch": "cabal v2-build && yarn run web-test-runner --watch",
     "build:linux": "mkdir -p dist/linux-x64 && cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist/linux-x64"
   },
   "repository": {

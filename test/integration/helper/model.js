@@ -1,3 +1,4 @@
+import { expect } from "@esm-bundle/chai";
 import "/test/components/helper/model/counter.sly";
 import "/test/components/helper/model/fetch.sly";
 
@@ -23,39 +24,38 @@ describe("model element handling", () => {
     );
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[2].textContent).toBe("0");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[2].textContent).to.equal("0");
 
     element.shadowRoot.childNodes[1].dispatchEvent(new Event("click"));
 
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[2].textContent).toBe("1");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[2].textContent).to.equal("1");
 
     element.shadowRoot.childNodes[1].dispatchEvent(new Event("click"));
 
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[2].textContent).toBe("2");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[2].textContent).to.equal("2");
 
     element.shadowRoot.childNodes[0].dispatchEvent(new Event("click"));
 
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[2].textContent).toBe("1");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[2].textContent).to.equal("1");
   });
 
   it("async model handling", async () => {
-    const fetchSpy = spyOn(window, "fetch").and.callFake(
-      (requestInfo) =>
-        new Promise((resolve) => {
-          resolve({
-            text: () => Promise.resolve("text response " + requestInfo),
-          });
-        })
-    );
+    const originalFetch = window.fetch;
+    window.fetch = (requestInfo) =>
+      new Promise((resolve) => {
+        resolve({
+          text: () => Promise.resolve("text response " + requestInfo),
+        });
+      });
 
     const element = document.createElement(
       "test-components-helper-model-fetch"
@@ -65,20 +65,20 @@ describe("model element handling", () => {
 
     container.appendChild(element);
 
-    expect(fetchSpy).toHaveBeenCalledOnceWith("/api/23");
-    expect(element.shadowRoot.textContent).toBe("Loading...");
+    expect(element.shadowRoot.textContent).to.equal("Loading...");
 
     await nextTick(10);
 
-    expect(element.shadowRoot.textContent).toBe("text response /api/23");
+    expect(element.shadowRoot.textContent).to.equal("text response /api/23");
 
     element.id = 5;
 
-    expect(fetchSpy).toHaveBeenCalledWith("/api/5");
-    expect(element.shadowRoot.textContent).toBe("Loading...");
+    expect(element.shadowRoot.textContent).to.equal("Loading...");
 
     await nextTick(10);
 
-    expect(element.shadowRoot.textContent).toBe("text response /api/5");
+    expect(element.shadowRoot.textContent).to.equal("text response /api/5");
+
+    window.fetch = originalFetch;
   });
 });

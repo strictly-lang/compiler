@@ -1,3 +1,4 @@
+import { expect } from "@esm-bundle/chai";
 import "/test/components/nesting/absolute.sly";
 import "/test/components/nesting/relative.sly";
 
@@ -16,25 +17,25 @@ describe("component handling", () => {
     element.foo = "bar";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe(
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal(
       "TEST-COMPONENTS-NESTING-DEEP-INDEX"
     );
-    expect(element.shadowRoot.childNodes[0].shadowRoot.childNodes.length).toBe(
-      1
-    );
+    expect(
+      element.shadowRoot.childNodes[0].shadowRoot.childNodes.length
+    ).to.equal(1);
     expect(
       element.shadowRoot.childNodes[0].shadowRoot.childNodes[0].tagName
-    ).toBe("DIV");
+    ).to.equal("DIV");
     expect(
       element.shadowRoot.childNodes[0].shadowRoot.childNodes[0].textContent
-    ).toBe("nested component value: bar");
+    ).to.equal("nested component value: bar");
 
     element.foo = "baz";
 
     expect(
       element.shadowRoot.childNodes[0].shadowRoot.childNodes[0].textContent
-    ).toBe("nested component value: baz");
+    ).to.equal("nested component value: baz");
   });
 
   it("creating nested relative component", () => {
@@ -42,24 +43,24 @@ describe("component handling", () => {
     element.foo = "bar";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe(
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal(
       "TEST-COMPONENTS-NESTING-DEEP-INDEX"
     );
-    expect(element.shadowRoot.childNodes[0].shadowRoot.childNodes.length).toBe(
-      1
-    );
+    expect(
+      element.shadowRoot.childNodes[0].shadowRoot.childNodes.length
+    ).to.equal(1);
     expect(
       element.shadowRoot.childNodes[0].shadowRoot.childNodes[0].tagName
-    ).toBe("DIV");
+    ).to.equal("DIV");
     expect(
       element.shadowRoot.childNodes[0].shadowRoot.childNodes[0].textContent
-    ).toBe("nested component value: bar");
+    ).to.equal("nested component value: bar");
 
     element.foo = "baz";
 
     expect(
       element.shadowRoot.childNodes[0].shadowRoot.childNodes[0].textContent
-    ).toBe("nested component value: baz");
+    ).to.equal("nested component value: baz");
   });
 });

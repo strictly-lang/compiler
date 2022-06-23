@@ -1,9 +1,10 @@
+import { expect } from "@esm-bundle/chai";
 import "/test/components/helper/context/consumer.sly";
 
 describe("context handling", () => {
   let container;
 
-  beforeAll(() => {
+  beforeEach(() => {
     class SomeParentElement extends HTMLElement {
       constructor() {
         super();
@@ -27,9 +28,7 @@ describe("context handling", () => {
     }
 
     customElements.define("some-parent-element", SomeParentElement);
-  });
 
-  beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -49,30 +48,30 @@ describe("context handling", () => {
       parent.appendChild(element);
       const consumerText = element.shadowRoot.childNodes[0].childNodes[0];
 
-      expect(element.shadowRoot.childNodes.length).toBe(1);
-      expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-      expect(element.shadowRoot.childNodes[0].textContent).toBe("foo");
-      expect(consumerText.textContent).toBe("foo");
+      expect(element.shadowRoot.childNodes.length).to.equal(1);
+      expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+      expect(element.shadowRoot.childNodes[0].textContent).to.equal("foo");
+      expect(consumerText.textContent).to.equal("foo");
 
       parent.value = "bar";
 
-      expect(element.shadowRoot.childNodes.length).toBe(1);
-      expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-      expect(element.shadowRoot.childNodes[0].textContent).toBe("bar");
-      expect(consumerText.textContent).toBe("bar");
+      expect(element.shadowRoot.childNodes.length).to.equal(1);
+      expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+      expect(element.shadowRoot.childNodes[0].textContent).to.equal("bar");
+      expect(consumerText.textContent).to.equal("bar");
 
       element.foo = false;
 
-      expect(element.shadowRoot.childNodes.length).toBe(1);
-      expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-      expect(element.shadowRoot.childNodes[0].textContent).toBe("mep");
+      expect(element.shadowRoot.childNodes.length).to.equal(1);
+      expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+      expect(element.shadowRoot.childNodes[0].textContent).to.equal("mep");
 
       parent.value = "baz";
 
-      expect(element.shadowRoot.childNodes.length).toBe(1);
-      expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-      expect(element.shadowRoot.childNodes[0].textContent).toBe("mep");
-      expect(consumerText.textContent).not.toBe("baz");
+      expect(element.shadowRoot.childNodes.length).to.equal(1);
+      expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+      expect(element.shadowRoot.childNodes[0].textContent).to.equal("mep");
+      expect(consumerText.textContent).not.to.equal("baz");
     });
 
     xit("consumer without fitting parent should throw exception", () => {

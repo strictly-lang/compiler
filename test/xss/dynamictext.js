@@ -1,3 +1,6 @@
+import { expect } from "@esm-bundle/chai";
+import "/test/components/text/dynamic.sly";
+
 describe("host element handling", () => {
   let container;
   beforeEach(() => {
@@ -13,15 +16,21 @@ describe("host element handling", () => {
     element.foo = "<div >";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("con-<div >-cat");
-    expect(element.shadowRoot.childNodes[0].querySelector("div")).toBe(null);
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
+      "con-<div >-cat"
+    );
+    expect(element.shadowRoot.childNodes[0].querySelector("div")).to.equal(
+      null
+    );
     element.foo = "<span >";
 
-    expect(element.shadowRoot.childNodes[0].textContent).toBe(
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
       "con-<span >-cat"
     );
-    expect(element.shadowRoot.childNodes[0].querySelector("span")).toBe(null);
+    expect(element.shadowRoot.childNodes[0].querySelector("span")).to.equal(
+      null
+    );
   });
 });

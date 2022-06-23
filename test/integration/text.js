@@ -1,3 +1,4 @@
+import { expect } from "@esm-bundle/chai";
 import "/test/components/text/base.sly";
 import "/test/components/text/dynamic.sly";
 import "/test/components/text/multidynamic.sly";
@@ -17,8 +18,8 @@ describe("text element handling", () => {
     const element = document.createElement("test-components-text-base");
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("foo");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal("foo");
   });
 
   it("dynamic text", () => {
@@ -26,13 +27,17 @@ describe("text element handling", () => {
     element.foo = "bar";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("con-bar-cat");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
+      "con-bar-cat"
+    );
 
     element.foo = "baz";
 
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("con-baz-cat");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
+      "con-baz-cat"
+    );
   });
 
   it("dynamic text with number", () => {
@@ -40,13 +45,15 @@ describe("text element handling", () => {
     element.foo = 1;
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("con-1-cat");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal("con-1-cat");
 
     element.foo = "baz";
 
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("con-baz-cat");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
+      "con-baz-cat"
+    );
   });
 
   it("multi dynamic text", () => {
@@ -55,13 +62,17 @@ describe("text element handling", () => {
     element.bar = "bar";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("foo-bar-foo");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
+      "foo-bar-foo"
+    );
 
     element.foo = "baz";
 
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("baz-bar-baz");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
+      "baz-bar-baz"
+    );
   });
 
   it("whitespace", () => {
@@ -69,15 +80,15 @@ describe("text element handling", () => {
     element.bar = "bar";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].textContent).toBe(
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
       " foo  bar  baz "
     );
 
     element.bar = "barbar";
 
-    expect(element.shadowRoot.childNodes[0].textContent).toBe(
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
       " foo  barbar  baz "
     );
   });

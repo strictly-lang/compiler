@@ -1,3 +1,4 @@
+import { expect } from "@esm-bundle/chai";
 import "/test/components/structural/record/base.sly";
 import "/test/components/structural/record/destructure.sly";
 
@@ -17,17 +18,17 @@ describe("record handling", () => {
     );
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("1 0");
+    expect(element.shadowRoot.childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("1 0");
 
     element.shadowRoot.childNodes[0].dispatchEvent(new Event("click"));
 
-    expect(element.shadowRoot.childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("3 0");
+    expect(element.shadowRoot.childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("3 0");
   });
 
   it("basic creation and update with destructuring", () => {
@@ -36,16 +37,16 @@ describe("record handling", () => {
     );
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("1 0");
+    expect(element.shadowRoot.childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("1 0");
 
     element.shadowRoot.childNodes[0].dispatchEvent(new Event("click"));
 
-    expect(element.shadowRoot.childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("BUTTON");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("3 0");
+    expect(element.shadowRoot.childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("BUTTON");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("3 0");
   });
 });

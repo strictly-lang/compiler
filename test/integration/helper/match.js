@@ -1,3 +1,4 @@
+import { expect } from "@esm-bundle/chai";
 import "/test/components/helper/match/base.sly";
 import "/test/components/helper/match/siblings.sly";
 import "/test/components/helper/match/nested.sly";
@@ -19,16 +20,16 @@ describe("match case handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("first");
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal("first");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
 
     element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(
       new MouseEvent("click")
     );
 
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("second: 1");
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal("second: 1");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
   });
 
   it("with siblings case", () => {
@@ -38,25 +39,25 @@ describe("match case handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("first");
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal("first");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
 
     element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(
       new MouseEvent("click")
     );
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("second: 1");
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal("second: 1");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
 
     element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(
       new MouseEvent("click")
     );
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("third: 3");
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal("third: 3");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
   });
 
   it("with nested case", () => {
@@ -66,25 +67,25 @@ describe("match case handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("first");
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal("first");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
 
     element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(
       new MouseEvent("click")
     );
 
-    expect(element.shadowRoot.childNodes[0].textContent).toBe(
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal(
       "second nestedValue: 3 siblingValue: 1"
     );
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
 
     element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(
       new MouseEvent("click")
     );
 
-    expect(element.shadowRoot.childNodes[0].textContent).toBe("third: 6");
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes[0].textContent).to.equal("third: 6");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
   });
 
   it("with updating", () => {
@@ -96,72 +97,82 @@ describe("match case handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe(
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).to.equal(
       "BUTTON"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe(
+    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).to.equal(
       "first: 1 bar"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).to.equal(
+      "SPAN"
+    );
 
     element.foo = "baz";
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe(
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).to.equal(
       "BUTTON"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe(
+    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).to.equal(
       "first: 1 baz"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).to.equal(
+      "SPAN"
+    );
 
     element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(
       new MouseEvent("click")
     );
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe(
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).to.equal(
       "BUTTON"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe(
+    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).to.equal(
       "second: 2 baz"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).to.equal(
+      "SPAN"
+    );
 
     element.shadowRoot.childNodes[0].childNodes[0].dispatchEvent(
       new MouseEvent("click")
     );
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe(
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).to.equal(
       "BUTTON"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe(
+    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).to.equal(
       "second: 8 baz"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).to.equal(
+      "SPAN"
+    );
 
     element.foo = "mep";
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe(
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).to.equal(
       "BUTTON"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).toBe(
+    expect(element.shadowRoot.childNodes[0].childNodes[0].textContent).to.equal(
       "second: 8 mep"
     );
-    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes[0].childNodes[1].tagName).to.equal(
+      "SPAN"
+    );
   });
 
   it("with removing", () => {
@@ -172,23 +183,23 @@ describe("match case handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.foo = false;
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SECTION");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SECTION");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.foo = true;
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
   });
 });
