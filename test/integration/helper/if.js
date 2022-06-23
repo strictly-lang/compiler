@@ -1,3 +1,4 @@
+import { expect } from "@esm-bundle/chai";
 import "/test/components/helper/if/base.sly";
 import "/test/components/helper/if/remove.sly";
 
@@ -17,41 +18,45 @@ describe("if condition handling", () => {
     element.bar = "baz";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo-baz");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.foo = false;
 
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("not-foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal(
+      "not-foo-baz"
+    );
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.bar = "barbar";
 
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("not-foo-barbar");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal(
+      "not-foo-barbar"
+    );
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.foo = true;
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("foo-barbar");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo-barbar");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.bar = "baz";
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo-baz");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
   });
 
   it("condition should render the correct result, false first", () => {
@@ -60,41 +65,47 @@ describe("if condition handling", () => {
     element.bar = "baz";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("not-foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal(
+      "not-foo-baz"
+    );
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.foo = true;
 
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo-baz");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.bar = "barbar";
 
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("foo-barbar");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo-barbar");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.foo = false;
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("not-foo-barbar");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal(
+      "not-foo-barbar"
+    );
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.bar = "baz";
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("not-foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal(
+      "not-foo-baz"
+    );
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
   });
 
   it("condition should render the correct update correct when both times condition is positive", () => {
@@ -103,21 +114,21 @@ describe("if condition handling", () => {
     element.bar = "baz";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo-baz");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
     let conditionContent = element.shadowRoot.childNodes[1];
 
     element.foo = true;
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
-    expect(element.shadowRoot.childNodes[1]).toBe(conditionContent);
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo-baz");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
+    expect(element.shadowRoot.childNodes[1]).to.equal(conditionContent);
   });
 
   it("condition should render the correct update correct when both times condition is negative", () => {
@@ -126,21 +137,25 @@ describe("if condition handling", () => {
     element.bar = "baz";
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("not-foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal(
+      "not-foo-baz"
+    );
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
     let conditionContent = element.shadowRoot.childNodes[1];
 
     element.foo = false;
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
-    expect(element.shadowRoot.childNodes[1].textContent).toBe("not-foo-baz");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
-    expect(element.shadowRoot.childNodes[1]).toBe(conditionContent);
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal(
+      "not-foo-baz"
+    );
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
+    expect(element.shadowRoot.childNodes[1]).to.equal(conditionContent);
   });
 
   it("remove if", () => {
@@ -149,23 +164,23 @@ describe("if condition handling", () => {
     element.bar = true;
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.foo = false;
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SECTION");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SECTION");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
 
     element.foo = true;
 
-    expect(element.shadowRoot.childNodes.length).toBe(3);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("HEADER");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[2].tagName).toBe("FOOTER");
+    expect(element.shadowRoot.childNodes.length).to.equal(3);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
   });
 });

@@ -1,3 +1,4 @@
+import { expect } from "@esm-bundle/chai";
 import "/test/components/host/base.sly";
 import "/test/components/host/siblings.sly";
 import "/test/components/host/nested.sly";
@@ -19,28 +20,30 @@ describe("host element handling", () => {
     const element = document.createElement("test-components-host-base");
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
   });
 
   it("sibling element creation", () => {
     const element = document.createElement("test-components-host-siblings");
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
   });
 
   it("nested element creation", () => {
     const element = document.createElement("test-components-host-nested");
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(2);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).toBe("IMG");
-    expect(element.shadowRoot.childNodes[1].tagName).toBe("SPAN");
+    expect(element.shadowRoot.childNodes.length).to.equal(2);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].childNodes[0].tagName).to.equal(
+      "IMG"
+    );
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
   });
 
   it("attribute test", () => {
@@ -50,19 +53,25 @@ describe("host element handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("DIV");
-    expect(element.shadowRoot.childNodes[0].className).toBe("foo");
-    expect(element.shadowRoot.childNodes[0].part.value).toBe("baz");
-    expect(element.shadowRoot.childNodes[0].title).toBe("combined fooo text");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[0].className).to.equal("foo");
+    expect(element.shadowRoot.childNodes[0].part.value).to.equal("baz");
+    expect(element.shadowRoot.childNodes[0].title).to.equal(
+      "combined fooo text"
+    );
 
     element.bar = "barbar";
 
-    expect(element.shadowRoot.childNodes[0].part.value).toBe("barbar");
-    expect(element.shadowRoot.childNodes[0].title).toBe("combined fooo text");
+    expect(element.shadowRoot.childNodes[0].part.value).to.equal("barbar");
+    expect(element.shadowRoot.childNodes[0].title).to.equal(
+      "combined fooo text"
+    );
 
     element.foo = "foofoo";
-    expect(element.shadowRoot.childNodes[0].title).toBe("combined foofoo text");
+    expect(element.shadowRoot.childNodes[0].title).to.equal(
+      "combined foofoo text"
+    );
   });
 
   it("input text change", () => {
@@ -74,16 +83,16 @@ describe("host element handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
-    expect(element.shadowRoot.childNodes[0].type).toBe("text");
-    expect(element.shadowRoot.childNodes[0].value).toBe("foo");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("INPUT");
+    expect(element.shadowRoot.childNodes[0].type).to.equal("text");
+    expect(element.shadowRoot.childNodes[0].value).to.equal("foo");
 
     element.shadowRoot.childNodes[0].value = "fooa";
     element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].value).toBe("fooa");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].value).to.equal("fooa");
   });
 
   it("input text non-change", () => {
@@ -95,16 +104,16 @@ describe("host element handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
-    expect(element.shadowRoot.childNodes[0].type).toBe("text");
-    expect(element.shadowRoot.childNodes[0].value).toBe("foo");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("INPUT");
+    expect(element.shadowRoot.childNodes[0].type).to.equal("text");
+    expect(element.shadowRoot.childNodes[0].value).to.equal("foo");
 
     element.shadowRoot.childNodes[0].value = "fooa";
     element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].value).toBe("foo");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].value).to.equal("foo");
   });
 
   it("input text different-change", () => {
@@ -116,16 +125,16 @@ describe("host element handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
-    expect(element.shadowRoot.childNodes[0].type).toBe("text");
-    expect(element.shadowRoot.childNodes[0].value).toBe("foo");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("INPUT");
+    expect(element.shadowRoot.childNodes[0].type).to.equal("text");
+    expect(element.shadowRoot.childNodes[0].value).to.equal("foo");
 
     element.shadowRoot.childNodes[0].value = "fooa";
     element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].value).toBe("foob");
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].value).to.equal("foob");
   });
 
   it("input checkbox change", () => {
@@ -137,16 +146,16 @@ describe("host element handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
-    expect(element.shadowRoot.childNodes[0].type).toBe("checkbox");
-    expect(element.shadowRoot.childNodes[0].checked).toBe(true);
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("INPUT");
+    expect(element.shadowRoot.childNodes[0].type).to.equal("checkbox");
+    expect(element.shadowRoot.childNodes[0].checked).to.equal(true);
 
     element.shadowRoot.childNodes[0].checked = false;
     element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].checked).toBe(false);
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].checked).to.equal(false);
   });
 
   it("input checkbox non-change", () => {
@@ -158,15 +167,15 @@ describe("host element handling", () => {
 
     container.appendChild(element);
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].tagName).toBe("INPUT");
-    expect(element.shadowRoot.childNodes[0].type).toBe("checkbox");
-    expect(element.shadowRoot.childNodes[0].checked).toBe(true);
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].tagName).to.equal("INPUT");
+    expect(element.shadowRoot.childNodes[0].type).to.equal("checkbox");
+    expect(element.shadowRoot.childNodes[0].checked).to.equal(true);
 
     element.shadowRoot.childNodes[0].checked = false;
     element.shadowRoot.childNodes[0].dispatchEvent(new Event("input"));
 
-    expect(element.shadowRoot.childNodes.length).toBe(1);
-    expect(element.shadowRoot.childNodes[0].checked).toBe(true);
+    expect(element.shadowRoot.childNodes.length).to.equal(1);
+    expect(element.shadowRoot.childNodes[0].checked).to.equal(true);
   });
 });
