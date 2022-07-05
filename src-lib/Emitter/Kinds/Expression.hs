@@ -203,12 +203,13 @@ listHandlerByLiteral stack typeDefinition (Right [[RightHandSideList listEntitie
                   ((TypeList listEntityType)) -> listEntityType
                   _ -> TypeUnknown
               )
+        entityStackHandler <- mapM (\listEntity -> toTypedExpression stack listEntityType [listEntity]) listEntities
+        primitives <- mapM runPrimitive entityStackHandler
+
         let stackHandler =
               ( StackHandler
                   { runPrimitive =
                       do
-                        stackHandler <- mapM (\listEntity -> toTypedExpression stack listEntityType [listEntity]) listEntities
-                        primitives <- mapM runPrimitive stackHandler
                         return (concatMap fst primitives, Ln "[" : intercalate [Ln ", "] (map snd primitives) ++ [Ln "]"]),
                     runFunctionApplication = \_ -> error "no function application implemented in list",
                     runProperty = listHandlerRunProperty stackHandler stack,
@@ -291,6 +292,54 @@ listHandlerRunViewStream stackHandler stack scope parent siblings leftHandSide b
           runSiblings = siblings
         }
     )
+
+-------------------
+-- Tuple Handler --
+-------------------
+tupleHandler :: TypeHandler
+tupleHandler = tupleHandlerByType
+
+tupleHandlerByType :: TypeHandler
+tupleHandlerByType stack typeDefinition@(TypeTuple tupleTypes) (Left (selfDependency, code)) =
+  Just
+    ( do
+        let stackHandler =
+              StackHandler
+                { runPrimitive =
+                    do
+                      return (selfDependency, code),
+                  runFunctionApplication = \_ -> error "no function application implemented in list",
+                  runProperty = listHandlerRunProperty stackHandler stack,
+                  runViewStream = listHandlerRunViewStream stackHandler stack,
+                  runResolvedType = typeDefinition,
+                  runPatternMatching = \(LeftHandSideList leftHandSides) -> do
+                    return []
+                }
+        return stackHandler
+    )
+tupleHandlerByType _ _ _ = Nothing
+
+-------------------
+-- Range Handler --
+-------------------
+rangeHandler :: TypeHandler
+rangeHandler stack typeDefinition (Right [[RightHandSideRange from to]]) =
+  Just
+    ( do
+        return
+          ( StackHandler
+              { runPrimitive =
+                  do
+                    return ([], []),
+                runFunctionApplication = \_ -> error "no function application implemented in void",
+                runProperty = \_ -> error "no property access implemented",
+                runViewStream = \_ -> error "no streaming",
+                runResolvedType = typeDefinition,
+                runPatternMatching = \_ -> error "no pattern access implemented"
+              }
+          )
+    )
+rangeHandler _ _ _ = Nothing
 
 ----------------------
 -- Function Handler --
@@ -490,6 +539,10 @@ componentHandler stack typeDefinition@((TypeFunction [typedProperties, _] (TypeA
     )
 componentHandler _ _ _ = Nothing
 
+-----------------
+-- Zip Handler --
+-----------------
+
 zipHandler :: StackValueContainer
 zipHandler stack "zip" =
   Just
@@ -520,6 +573,8 @@ prelude =
     StackType stringHandler,
     StackType recordHandler,
     StackType listHandler,
+    StackType tupleHandler,
+    StackType rangeHandler,
     StackType componentHandler,
     StackType functionHandler,
     StackType voidHandler

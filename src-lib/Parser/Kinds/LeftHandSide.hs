@@ -27,20 +27,7 @@ leftHandSideAlgebraicDataTypeParser indentationLevel = do
 
 leftHandSideListParser :: IndentationLevel -> Parser LeftHandSide
 leftHandSideListParser indentationLevel = do
-  destructures <- blockParser listOpenParser (lookAhead (listCloseParser <|> baseOfParser)) leftHandSideParser indentationLevel
-
-  hasRest <- optional (lookAhead baseOfParser)
-
-  rest <- case hasRest of
-    Just _ -> do
-      _ <- baseOfParser
-      Just <$> leftHandSideParser indentationLevel
-    Nothing -> do
-      return Nothing
-
-  _ <- listCloseParser
-
-  return (LeftHandSideList destructures rest)
+  LeftHandSideList <$> blockParser listOpenParser listCloseParser leftHandSideParser indentationLevel
 
 leftHandSideRecordParser :: IndentationLevel -> Parser LeftHandSide
 leftHandSideRecordParser indentationLevel = do

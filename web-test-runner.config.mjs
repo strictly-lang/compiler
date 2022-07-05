@@ -13,6 +13,7 @@ export default {
     "test/integration/text.js",
     "test/integration/host/*.js",
     "test/integration/helper/if.js",
+    // "test/integration/helper/each.js"
   ],
   nodeResolve: true,
   plugins: [
