@@ -27,7 +27,7 @@ algebraicDataTypeTypeHandler name parameterTypes stack typeDefinition (Right [[R
                     runProperty = \_ -> error "no property access implemented",
                     runViewStream = \_ -> error "no streaming",
                     runResolvedType = typeDefinition,
-                    runPatternMatching = \leftHandSide -> return []
+                    runPatternMatching = \leftHandSide -> return ([], [])
                   }
           return
             stackHandler

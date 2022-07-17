@@ -300,20 +300,38 @@ tupleHandler :: TypeHandler
 tupleHandler = tupleHandlerByType
 
 tupleHandlerByType :: TypeHandler
-tupleHandlerByType stack typeDefinition@(TypeTuple tupleTypes) (Left (selfDependency, code)) =
+tupleHandlerByType stack typeDefinition@(TypeTuple tupleTypes) (Left (dependencies, code)) =
   Just
     ( do
         let stackHandler =
               StackHandler
                 { runPrimitive =
                     do
-                      return (selfDependency, code),
+                      return (dependencies, code),
                   runFunctionApplication = \_ -> error "no function application implemented in list",
                   runProperty = listHandlerRunProperty stackHandler stack,
                   runViewStream = listHandlerRunViewStream stackHandler stack,
                   runResolvedType = typeDefinition,
                   runPatternMatching = \(LeftHandSideList leftHandSides) -> do
-                    return []
+                    tupleStacks <-
+                      mapM
+                        ( \(leftHandSide, index, tupleType) ->
+                            do
+                              let [selfDependency] = dependencies
+                              entityStackHandler <- typedOrigin stack (selfDependency ++ [BracketNotation (show index)]) tupleType
+                              return (leftHandSide, entityStackHandler)
+                        )
+                        ( zip3
+                            leftHandSides
+                            [0 ..]
+                            tupleTypes
+                        )
+
+                    stack' <-
+                      addToVariableStack
+                        stack
+                        tupleStacks
+                    return ([], stack')
                 }
         return stackHandler
     )
@@ -625,11 +643,11 @@ addToVariableStack :: Stack -> [(LeftHandSide, StackHandler)] -> AppStateMonad S
 addToVariableStack variableStack [] = return variableStack
 addToVariableStack variableStack ((LeftHandSideHole, _) : restNewVariables) = addToVariableStack variableStack restNewVariables
 addToVariableStack variableStack ((LeftHandSideVariable name, typedExpression) : restNewVariables) = do
-  next <- addToVariableStack variableStack restNewVariables
-  return (StackValue (\stack name' -> if name == name' then Just typedExpression else Nothing) : next)
+  let variableStack' = StackValue (\stack name' -> if name == name' then Just typedExpression else Nothing) : variableStack
+  addToVariableStack variableStack' restNewVariables
 addToVariableStack variableStack ((leftHandSide, stackHandler) : restNewVariables) = do
   next <- addToVariableStack variableStack restNewVariables
-  result <- runPatternMatching stackHandler leftHandSide
+  (conditions, result) <- runPatternMatching stackHandler leftHandSide
   return (next ++ result)
 
 -- view

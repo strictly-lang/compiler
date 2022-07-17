@@ -33,7 +33,7 @@ data StackHandler = StackHandler
     runProperty :: String -> AppStateMonad StackHandler,
     runViewStream :: [Variable] -> Parent -> [Sibling] -> LeftHandSide -> [Statement] -> AppStateMonad ViewResult,
     runResolvedType :: TypeDefinition,
-    runPatternMatching :: LeftHandSide -> AppStateMonad Stack
+    runPatternMatching :: LeftHandSide -> AppStateMonad ([Code], Stack)
   }
 
 type StackParameter = Either ([[Variable]], [Code]) [UntypedExpression]
