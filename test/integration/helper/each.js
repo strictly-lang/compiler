@@ -1,7 +1,7 @@
 import { expect } from "@esm-bundle/chai";
 import "/test/components/helper/each/base.sly";
-import "/test/components/helper/each/constraint.sly";
-import "/test/components/helper/each/neverconstraint.sly";
+// import "/test/components/helper/each/constraint.sly";
+// import "/test/components/helper/each/neverconstraint.sly";
 
 describe("each loop handling", () => {
   let container;
@@ -20,6 +20,7 @@ describe("each loop handling", () => {
     element.bar = "mep";
 
     container.appendChild(element);
+    debugger;
 
     expect(element.shadowRoot.childNodes.length).to.equal(5);
     expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");

@@ -8,7 +8,7 @@ import Data.Foldable (find)
 import Data.List (groupBy, intercalate, intersperse, isPrefixOf)
 import Data.Maybe (isJust)
 import Emitter.Types
-import Emitter.Util (getFreshExprId, groupProperties, nameToVariable, slashToCamelCase, slashToDash, variableToString)
+import Emitter.Util (getFreshExprId, getModule, groupProperties, nameToVariable, slashToCamelCase, slashToDash, variableToString)
 import Parser.Kinds.LeftHandSide (leftHandSideVariableParser)
 import Types
 
@@ -276,7 +276,8 @@ listHandlerRunViewStream stackHandler stack scope parent siblings leftHandSide b
               Ln (variableToString iterable ++ " = ")
             ]
               ++ iterableCode
-              ++ [ Br,
+              ++ [ Ln ";",
+                   Br,
                    Ln ("for(let " ++ variableToString index ++ " = 0; " ++ variableToString index ++ " < " ++ variableToString iterable ++ ".length; " ++ variableToString index ++ " += 1) {"),
                    Ind
                      [ Ln (variableToString entityScope ++ " = {};"),
@@ -569,10 +570,11 @@ zipHandler stack "zip" =
               do
                 return ([], []),
             runFunctionApplication = \parameters -> do
+              zip <- getModule "@strictly-lang/runtime" "zip"
+
               parameterPrimitives <- mapM runPrimitive parameters
               let parameterTypes = map runResolvedType parameters
-
-              findType stack (TypeList (TypeTuple parameterTypes)) (Left (concatMap fst parameterPrimitives, Ln "[" : intercalate [Ln ", "] (map snd parameterPrimitives) ++ [Ln "]"])),
+              findType stack (TypeList (TypeTuple parameterTypes)) (Left (concatMap fst parameterPrimitives, Ln (zip ++ "(") : intercalate [Ln ", "] (map snd parameterPrimitives) ++ [Ln ")"])),
             runProperty = \_ -> error "no property access implemented",
             runViewStream = \_ -> error "no streaming",
             runResolvedType = TypeUnknown,

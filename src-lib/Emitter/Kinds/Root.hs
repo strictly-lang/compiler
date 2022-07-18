@@ -4,7 +4,7 @@ import Control.Monad.State.Lazy (get, runState)
 -- import Emitter.Kinds.RootAssignment (rootAssignment)
 
 import Data.Char (toUpper)
-import Data.List (find)
+import Data.List (find, intercalate, intersperse)
 import Emitter.Kinds.Expression (addToVariableStack, prelude, toTypedExpression, toTypedExpression')
 import Emitter.Kinds.RootDeclaration (algebraicDataTypeConstructor)
 import Emitter.Types
@@ -14,8 +14,13 @@ import Types
 compileRoot :: String -> [Root] -> String
 compileRoot componentName roots =
   let code = compileRoot' prelude roots
-      (result, _) = runState code (AppState {componentName = componentName, expressionIdCounter = 0, modules = []})
-   in codeToString 0 True result
+      (result, AppState {modules = modules}) = runState code (AppState {componentName = componentName, expressionIdCounter = 0, modules = []})
+      imports = intercalate [Br] (map convertmportsToCode modules)
+   in codeToString 0 True (imports ++ [Br] ++ result)
+
+convertmportsToCode :: Module -> [Code]
+convertmportsToCode (name, []) = []
+convertmportsToCode (moduleName, imports) = Ln "import { " : intersperse (Ln ",") [Ln (importName ++ " as " ++ exportName) | (importName, exportName) <- imports] ++ [Ln ("} from \"" ++ moduleName ++ "\"")]
 
 compileRoot' :: Stack -> [Root] -> AppStateMonad [Code]
 compileRoot' variableStack [] = do return []

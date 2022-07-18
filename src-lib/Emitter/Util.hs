@@ -32,8 +32,8 @@ getModule :: String -> String -> AppStateMonad String
 getModule moduleName importName =
   state
     ( \(AppState {componentName = componentName, expressionIdCounter = expressionIdCounter, modules = modules}) ->
-        let (expressionIdCounter', importName, modules') = addModule moduleName importName expressionIdCounter modules
-         in ( importName,
+        let (expressionIdCounter', importName', modules') = addModule moduleName importName expressionIdCounter modules
+         in ( importName',
               AppState
                 { componentName = componentName,
                   expressionIdCounter = expressionIdCounter',
@@ -42,9 +42,7 @@ getModule moduleName importName =
             )
     )
 
-type Modules = [(String, [(String, String)])]
-
-addModule :: String -> String -> Int -> Modules -> (Int, String, Modules)
+addModule :: String -> String -> Int -> [Module] -> (Int, String, [Module])
 addModule moduleName importName expressionIdCounter [] =
   let expressionIdCounter' = expressionIdCounter + 1
       importName' = importName ++ show expressionIdCounter

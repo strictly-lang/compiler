@@ -6,10 +6,12 @@ import Types (LeftHandSide, Statement, TypeDefinition, UntypedExpression)
 data Code = Ln String | Ind [Code] | Br
   deriving (Show)
 
+type Module = (String, [(String, String)])
+
 data AppState = AppState
   { componentName :: String,
     expressionIdCounter :: Int,
-    modules :: [(String, [(String, String)])]
+    modules :: [Module]
   }
 
 data Variable = DotNotation String | BracketNotation String
