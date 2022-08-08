@@ -828,26 +828,49 @@
     picomatch "^2.2.2"
     ws "^7.4.2"
 
-"@web/dev-server-rollup@^0.3.18":
-  version "0.3.18"
-  resolved "https://registry.yarnpkg.com/@web/dev-server-rollup/-/dev-server-rollup-0.3.18.tgz#16cf4e63101db25eee1994dfcdfc1f9d03ced706"
+"@web/dev-server-core@^0.3.19":
+  version "0.3.19"
+  resolved "https://registry.yarnpkg.com/@web/dev-server-core/-/dev-server-core-0.3.19.tgz#b61f9a0b92351371347a758b30ba19e683c72e94"
+  dependencies:
+    "@types/koa" "^2.11.6"
+    "@types/ws" "^7.4.0"
+    "@web/parse5-utils" "^1.2.0"
+    chokidar "^3.4.3"
+    clone "^2.1.2"
+    es-module-lexer "^1.0.0"
+    get-stream "^6.0.0"
+    is-stream "^2.0.0"
+    isbinaryfile "^4.0.6"
+    koa "^2.13.0"
+    koa-etag "^4.0.0"
+    koa-send "^5.0.1"
+    koa-static "^5.0.0"
+    lru-cache "^6.0.0"
+    mime-types "^2.1.27"
+    parse5 "^6.0.1"
+    picomatch "^2.2.2"
+    ws "^7.4.2"
+
+"@web/dev-server-rollup@^0.3.19":
+  version "0.3.19"
+  resolved "https://registry.yarnpkg.com/@web/dev-server-rollup/-/dev-server-rollup-0.3.19.tgz#188f3a37bcc38f4dc1b208663b14ab2d17321a57"
   dependencies:
     "@rollup/plugin-node-resolve" "^13.0.4"
-    "@web/dev-server-core" "^0.3.18"
+    "@web/dev-server-core" "^0.3.19"
     nanocolors "^0.2.1"
     parse5 "^6.0.1"
     rollup "^2.67.0"
     whatwg-url "^11.0.0"
 
-"@web/dev-server@^0.1.32":
-  version "0.1.32"
-  resolved "https://registry.yarnpkg.com/@web/dev-server/-/dev-server-0.1.32.tgz#d2c963a43d2107cd4dca7067f343fd9b5e1f2f80"
+"@web/dev-server@^0.1.33":
+  version "0.1.33"
+  resolved "https://registry.yarnpkg.com/@web/dev-server/-/dev-server-0.1.33.tgz#0f0723257823b6f51fc7e02704549162128acd1e"
   dependencies:
     "@babel/code-frame" "^7.12.11"
     "@types/command-line-args" "^5.0.0"
     "@web/config-loader" "^0.1.3"
-    "@web/dev-server-core" "^0.3.18"
-    "@web/dev-server-rollup" "^0.3.18"
+    "@web/dev-server-core" "^0.3.19"
+    "@web/dev-server-rollup" "^0.3.19"
     camelcase "^6.2.0"
     command-line-args "^5.1.1"
     command-line-usage "^6.1.1"
@@ -928,13 +951,13 @@
     "@types/mocha" "^8.2.0"
     "@web/test-runner-core" "^0.10.20"
 
-"@web/test-runner@^0.13.31":
-  version "0.13.31"
-  resolved "https://registry.yarnpkg.com/@web/test-runner/-/test-runner-0.13.31.tgz#bbc7536eb080088f97edcd4db7b335e754da7bbf"
+"@web/test-runner@^0.14.0":
+  version "0.14.0"
+  resolved "https://registry.yarnpkg.com/@web/test-runner/-/test-runner-0.14.0.tgz#fc7b206f3fdc5a1d774cfc8f60159a574d30b185"
   dependencies:
     "@web/browser-logs" "^0.2.2"
     "@web/config-loader" "^0.1.3"
-    "@web/dev-server" "^0.1.32"
+    "@web/dev-server" "^0.1.33"
     "@web/test-runner-chrome" "^0.10.7"
     "@web/test-runner-commands" "^0.6.3"
     "@web/test-runner-core" "^0.10.27"
@@ -1891,6 +1914,10 @@ errorstacks@^2.2.0:
 es-module-lexer@^0.9.0:
   version "0.9.3"
   resolved "https://registry.yarnpkg.com/es-module-lexer/-/es-module-lexer-0.9.3.tgz#6f13db00cc38417137daf74366f535c8eb438f19"
+
+es-module-lexer@^1.0.0:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/es-module-lexer/-/es-module-lexer-1.0.2.tgz#89dd1355d0e8a741b431171c69b2bfecc47d4293"
 
 escalade@^3.1.1:
   version "3.1.1"
