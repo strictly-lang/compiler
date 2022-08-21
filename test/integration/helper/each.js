@@ -20,16 +20,15 @@ describe("each loop handling", () => {
     element.bar = "mep";
 
     container.appendChild(element);
-    debugger;
 
     expect(element.shadowRoot.childNodes.length).to.equal(5);
     expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).to.equal("0-foo-mep");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo-mep");
     expect(element.shadowRoot.childNodes[2].tagName).to.equal("DIV");
-    expect(element.shadowRoot.childNodes[2].textContent).to.equal("1-bar-mep");
+    expect(element.shadowRoot.childNodes[2].textContent).to.equal("bar-mep");
     expect(element.shadowRoot.childNodes[3].tagName).to.equal("DIV");
-    expect(element.shadowRoot.childNodes[3].textContent).to.equal("2-baz-mep");
+    expect(element.shadowRoot.childNodes[3].textContent).to.equal("baz-mep");
     expect(element.shadowRoot.childNodes[4].tagName).to.equal("FOOTER");
 
     element.foo = ["foo2", "bar2", "baz2"];
@@ -37,16 +36,16 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes.length).to.equal(5);
     expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).to.equal("0-foo2-mep");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo2-mep");
     expect(element.shadowRoot.childNodes[2].tagName).to.equal("DIV");
-    expect(element.shadowRoot.childNodes[2].textContent).to.equal("1-bar2-mep");
+    expect(element.shadowRoot.childNodes[2].textContent).to.equal("bar2-mep");
     expect(element.shadowRoot.childNodes[3].tagName).to.equal("DIV");
-    expect(element.shadowRoot.childNodes[3].textContent).to.equal("2-baz2-mep");
+    expect(element.shadowRoot.childNodes[3].textContent).to.equal("baz2-mep");
     expect(element.shadowRoot.childNodes[4].tagName).to.equal("FOOTER");
   });
 
   it("with growing array", () => {
-    const element = document.createElement("test-components-helper-each-base");
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = [];
     element.bar = "alice";
@@ -103,7 +102,7 @@ describe("each loop handling", () => {
   });
 
   it("with shrinking array", () => {
-    const element = document.createElement("test-components-helper-each-base");
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = ["foo", "bar", "baz"];
     element.bar = "alice";
@@ -166,7 +165,7 @@ describe("each loop handling", () => {
   });
 
   it("with resetting empty array", () => {
-    const element = document.createElement("test-components-helper-each-base");
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = [];
     element.bar = "alice";
@@ -203,7 +202,7 @@ describe("each loop handling", () => {
   });
 
   it("removing each in filled-case", () => {
-    const element = document.createElement("test-components-helper-each-base");
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = ["foo", "bar", "baz"];
     element.bar = "alice";
@@ -235,7 +234,7 @@ describe("each loop handling", () => {
   });
 
   it("removing each in empty-case", () => {
-    const element = document.createElement("test-components-helper-each-base");
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = [];
     element.bar = "alice";
