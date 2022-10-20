@@ -828,26 +828,49 @@
     picomatch "^2.2.2"
     ws "^7.4.2"
 
-"@web/dev-server-rollup@^0.3.18":
-  version "0.3.18"
-  resolved "https://registry.yarnpkg.com/@web/dev-server-rollup/-/dev-server-rollup-0.3.18.tgz#16cf4e63101db25eee1994dfcdfc1f9d03ced706"
+"@web/dev-server-core@^0.3.19":
+  version "0.3.19"
+  resolved "https://registry.yarnpkg.com/@web/dev-server-core/-/dev-server-core-0.3.19.tgz#b61f9a0b92351371347a758b30ba19e683c72e94"
+  dependencies:
+    "@types/koa" "^2.11.6"
+    "@types/ws" "^7.4.0"
+    "@web/parse5-utils" "^1.2.0"
+    chokidar "^3.4.3"
+    clone "^2.1.2"
+    es-module-lexer "^1.0.0"
+    get-stream "^6.0.0"
+    is-stream "^2.0.0"
+    isbinaryfile "^4.0.6"
+    koa "^2.13.0"
+    koa-etag "^4.0.0"
+    koa-send "^5.0.1"
+    koa-static "^5.0.0"
+    lru-cache "^6.0.0"
+    mime-types "^2.1.27"
+    parse5 "^6.0.1"
+    picomatch "^2.2.2"
+    ws "^7.4.2"
+
+"@web/dev-server-rollup@^0.3.19":
+  version "0.3.19"
+  resolved "https://registry.yarnpkg.com/@web/dev-server-rollup/-/dev-server-rollup-0.3.19.tgz#188f3a37bcc38f4dc1b208663b14ab2d17321a57"
   dependencies:
     "@rollup/plugin-node-resolve" "^13.0.4"
-    "@web/dev-server-core" "^0.3.18"
+    "@web/dev-server-core" "^0.3.19"
     nanocolors "^0.2.1"
     parse5 "^6.0.1"
     rollup "^2.67.0"
     whatwg-url "^11.0.0"
 
-"@web/dev-server@^0.1.32":
-  version "0.1.32"
-  resolved "https://registry.yarnpkg.com/@web/dev-server/-/dev-server-0.1.32.tgz#d2c963a43d2107cd4dca7067f343fd9b5e1f2f80"
+"@web/dev-server@^0.1.35":
+  version "0.1.35"
+  resolved "https://registry.yarnpkg.com/@web/dev-server/-/dev-server-0.1.35.tgz#d845822d7c3c7749adf03f7abac4a69e2a4490cc"
   dependencies:
     "@babel/code-frame" "^7.12.11"
     "@types/command-line-args" "^5.0.0"
     "@web/config-loader" "^0.1.3"
-    "@web/dev-server-core" "^0.3.18"
-    "@web/dev-server-rollup" "^0.3.18"
+    "@web/dev-server-core" "^0.3.19"
+    "@web/dev-server-rollup" "^0.3.19"
     camelcase "^6.2.0"
     command-line-args "^5.1.1"
     command-line-usage "^6.1.1"
@@ -856,7 +879,7 @@
     ip "^1.1.5"
     nanocolors "^0.2.1"
     open "^8.0.2"
-    portfinder "^1.0.28"
+    portfinder "^1.0.32"
 
 "@web/parse5-utils@^1.2.0":
   version "1.3.0"
@@ -928,13 +951,13 @@
     "@types/mocha" "^8.2.0"
     "@web/test-runner-core" "^0.10.20"
 
-"@web/test-runner@^0.13.31":
-  version "0.13.31"
-  resolved "https://registry.yarnpkg.com/@web/test-runner/-/test-runner-0.13.31.tgz#bbc7536eb080088f97edcd4db7b335e754da7bbf"
+"@web/test-runner@^0.14.1":
+  version "0.14.1"
+  resolved "https://registry.yarnpkg.com/@web/test-runner/-/test-runner-0.14.1.tgz#a637e45c9b6ce7860ab780b5ac82dbfa1ed824f9"
   dependencies:
     "@web/browser-logs" "^0.2.2"
     "@web/config-loader" "^0.1.3"
-    "@web/dev-server" "^0.1.32"
+    "@web/dev-server" "^0.1.35"
     "@web/test-runner-chrome" "^0.10.7"
     "@web/test-runner-commands" "^0.6.3"
     "@web/test-runner-core" "^0.10.27"
@@ -946,7 +969,7 @@
     diff "^5.0.0"
     globby "^11.0.1"
     nanocolors "^0.2.1"
-    portfinder "^1.0.28"
+    portfinder "^1.0.32"
     source-map "^0.7.3"
 
 JSONStream@^1.0.4:
@@ -1143,7 +1166,7 @@ astral-regex@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/astral-regex/-/astral-regex-2.0.0.tgz#483143c567aeed4785759c0865786dc77d7d2e31"
 
-async@^2.6.2:
+async@^2.6.4:
   version "2.6.4"
   resolved "https://registry.yarnpkg.com/async/-/async-2.6.4.tgz#706b7ff6084664cd7eae713f6f965433b5504221"
   dependencies:
@@ -1704,7 +1727,7 @@ debug@^2.6.9:
   dependencies:
     ms "2.0.0"
 
-debug@^3.1.0, debug@^3.1.1:
+debug@^3.1.0, debug@^3.2.7:
   version "3.2.7"
   resolved "https://registry.yarnpkg.com/debug/-/debug-3.2.7.tgz#72580b7e9145fb39b6676f9c5e5fb100b934179a"
   dependencies:
@@ -1891,6 +1914,10 @@ errorstacks@^2.2.0:
 es-module-lexer@^0.9.0:
   version "0.9.3"
   resolved "https://registry.yarnpkg.com/es-module-lexer/-/es-module-lexer-0.9.3.tgz#6f13db00cc38417137daf74366f535c8eb438f19"
+
+es-module-lexer@^1.0.0:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/es-module-lexer/-/es-module-lexer-1.0.5.tgz#d6d9de310a5e11cbf73b39a1d6f79e5c3df4d06f"
 
 escalade@^3.1.1:
   version "3.1.1"
@@ -3432,6 +3459,10 @@ minimist@^1.2.0, minimist@^1.2.5:
   version "1.2.6"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.6.tgz#8637a5b759ea0d6e98702cfb3a9283323c93af44"
 
+minimist@^1.2.6:
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.7.tgz#daa1c4d91f507390437c6a8bc01078e7000c4d18"
+
 minipass-collect@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/minipass-collect/-/minipass-collect-1.0.2.tgz#22b813bf745dc6edba2576b940022ad6edc8c617"
@@ -3518,11 +3549,11 @@ mkdirp@*, mkdirp@^1.0.3, mkdirp@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
 
-mkdirp@^0.5.5:
-  version "0.5.5"
-  resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.5.tgz#d91cefd62d1436ca0f41620e251288d420099def"
+mkdirp@^0.5.6:
+  version "0.5.6"
+  resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.6.tgz#7def03d2432dcae4ba1d611445c48396062255f6"
   dependencies:
-    minimist "^1.2.5"
+    minimist "^1.2.6"
 
 modify-values@^1.0.0:
   version "1.0.1"
@@ -4294,13 +4325,13 @@ pkg-dir@4.2.0:
   dependencies:
     find-up "^4.0.0"
 
-portfinder@^1.0.28:
-  version "1.0.28"
-  resolved "https://registry.yarnpkg.com/portfinder/-/portfinder-1.0.28.tgz#67c4622852bd5374dd1dd900f779f53462fac778"
+portfinder@^1.0.32:
+  version "1.0.32"
+  resolved "https://registry.yarnpkg.com/portfinder/-/portfinder-1.0.32.tgz#2fe1b9e58389712429dc2bea5beb2146146c7f81"
   dependencies:
-    async "^2.6.2"
-    debug "^3.1.1"
-    mkdirp "^0.5.5"
+    async "^2.6.4"
+    debug "^3.2.7"
+    mkdirp "^0.5.6"
 
 prelude-ls@^1.2.1:
   version "1.2.1"
