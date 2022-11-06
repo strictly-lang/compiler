@@ -4,7 +4,8 @@ store = {
 	reducer = \_, action -> action
 }
 
-main : \ {}, {} -> View
+#[webcomponent]
+main : \ {}, {} -> Output
 main = \_, _ ->
 	let [mainState, mainDispatch] <- model(store);
 	$input{

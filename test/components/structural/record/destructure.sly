@@ -6,7 +6,8 @@ store = {
 	reducer = \state, x -> { x = state.x + x | state}
 }
 
-main : \{}, {} -> View
+#[webcomponent]
+main : \{}, {} -> Output
 main = \_, _ ->
 	let [{x, deep = { y = yValue }}, mainDispatch] <- model(store);
 	$button{

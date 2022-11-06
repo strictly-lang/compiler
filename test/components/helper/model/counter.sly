@@ -7,7 +7,8 @@ store = {
 	reducer = \state, Decrement -> state - 1
 }
 
-main : \ {}, {} -> View
+#[webcomponent]
+main : \ {}, {} -> Output
 main = \_, _ ->
 	let [counterState, counterDispatch] <- model(store);
 	$button{

@@ -1,4 +1,5 @@
-main : \{ value: Boolean, oninput: \Boolean -> Void }, {} -> View
+#[webcomponent]
+main : \{ value: Boolean, oninput: \Boolean -> Void }, {} -> Output
 main = \props, _ ->
 	$input{
 		type = "checkbox"

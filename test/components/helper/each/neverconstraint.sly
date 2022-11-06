@@ -1,6 +1,7 @@
 data State = Odd(Integer), Even(Integer), Never(Integer);
 
-main : \{}, {} -> View
+#[webcomponent]
+main : \{}, {} -> Output
 main = \_, _ ->
 	$header
 	$section

@@ -1,3 +1,4 @@
-main : \{}, {} -> View
+#[webcomponent]
+main : \{}, {} -> Output
 main = \_, _ ->
 	"foo"

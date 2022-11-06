@@ -1,4 +1,5 @@
-main : \{ foo: String[], baz: Boolean, bar: String }, {} -> View
+#[webcomponent]
+main : \{ foo: String[], baz: Boolean, bar: String }, {} -> Output
 main = \props, _ ->
 	$header
 	if props.baz then

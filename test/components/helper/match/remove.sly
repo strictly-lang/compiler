@@ -6,7 +6,8 @@ store = {
 	reducer = \_, action -> action
 }
 
-main : \{ foo: Boolean, }, {} -> View
+#[webcomponent]
+main : \{ foo: Boolean, }, {} -> Output
 main = \props, _ ->
 	$header
 	let [stateState, stateDispatch] <- model(store);

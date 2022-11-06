@@ -1,4 +1,5 @@
-main : \{ value: String, oninput: \String -> Void }, {} -> View
+#[webcomponent]
+main : \{ value: String, oninput: \String -> Void }, {} -> Output
 main = \props, _ ->
 	$input{
 		type = "text"

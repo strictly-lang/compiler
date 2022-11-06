@@ -7,7 +7,8 @@ store = \_ -> {
 	reducer = \_, AddSelection    -> True
 }
 
-main : \{ page: Integer }, {} -> View
+#[webcomponent]
+main : \{ page: Integer }, {} -> Output
 main = \props, _ ->
 	let entity <- [props.page * 10 .. (props.page * 10 + 10)];
 	let [selectionState, selectionDispatch] <- model(store(props.page));

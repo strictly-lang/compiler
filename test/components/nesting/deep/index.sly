@@ -1,4 +1,5 @@
-main : \{ foo: String }, {} -> View
+#[webcomponent]
+main : \{ foo: String }, {} -> Output
 main = \props, _ ->
 	$div
 		"nested component value: ${props.foo}"

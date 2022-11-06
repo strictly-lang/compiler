@@ -1,4 +1,5 @@
-main : \{}, {} -> View
+#[webcomponent]
+main : \{}, {} -> Output
 main = \_, _ ->
 	$header
 	$section

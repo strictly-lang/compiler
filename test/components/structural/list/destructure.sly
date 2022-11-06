@@ -1,4 +1,5 @@
-main : \{ values: String[] }, {} -> View
+#[webcomponent]
+main : \{ values: String[] }, {} -> Output
 main = \props, _ ->
 	match props.values
 		case \[] ->

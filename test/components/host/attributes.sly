@@ -1,4 +1,5 @@
-main : \{ foo: String, bar: String}, {} -> View
+#[webcomponent]
+main : \{ foo: String, bar: String}, {} -> Output
 main = \props, _ ->
 	$div{
 		class="foo"

@@ -25,7 +25,8 @@ store = {
 		{ todos = todos' | state }
 }
 
-main : \{}, {} -> View
+#[webcomponent]
+main : \{}, {} -> Output
 main = \_, _ ->
 	let [{todos, textValue}, todosDispatch] <- model(store);
 

@@ -1,4 +1,5 @@
-main : \{ foo: Boolean }, {} -> View
+#[webcomponent]
+main : \{ foo: Boolean }, {} -> Output
 main = \props, _ ->
 	$div
 		if props.foo then
