@@ -18,20 +18,20 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md,README.md
 
 library
-  exposed-modules:     Compiler.Main
-  other-modules:       Types,
-                       Parser.Types,
+  exposed-modules:     Compiler
+  other-modules:       Parser.Types,
                        Parser.Util,
                        Parser.Main,
-                       Parser.Kinds.Root,
-                       Parser.Kinds.LeftHandSide,
-                       Parser.Kinds.Statement,
-                       Emitter.Types
-                       Emitter.Util,
-                       Emitter.Kinds.Root,
-                       Emitter.Kinds.RootDeclaration,
-                       Emitter.Kinds.Expression
-                       Emitter.Kinds.RootAssignment
+                       Parser.Root,
+                       Parser.LeftHandSide,
+                       Parser.Statement
+  --                      TypeChecker.Types,
+  --                      Emitter.Types
+  --                      Emitter.Util,
+  --                      Emitter.Kinds.Root,
+  --                      Emitter.Kinds.RootDeclaration,
+  --                      Emitter.Kinds.Expression
+  --                      Emitter.Kinds.RootAssignment
 
   -- other-extensions:
   build-depends:       base, megaparsec, mtl

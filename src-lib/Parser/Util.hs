@@ -5,7 +5,6 @@ import Parser.Types
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, optional, some, try)
 import Text.Megaparsec.Char (char, digitChar, eol, letterChar, lowerChar, space, string, upperChar)
 import Text.Megaparsec.Char.Lexer
-import Types
 
 hole' :: Parser ()
 hole' = do
@@ -76,24 +75,24 @@ sc = do
 -- Type --
 ----------
 
-typeDefinitionParser :: IndentationLevel -> Parser TypeDefinition
+typeDefinitionParser :: IndentationLevel -> Parser ASTTypeDeclaration
 typeDefinitionParser indentationLevel = do
   typeValue <- typeAlgebraicDataTypeParser indentationLevel <|> typeFunctionTypeParser indentationLevel <|> typeRecordTypeParser indentationLevel
 
   typeListParser typeValue
 
-typeListParser :: TypeDefinition -> Parser TypeDefinition
+typeListParser :: ASTTypeDeclaration -> Parser ASTTypeDeclaration
 typeListParser typeValue = do
   hasList <- optional (lookAhead listOpenParser)
 
   case hasList of
     Just _ -> do
       _ <- listOpenParser <* listCloseParser
-      typeListParser (TypeList typeValue)
+      typeListParser (ASTTypeDeclarationList typeValue)
     Nothing ->
       return typeValue
 
-typeAlgebraicDataTypeParser :: IndentationLevel -> Parser TypeDefinition
+typeAlgebraicDataTypeParser :: IndentationLevel -> Parser ASTTypeDeclaration
 typeAlgebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser <* sc
   hasParameter <- optional (lookAhead functionCallOpenParser)
@@ -103,18 +102,18 @@ typeAlgebraicDataTypeParser indentationLevel = do
       Nothing -> do return []
 
   hasList <- optional (lookAhead listOpenParser)
-  return (TypeAlgebraicDataType name parameters)
+  return (ASTTypeDeclarationAlgebraicDataType name parameters)
 
-typeFunctionTypeParser :: IndentationLevel -> Parser TypeDefinition
+typeFunctionTypeParser :: IndentationLevel -> Parser ASTTypeDeclaration
 typeFunctionTypeParser indentationLevel = do
   parameters <- blockParser functionDefinitionParser functionBodyParser typeDefinitionParser indentationLevel
-  TypeFunction parameters <$> typeDefinitionParser indentationLevel
+  ASTTypeDeclarationFunction parameters <$> typeDefinitionParser indentationLevel
 
-typeRecordTypeParser :: IndentationLevel -> Parser TypeDefinition
+typeRecordTypeParser :: IndentationLevel -> Parser ASTTypeDeclaration
 typeRecordTypeParser indentationLevel = do
-  TypeRecord <$> blockParser recordOpenParser recordCloseParser typeRecordEntryParser indentationLevel
+  ASTTypeDeclarationRecord <$> blockParser recordOpenParser recordCloseParser typeRecordEntryParser indentationLevel
 
-typeRecordEntryParser :: IndentationLevel -> Parser (String, TypeDefinition)
+typeRecordEntryParser :: IndentationLevel -> Parser (String, ASTTypeDeclaration)
 typeRecordEntryParser indentationLevel = do
   property <- lowercaseIdentifierParser
   _ <- typeAssignParser

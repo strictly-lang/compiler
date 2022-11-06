@@ -1,24 +1,23 @@
-module Parser.Kinds.Statement where
+module Parser.Statement (statementParser, expressionParser) where
 
 import Control.Applicative ((<|>))
-import Parser.Kinds.LeftHandSide (leftHandSideParser)
+import Parser.LeftHandSide (leftHandSideParser)
 import Parser.Types
 import Parser.Util (assignParser, baseOfParser, blockParser, functionBodyParser, functionCallCloseParser, functionCallOpenParser, functionDefinitionParser, indentationParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, numberParser, recordCloseParser, recordOpenParser, sc, statementTerminationParser, streamParser, typeAssignParser, typeDefinitionParser, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, many, manyTill, optional, some, try)
 import Text.Megaparsec.Char (char, eol, letterChar, lowerChar, string)
 import Text.Megaparsec.Char.Lexer (charLiteral)
-import Types
 
-statementParser :: IndentationLevel -> Parser Statement
+statementParser :: IndentationLevel -> Parser ASTStatement
 statementParser indentationLevel =
   letParser indentationLevel
-    <|> (UntypedExpression <$> expressionParser indentationLevel)
+    <|> (ASTExpression <$> expressionParser indentationLevel)
 
 -----------------------
 -- Statement-Parsers --
 -----------------------
 
-letParser :: IndentationLevel -> Parser Statement
+letParser :: IndentationLevel -> Parser ASTStatement
 letParser indentationLevel = do
   _ <- string "let " <* sc
   leftHandSide <- leftHandSideParser indentationLevel
@@ -27,9 +26,9 @@ letParser indentationLevel = do
 
   result <- case kind of
     Left _ ->
-      return (VariableAssignment leftHandSide expression)
+      return (ASTStatementVariableAssignment leftHandSide expression)
     Right _ ->
-      return (Stream leftHandSide expression)
+      return (ASTStream leftHandSide expression)
   _ <- statementTerminationParser
 
   return result
@@ -38,7 +37,7 @@ letParser indentationLevel = do
 -- Expression-Parsers --
 ------------------------
 
-expressionParser :: IndentationLevel -> Parser UntypedExpression
+expressionParser :: IndentationLevel -> Parser ASTExpression
 expressionParser indentationLevel = do
   result <- expressionParser' indentationLevel
 
@@ -47,11 +46,11 @@ expressionParser indentationLevel = do
   case operator of
     Just operator -> do
       nextExpression <- expressionParser indentationLevel
-      return [RightHandSideOperator operator result nextExpression]
+      return [ASTExpressionOperator operator result nextExpression]
     Nothing -> do
       return result
 
-expressionParser' :: IndentationLevel -> Parser UntypedExpression
+expressionParser' :: IndentationLevel -> Parser ASTExpression
 expressionParser' indentationLevel = do
   expression <- expressionParser'' indentationLevel
 
@@ -68,12 +67,12 @@ expressionParser' indentationLevel = do
 
   case hasFunctionCall of
     Just _ -> do
-      functionCall <- RightHandSideFunctionCall <$> blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
+      functionCall <- ASTExpressionFunctionCall <$> blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
       return (result ++ [functionCall])
     Nothing -> do
       return result
 
-expressionParser'' :: IndentationLevel -> Parser UntypedExpression'
+expressionParser'' :: IndentationLevel -> Parser ASTExpression'
 expressionParser'' indentationLevel = do
   rightHandSideFunctionDefinitionParser indentationLevel
     <|> rightHandSideConditionParser indentationLevel
@@ -86,7 +85,7 @@ expressionParser'' indentationLevel = do
     <|> rightHandSideVariableParser indentationLevel
     <|> rightHandSideHostParser indentationLevel
 
-rightHandSideConditionParser :: IndentationLevel -> Parser UntypedExpression'
+rightHandSideConditionParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideConditionParser indentationLevel = do
   _ <- string "if " *> sc
   condition <- expressionParser indentationLevel
@@ -95,23 +94,23 @@ rightHandSideConditionParser indentationLevel = do
   _ <- indentationParser (\indentationLevel -> do string "else" *> sc) indentationLevel
   elseCase <- some (indentationParser statementParser (indentationLevel + 1))
 
-  return (RightHandSideCondition condition thenCase elseCase)
+  return (ASTExpressionCondition condition thenCase elseCase)
 
-rightHandSideMatchParser :: IndentationLevel -> Parser UntypedExpression'
+rightHandSideMatchParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideMatchParser indentationLevel = do
   _ <- string "match " *> sc
   matchTarget <- expressionParser indentationLevel
   cases <- many (indentationParser caseParser (indentationLevel + 1))
 
-  return (RightHandSideMatch matchTarget cases)
+  return (ASTExpressionMatch matchTarget cases)
 
-caseParser :: IndentationLevel -> Parser (LeftHandSide, [Statement])
+caseParser :: IndentationLevel -> Parser (ASTLeftHandSide, [ASTStatement])
 caseParser indentationLevel = do
   _ <- string "case " *> sc
-  RightHandSideFunctionDefinition [patterns] statements <- rightHandSideFunctionDefinitionParser indentationLevel
+  ASTExpressionFunctionDeclaration [patterns] statements <- rightHandSideFunctionDefinitionParser indentationLevel
   return (patterns, statements)
 
-rightHandSideAgebraicDataTypeParser :: IndentationLevel -> Parser UntypedExpression'
+rightHandSideAgebraicDataTypeParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideAgebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser
   hasParameter <- optional (lookAhead functionCallOpenParser)
@@ -119,13 +118,13 @@ rightHandSideAgebraicDataTypeParser indentationLevel = do
     Just _ -> do
       blockParser functionCallOpenParser functionCallCloseParser expressionParser indentationLevel
     Nothing -> do return []
-  return (RightHandSideAlgebraicDataType name parameters)
+  return (ASTExpressionAlgebraicDataType name parameters)
 
-rightHandSideRecordParser :: IndentationLevel -> Parser UntypedExpression'
+rightHandSideRecordParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideRecordParser indentationLevel = do
-  RightHandSideRecord <$> recordParser indentationLevel
+  ASTExpressionRecord <$> recordParser indentationLevel
 
-recordParser :: IndentationLevel -> Parser Record
+recordParser :: IndentationLevel -> Parser ASTRecord
 recordParser indentationLevel = do
   properties <- blockParser recordOpenParser (lookAhead (recordCloseParser <|> baseOfParser)) recordOptionParser indentationLevel
 
@@ -139,7 +138,7 @@ recordParser indentationLevel = do
       _ <- recordCloseParser
       return (properties, [])
 
-recordOptionParser :: IndentationLevel -> Parser (String, RecordValue)
+recordOptionParser :: IndentationLevel -> Parser (String, ASTRecordValue)
 recordOptionParser indentationLevel = do
   key <- lowercaseIdentifierParser
 
@@ -161,7 +160,7 @@ recordOptionParser indentationLevel = do
 
   return (key, value)
 
-rightHandSideFunctionDefinitionParser :: IndentationLevel -> Parser UntypedExpression'
+rightHandSideFunctionDefinitionParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideFunctionDefinitionParser indentationLevel = do
   parameters <- blockParser functionDefinitionParser functionBodyParser leftHandSideParser indentationLevel
 
@@ -173,15 +172,15 @@ rightHandSideFunctionDefinitionParser indentationLevel = do
     Nothing -> do
       result <- statementParser indentationLevel
       return [result]
-  return (RightHandSideFunctionDefinition parameters functionBody)
+  return (ASTExpressionFunctionDeclaration parameters functionBody)
 
-rightHandSideListParser :: IndentationLevel -> Parser UntypedExpression'
+rightHandSideListParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideListParser indentationLevel = do
   entities <- blockParser listOpenParser (lookAhead (listCloseParser <|> baseOfParser)) expressionParser indentationLevel
 
   hasSource <- lookAhead (optional baseOfParser)
 
-  RightHandSideList entities
+  ASTExpressionList entities
     <$> case hasSource of
       Just _ -> do
         blockParser baseOfParser listCloseParser statementParser indentationLevel
@@ -189,7 +188,7 @@ rightHandSideListParser indentationLevel = do
         _ <- listCloseParser
         return []
 
-rightHandSideNumberParser :: IndentationLevel -> Parser UntypedExpression'
+rightHandSideNumberParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideNumberParser indentationLevel = do
   from <- numberParser
 
@@ -197,30 +196,30 @@ rightHandSideNumberParser indentationLevel = do
 
   case hasRange of
     Just _ -> do
-      RightHandSideRange from <$> optional numberParser
+      ASTExpressionRange from <$> optional numberParser
     Nothing ->
-      return (RightHandSideNumber from)
+      return (ASTExpressionNumber from)
 
-rightHandSideMixedTextParser :: IndentationLevel -> Parser UntypedExpression'
+rightHandSideMixedTextParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideMixedTextParser indentationLevel = do
-  RightHandSideString
+  ASTExpressionString
     <$> (char '\"' *> (dynamicTextParser indentationLevel <|> staticTextParser indentationLevel) `manyTill` char '"')
 
-staticTextParser :: IndentationLevel -> Parser RightHandSideString
+staticTextParser :: IndentationLevel -> Parser ASTString
 staticTextParser indentationLevel = do
   text <- charLiteral `manyTill` lookAhead (string "\"" <|> string "${")
-  return (RightHandSideStringStatic text)
+  return (ASTStringStatic text)
 
-dynamicTextParser :: IndentationLevel -> Parser RightHandSideString
+dynamicTextParser :: IndentationLevel -> Parser ASTString
 dynamicTextParser indentationLevel = do
   value <- string "${" *> expressionParser indentationLevel <* char '}'
 
-  return (RightHandSideStringDynamic value)
+  return (ASTStringDynamic value)
 
-rightHandSideVariableParser :: IndentationLevel -> Parser UntypedExpression'
-rightHandSideVariableParser indentationLevel = do RightHandSideVariable <$> lowercaseIdentifierParser
+rightHandSideVariableParser :: IndentationLevel -> Parser ASTExpression'
+rightHandSideVariableParser indentationLevel = do ASTExpressionVariable <$> lowercaseIdentifierParser
 
-rightHandSideHostParser :: IndentationLevel -> Parser UntypedExpression'
+rightHandSideHostParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideHostParser indentationLevel = do
   _ <- char '$'
   hostName <- some lowerChar
@@ -232,7 +231,7 @@ rightHandSideHostParser indentationLevel = do
     Nothing -> do return ([], [])
 
   children <- many (indentationParser statementParser (indentationLevel + 1))
-  return (RightHandSideHost hostName record children)
+  return (ASTExpressionHost hostName record children)
 
 ---------------------
 -- Operator Parser --
@@ -254,39 +253,39 @@ operatorParser =
 equalParser :: Parser Operator
 equalParser = do
   _ <- string "=="
-  return Equal
+  return "equal"
 
 unequalParser :: Parser Operator
 unequalParser = do
   _ <- string "!="
-  return Unequal
+  return "unequal"
 
 concatParser :: Parser Operator
 concatParser = do
   _ <- string "++"
-  return Concat
+  return "concat"
 
 plusParser :: Parser Operator
 plusParser = do
   _ <- string "+"
-  return Plus
+  return "plus"
 
 minusParser :: Parser Operator
 minusParser = do
   _ <- string "-"
-  return Unequal
+  return "unequal"
 
 multiplyParser :: Parser Operator
 multiplyParser = do
   _ <- string "*"
-  return Multiply
+  return "multiply"
 
 divisionParser :: Parser Operator
 divisionParser = do
   _ <- string "/"
-  return Division
+  return "division"
 
 moduloParser :: Parser Operator
 moduloParser = do
   _ <- string "%"
-  return Modulo
+  return "modulo"

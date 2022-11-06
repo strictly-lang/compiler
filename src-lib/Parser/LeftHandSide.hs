@@ -1,21 +1,20 @@
-module Parser.Kinds.LeftHandSide where
+module Parser.LeftHandSide where
 
 import Control.Applicative ((<|>))
 import Parser.Types
 import Parser.Util (assignParser, baseOfParser, blockParser, functionCallCloseParser, functionCallOpenParser, listCloseParser, listOpenParser, lowercaseIdentifierParser, recordCloseParser, recordOpenParser, sc, uppercaseIdentifierParser)
 import Text.Megaparsec (lookAhead, optional)
 import Text.Megaparsec.Char (char)
-import Types
 
-leftHandSideParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideParser :: IndentationLevel -> Parser ASTLeftHandSide
 leftHandSideParser indentationLevel = leftHandSideHoleParser indentationLevel <|> leftHandSideListParser indentationLevel <|> leftHandSideAlgebraicDataTypeParser indentationLevel <|> leftHandSideRecordParser indentationLevel <|> leftHandSideVariableParser indentationLevel
 
-leftHandSideHoleParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideHoleParser :: IndentationLevel -> Parser ASTLeftHandSide
 leftHandSideHoleParser indentationLevel = do
   _ <- char '_' *> sc
-  return LeftHandSideHole
+  return ASTLeftHandSideHole
 
-leftHandSideAlgebraicDataTypeParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideAlgebraicDataTypeParser :: IndentationLevel -> Parser ASTLeftHandSide
 leftHandSideAlgebraicDataTypeParser indentationLevel = do
   name <- uppercaseIdentifierParser <* sc
   hasParameter <- optional (lookAhead functionCallOpenParser)
@@ -23,18 +22,18 @@ leftHandSideAlgebraicDataTypeParser indentationLevel = do
     Just _ -> do
       blockParser functionCallOpenParser functionCallCloseParser leftHandSideParser indentationLevel
     Nothing -> do return []
-  return (LeftHandSideAlgebraicDataType name parameters)
+  return (ASTLeftHandSideAlgebraicDataType name parameters)
 
-leftHandSideListParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideListParser :: IndentationLevel -> Parser ASTLeftHandSide
 leftHandSideListParser indentationLevel = do
-  LeftHandSideList <$> blockParser listOpenParser listCloseParser leftHandSideParser indentationLevel
+  ASTLeftHandSideList <$> blockParser listOpenParser listCloseParser leftHandSideParser indentationLevel
 
-leftHandSideRecordParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideRecordParser :: IndentationLevel -> Parser ASTLeftHandSide
 leftHandSideRecordParser indentationLevel = do
   destructuredProperties <- blockParser recordOpenParser recordCloseParser leftHandSideRecordEntityParser indentationLevel
-  return (LeftHandSideRecord destructuredProperties)
+  return (ASTLeftHandSideRecord destructuredProperties)
 
-leftHandSideRecordEntityParser :: IndentationLevel -> Parser (String, Maybe LeftHandSide)
+leftHandSideRecordEntityParser :: IndentationLevel -> Parser (String, Maybe ASTLeftHandSide)
 leftHandSideRecordEntityParser indentationLevel = do
   propertyName <- lowercaseIdentifierParser
   hasAlias <- optional assignParser
@@ -46,13 +45,13 @@ leftHandSideRecordEntityParser indentationLevel = do
     Nothing -> do
       return (propertyName, Nothing)
 
-leftHandSideVariableParser :: IndentationLevel -> Parser LeftHandSide
+leftHandSideVariableParser :: IndentationLevel -> Parser ASTLeftHandSide
 leftHandSideVariableParser indentationLevel = do
   identifier <- lowercaseIdentifierParser
   isAlias <- optional (char '@')
 
   case isAlias of
-    Just _ -> do LeftHandSideAlias identifier <$> leftHandSideParser indentationLevel
+    Just _ -> do ASTLeftHandSideAlias identifier <$> leftHandSideParser indentationLevel
     Nothing -> do
       _ <- sc
-      return (LeftHandSideVariable identifier)
+      return (ASTLeftHandSideVariable identifier)
