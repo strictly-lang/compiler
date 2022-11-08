@@ -1,11 +1,11 @@
 module Parser.Root (rootParser) where
 
-import Control.Applicative ((<|>))
+import Control.Applicative (Alternative (some), (<|>))
 import Parser.Statement
 import Parser.Types
-import Parser.Util (assignParser, blockParser, functionCallCloseParser, functionCallOpenParser, lowercaseIdentifierParser, sc, statementTerminationParser, typeAssignParser, typeDefinitionParser, uppercaseIdentifierParser)
+import Parser.Util (assignParser, blockParser, eol', functionCallCloseParser, functionCallOpenParser, functionMacroCloseParser, functionMacroOpenParser, lowercaseIdentifierParser, sc, statementTerminationParser, typeAssignParser, typeDefinitionParser, uppercaseIdentifierParser)
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, optional, sepBy)
-import Text.Megaparsec.Char (char, space, space1, string)
+import Text.Megaparsec.Char (char, letterChar, space, space1, string)
 
 rootParser :: Parser ASTRootNode
 rootParser = dataParser <|> typeDeclarationParser <|> assignmentParser
@@ -35,8 +35,15 @@ typeDeclarationParser = do
 
 assignmentParser :: Parser ASTRootNode
 assignmentParser = do
+  macro <- optional (between functionMacroOpenParser functionMacroCloseParser (some letterChar) <* eol')
   name <- lowercaseIdentifierParser <* sc
   kind <- Left <$> typeAssignParser <|> Right <$> assignParser
   case kind of
     Left _ -> ASTRootTypeDeclaration name <$> typeDefinitionParser 0
-    Right _ -> ASTRootAssignment name <$> expressionParser 0
+    Right _ -> do
+      expression <- expressionParser 0
+      ASTRootAssignment name <$> case expression of
+        [ASTExpressionFunctionDeclaration Nothing parameters body] ->
+          return [ASTExpressionFunctionDeclaration macro parameters body]
+        _ ->
+          return expression

@@ -2,7 +2,7 @@ module Parser.Util where
 
 import Control.Applicative ((<|>))
 import Parser.Types
-import Text.Megaparsec (MonadParsec (lookAhead), between, many, optional, some, try)
+import Text.Megaparsec (MonadParsec (lookAhead), many, optional, some, try)
 import Text.Megaparsec.Char (char, digitChar, eol, letterChar, lowerChar, space, string, upperChar)
 import Text.Megaparsec.Char.Lexer
 
@@ -153,6 +153,18 @@ delimiterParser = do
 baseOfParser :: Parser ()
 baseOfParser = do
   _ <- char '|' *> sc
+
+  return ()
+
+functionMacroOpenParser :: Parser ()
+functionMacroOpenParser = do
+  _ <- string "#[" <* sc
+
+  return ()
+
+functionMacroCloseParser :: Parser ()
+functionMacroCloseParser = do
+  _ <- char ']' <* sc
 
   return ()
 

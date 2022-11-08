@@ -53,7 +53,7 @@ data ASTExpression'
   | ASTExpressionNumber Int
   | ASTExpressionRange Int (Maybe Int)
   | ASTExpressionString [ASTString]
-  | ASTExpressionFunctionDeclaration [ASTLeftHandSide] [ASTStatement]
+  | ASTExpressionFunctionDeclaration (Maybe String) [ASTLeftHandSide] [ASTStatement]
   | ASTExpressionFunctionCall [ASTExpression]
   | ASTExpressionOperator Operator ASTExpression ASTExpression
   | ASTExpressionCondition ASTExpression [ASTStatement] [ASTStatement]
