@@ -19,7 +19,11 @@ extra-source-files:  CHANGELOG.md,README.md
 
 library
   exposed-modules:     Compiler
-  other-modules:       Parser.Types,
+  other-modules:
+                       Prelude.Types,
+                       Prelude.Main,
+                       Prelude.Javascript,
+                       Parser.Types,
                        Parser.Util,
                        Parser.Main,
                        Parser.Root,
