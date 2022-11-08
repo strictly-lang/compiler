@@ -8,7 +8,7 @@ import Text.Megaparsec (MonadParsec (lookAhead), between, many, optional, sepBy)
 import Text.Megaparsec.Char (char, letterChar, space, space1, string)
 
 rootParser :: Parser ASTRootNode
-rootParser = dataParser <|> typeDeclarationParser <|> assignmentParser
+rootParser = dataParser <|> typeDeclarationParser <|> macroParser <|> assignmentParser
 
 dataParser :: Parser ASTRootNode
 dataParser = do
@@ -33,17 +33,14 @@ typeDeclarationParser = do
   _ <- statementTerminationParser
   return (ASTRootTypeDeclaration name typeDefinition)
 
+macroParser :: Parser ASTRootNode
+macroParser = do
+  ASTMacro <$> between functionMacroOpenParser functionMacroCloseParser (some letterChar)
+
 assignmentParser :: Parser ASTRootNode
 assignmentParser = do
-  macro <- optional (between functionMacroOpenParser functionMacroCloseParser (some letterChar) <* eol')
   name <- lowercaseIdentifierParser <* sc
   kind <- Left <$> typeAssignParser <|> Right <$> assignParser
   case kind of
     Left _ -> ASTRootTypeDeclaration name <$> typeDefinitionParser 0
-    Right _ -> do
-      expression <- expressionParser 0
-      ASTRootAssignment name <$> case expression of
-        [ASTExpressionFunctionDeclaration Nothing parameters body] ->
-          return [ASTExpressionFunctionDeclaration macro parameters body]
-        _ ->
-          return expression
+    Right _ -> ASTRootAssignment name <$> expressionParser 0

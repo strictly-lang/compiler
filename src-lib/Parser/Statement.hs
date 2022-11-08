@@ -107,7 +107,7 @@ rightHandSideMatchParser indentationLevel = do
 caseParser :: IndentationLevel -> Parser (ASTLeftHandSide, [ASTStatement])
 caseParser indentationLevel = do
   _ <- string "case " *> sc
-  ASTExpressionFunctionDeclaration Nothing [patterns] statements <- rightHandSideFunctionDefinitionParser indentationLevel
+  ASTExpressionFunctionDeclaration [patterns] statements <- rightHandSideFunctionDefinitionParser indentationLevel
   return (patterns, statements)
 
 rightHandSideAgebraicDataTypeParser :: IndentationLevel -> Parser ASTExpression'
@@ -172,7 +172,7 @@ rightHandSideFunctionDefinitionParser indentationLevel = do
     Nothing -> do
       result <- statementParser indentationLevel
       return [result]
-  return (ASTExpressionFunctionDeclaration Nothing parameters functionBody)
+  return (ASTExpressionFunctionDeclaration parameters functionBody)
 
 rightHandSideListParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideListParser indentationLevel = do

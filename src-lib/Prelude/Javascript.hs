@@ -3,6 +3,6 @@ module Prelude.Javascript where
 import Prelude.Types
 
 webcomponent :: Macro
-webcomponent ast = error ""
+webcomponent ast = show ast
 
-macros = []
+macros = [webcomponent]

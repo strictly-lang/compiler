@@ -18,4 +18,5 @@ parse = do
       return (Right ast)
 
 parseRoot' :: Parser [ASTRootNode]
-parseRoot' = many (many eol *> (rootParser <* many eol)) <* eof
+parseRoot' = do
+  many (many eol *> (rootParser <* many eol)) <* eof

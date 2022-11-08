@@ -11,11 +11,9 @@ type AST = [ASTRootNode]
 
 data ASTRootNode
   = ASTRootNodeAlgebraicDataTypeDeclaration String [(String, [ASTTypeDeclaration])]
+  | ASTMacro String
   | ASTRootTypeDeclaration String ASTTypeDeclaration
   | ASTRootAssignment String ASTExpression
-  deriving (Show)
-
-newtype ASTMacro = ASTMacro String
   deriving (Show)
 
 data ASTTypeDeclaration
@@ -53,7 +51,7 @@ data ASTExpression'
   | ASTExpressionNumber Int
   | ASTExpressionRange Int (Maybe Int)
   | ASTExpressionString [ASTString]
-  | ASTExpressionFunctionDeclaration (Maybe String) [ASTLeftHandSide] [ASTStatement]
+  | ASTExpressionFunctionDeclaration [ASTLeftHandSide] [ASTStatement]
   | ASTExpressionFunctionCall [ASTExpression]
   | ASTExpressionOperator Operator ASTExpression ASTExpression
   | ASTExpressionCondition ASTExpression [ASTStatement] [ASTStatement]
