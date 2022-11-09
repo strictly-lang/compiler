@@ -35,7 +35,7 @@ typeDeclarationParser = do
 
 macroParser :: Parser ASTRootNode
 macroParser = do
-  ASTMacro <$> between functionMacroOpenParser functionMacroCloseParser (some letterChar)
+  ASTRootMacro <$> between functionMacroOpenParser functionMacroCloseParser (some letterChar)
 
 assignmentParser :: Parser ASTRootNode
 assignmentParser = do
