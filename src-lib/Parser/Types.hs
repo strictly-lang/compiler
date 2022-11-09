@@ -12,7 +12,7 @@ type AST = [ASTRootNode]
 data ASTRootNode
   = ASTRootNodeAlgebraicDataTypeDeclaration String [(String, [ASTTypeDeclaration])]
   | ASTMacro String
-  | ASTRootTypeDeclaration String ASTTypeDeclaration
+  | ASTRootTypeAssignment String ASTTypeDeclaration
   | ASTRootAssignment String ASTExpression
   deriving (Show)
 
