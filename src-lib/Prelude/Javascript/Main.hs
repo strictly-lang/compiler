@@ -14,7 +14,14 @@ webcomponent' filePath ast ((ASTRootMacro "webcomponent") : ast') =
    in [ Ln ("class " ++ slashToCamelCase filePathWithoutExtension ++ " extends HTMLElement {"),
         Ind
           [ Ln "constructor() {",
-            Ind [],
+            Ind
+              [ Ln "super();",
+                Ln "this.properties = {};"
+              ],
+            Ln "}",
+            Br,
+            Ln "connectedCallback() {",
+            Ind [Ln "this.attachShadow();"],
             Ln "}"
           ],
         Ln "}",
