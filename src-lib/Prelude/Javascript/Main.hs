@@ -21,7 +21,7 @@ webcomponent' filePath ast ((ASTRootMacro "webcomponent") : ast') =
             Ln "}",
             Br,
             Ln "connectedCallback() {",
-            Ind [Ln "this.attachShadow();"],
+            Ind [Ln "this.attachShadow({ mode: \"open\" });"],
             Ln "}"
           ],
         Ln "}",
