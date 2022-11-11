@@ -1,6 +1,6 @@
 module Prelude.Javascript.Main where
 
-import Parser.Types (AST, ASTRootNode (ASTRootMacro))
+import Parser.Types (AST, ASTRootNode (ASTRootMacro, ASTRootNodeAlgebraicDataTypeDeclaration))
 import Prelude.Javascript.Util (Code (Br, Ind, Ln), codeToString, removeFileExtension, slashToCamelCase, slashToDash)
 import Prelude.Types
 
@@ -11,11 +11,12 @@ webcomponent' :: String -> AST -> AST -> [Code]
 webcomponent' filePath ast [] = []
 webcomponent' filePath ast ((ASTRootMacro "webcomponent") : ast') =
   let filePathWithoutExtension = removeFileExtension filePath
-   in [ Ln ("class " ++ slashToCamelCase filePathWithoutExtension ++ " extends HTMLElement {"),
+   in algeraicDataTypes ast ++ [ Ln ("class " ++ slashToCamelCase filePathWithoutExtension ++ " extends HTMLElement {"),
         Ind
           [ Ln "constructor() {",
             Ind
               [ Ln "super();",
+                Br,
                 Ln "this.properties = {};"
               ],
             Ln "}",
@@ -30,5 +31,21 @@ webcomponent' filePath ast ((ASTRootMacro "webcomponent") : ast') =
         Br
       ]
 webcomponent' filePath ast (currentNode : restNodes) = webcomponent' filePath ast restNodes
+
+algeraicDataTypes :: AST -> [Code]
+algeraicDataTypes [] = []
+algeraicDataTypes (ASTRootNodeAlgebraicDataTypeDeclaration  name dataTypes : restNodes) = 
+  [
+    Ln ("function " ++ name ++ "(type, ...args) {"),
+    Ind [
+       Ln "this._type = type;",
+       Br,
+       Ln "this._args = args;"
+    ],
+    Ln "}",
+    Br,
+    Br
+  ] ++ algeraicDataTypes restNodes
+algeraicDataTypes (_: restNodes) = algeraicDataTypes restNodes
 
 macros = [webcomponent]
