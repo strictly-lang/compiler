@@ -16,9 +16,24 @@ main = do
 
 readFramelessFile :: FilePath -> IO String
 readFramelessFile fileName = do
-  cwd <- System.Directory.getCurrentDirectory
   fileContent <- readFile fileName
-  case compile fileName fileContent of
-    Left parseError -> error parseError
-    Right (targetPath, compiledContent) ->
-      return compiledContent
+  cwd <- System.Directory.getCurrentDirectory
+  case relativePath cwd (normalizePath cwd fileName) of
+    Just normalizedPath ->
+      case compile normalizedPath fileContent of
+        Left parseError -> error parseError
+        Right (targetPath, compiledContent) ->
+          return compiledContent
+    Nothing ->
+      error ("The " ++ fileName ++ "is outside of the current working directory" ++ cwd)
+
+normalizePath :: String -> String -> String
+normalizePath cwd filePath@('/' : _) = filePath
+normalizePath cwd filePath = cwd ++ "/" ++ filePath
+
+relativePath :: String -> String -> Maybe String
+relativePath [] (a : as) = Just as
+relativePath (p : ps) (a : as)
+  | p == a = relativePath ps as
+  | otherwise = Nothing
+relativePath _ [] = Nothing

@@ -31,16 +31,16 @@ typeDeclarationParser = do
   name <- string "type " *> sc *> uppercaseIdentifierParser <* sc <* assignParser
   typeDefinition <- typeDefinitionParser 0
   _ <- statementTerminationParser
-  return (ASTRootTypeDeclaration name typeDefinition)
+  return (ASTRootTypeAssignment name typeDefinition)
 
 macroParser :: Parser ASTRootNode
 macroParser = do
-  ASTMacro <$> between functionMacroOpenParser functionMacroCloseParser (some letterChar)
+  ASTRootMacro <$> between functionMacroOpenParser functionMacroCloseParser (some letterChar)
 
 assignmentParser :: Parser ASTRootNode
 assignmentParser = do
   name <- lowercaseIdentifierParser <* sc
   kind <- Left <$> typeAssignParser <|> Right <$> assignParser
   case kind of
-    Left _ -> ASTRootTypeDeclaration name <$> typeDefinitionParser 0
+    Left _ -> ASTRootTypeAssignment name <$> typeDefinitionParser 0
     Right _ -> ASTRootAssignment name <$> expressionParser 0

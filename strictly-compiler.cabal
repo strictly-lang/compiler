@@ -22,7 +22,8 @@ library
   other-modules:
                        Prelude.Types,
                        Prelude.Main,
-                       Prelude.Javascript,
+                       Prelude.Javascript.Main,
+                       Prelude.Javascript.Util,
                        Parser.Types,
                        Parser.Util,
                        Parser.Main,

@@ -1,7 +1,7 @@
 module Compiler (compile) where
 
 import Parser.Main (parse)
-import Prelude.Javascript (macros)
+import Prelude.Javascript.Main (macros)
 import Prelude.Main (emit)
 import Text.Megaparsec (errorBundlePretty)
 
