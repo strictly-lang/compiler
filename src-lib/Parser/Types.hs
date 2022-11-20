@@ -7,14 +7,18 @@ type Parser = Parsec Void String
 
 type IndentationLevel = Int
 
-type AST = [ASTRootNode]
+type AST = [ASTRootNodeGrouped]
 
-data ASTRootNode
-  = ASTRootNodeAlgebraicDataTypeDeclaration String [(String, [ASTTypeDeclaration])]
-  | ASTRootMacro String
-  | ASTRootTypeAssignment String ASTTypeDeclaration
-  | ASTRootAssignment String ASTExpression
+data ASTRootNodeUngrouped
+  = ASTRootNodeUngroupedAlgebraicDataTypeDeclaration String [(String, [ASTTypeDeclaration])]
+  | ASTRootNodeUngroupedMacro String
+  | ASTRootNodeUngroupedTypeAssignment String ASTTypeDeclaration
+  | ASTRootNodeUngroupedAssignment String ASTExpression
   deriving (Show)
+
+data ASTRootNodeGrouped
+  = ASTRootNodeGroupedAlgebraicDataTypeDeclaration String [(String, [ASTTypeDeclaration])]
+  | ASTRootNodeGroupedAssignment String (Maybe String) (Maybe ASTTypeDeclaration) [ASTExpression]
 
 data ASTTypeDeclaration
   = ASTTypeDeclarationList ASTTypeDeclaration

@@ -30,7 +30,8 @@ library
                        Parser.Root,
                        Parser.LeftHandSide,
                        Parser.Statement
-  --                      TypeChecker.Types,
+                       TypeChecker.Types,
+                       TypeChecker.Main
   --                      Emitter.Types
   --                      Emitter.Util,
   --                      Emitter.Kinds.Root,

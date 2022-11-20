@@ -7,14 +7,14 @@ import Parser.Util (assignParser, blockParser, eol', functionCallCloseParser, fu
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, optional, sepBy)
 import Text.Megaparsec.Char (char, letterChar, space, space1, string)
 
-rootParser :: Parser ASTRootNode
+rootParser :: Parser ASTRootNodeUngrouped
 rootParser = dataParser <|> typeDeclarationParser <|> macroParser <|> assignmentParser
 
-dataParser :: Parser ASTRootNode
+dataParser :: Parser ASTRootNodeUngrouped
 dataParser = do
   name <- string "data " *> sc *> uppercaseIdentifierParser <* sc
   dataDeclarations <- blockParser assignParser statementTerminationParser algebraicDataTypeParser 0
-  return (ASTRootNodeAlgebraicDataTypeDeclaration name dataDeclarations)
+  return (ASTRootNodeUngroupedAlgebraicDataTypeDeclaration name dataDeclarations)
 
 algebraicDataTypeParser :: IndentationLevel -> Parser (String, [ASTTypeDeclaration])
 algebraicDataTypeParser indentationLevel = do
@@ -26,21 +26,21 @@ algebraicDataTypeParser indentationLevel = do
       Nothing -> do return []
   return (name, parameters)
 
-typeDeclarationParser :: Parser ASTRootNode
+typeDeclarationParser :: Parser ASTRootNodeUngrouped
 typeDeclarationParser = do
   name <- string "type " *> sc *> uppercaseIdentifierParser <* sc <* assignParser
   typeDefinition <- typeDefinitionParser 0
   _ <- statementTerminationParser
-  return (ASTRootTypeAssignment name typeDefinition)
+  return (ASTRootNodeUngroupedTypeAssignment name typeDefinition)
 
-macroParser :: Parser ASTRootNode
+macroParser :: Parser ASTRootNodeUngrouped
 macroParser = do
-  ASTRootMacro <$> between functionMacroOpenParser functionMacroCloseParser (some letterChar)
+  ASTRootNodeUngroupedMacro <$> between functionMacroOpenParser functionMacroCloseParser (some letterChar)
 
-assignmentParser :: Parser ASTRootNode
+assignmentParser :: Parser ASTRootNodeUngrouped
 assignmentParser = do
   name <- lowercaseIdentifierParser <* sc
   kind <- Left <$> typeAssignParser <|> Right <$> assignParser
   case kind of
-    Left _ -> ASTRootTypeAssignment name <$> typeDefinitionParser 0
-    Right _ -> ASTRootAssignment name <$> expressionParser 0
+    Left _ -> ASTRootNodeUngroupedTypeAssignment name <$> typeDefinitionParser 0
+    Right _ -> ASTRootNodeUngroupedAssignment name <$> expressionParser 0
