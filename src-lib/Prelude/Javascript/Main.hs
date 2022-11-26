@@ -1,6 +1,7 @@
 module Prelude.Javascript.Main where
 
 import Parser.Types
+import Prelude.Javascript.Types.String (javaScriptTypeHandlerString)
 import Prelude.Javascript.Util (Code (Br, Ind, Ln), codeToString, removeFileExtension, slashToCamelCase, slashToDash)
 import Prelude.Types
 
@@ -50,3 +51,5 @@ algeraicDataTypes (ASTRootNodeGroupedAlgebraicDataTypeDeclaration name dataTypes
 algeraicDataTypes (_ : restNodes) = algeraicDataTypes restNodes
 
 macros = [webcomponent]
+
+types = [javaScriptTypeHandlerString]
