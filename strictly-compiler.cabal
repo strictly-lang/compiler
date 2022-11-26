@@ -59,4 +59,4 @@ test-suite strictly-compiler-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             CompilerTest.hs
-  build-depends:       base
+  build-depends:       base, strictly-compiler
