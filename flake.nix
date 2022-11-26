@@ -8,9 +8,20 @@
     flake-utils.lib.eachDefaultSystem
       (system:
         let pkgs = nixpkgs.legacyPackages.${system};
+            packageName = "strictly";
         in {
-          devShells.default = pkgs.mkShell {
-              buildInputs = [ pkgs.nodejs pkgs.yarn pkgs.ghc pkgs.cabal-install pkgs.haskell-language-server];
+          packages.${packageName} = pkgs.haskellPackages.callCabal2nix packageName self rec {};
+          defaultPackage = self.packages.${system}.${packageName};
+
+          devShell = pkgs.mkShell {
+            buildInputs = [
+                pkgs.nodejs
+                pkgs.yarn
+                pkgs.ghc
+                pkgs.cabal-install
+                pkgs.haskell-language-server
+              ];
+            inputsFrom = builtins.attrValues self.packages.${system};
           };
         }
       );
