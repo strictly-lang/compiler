@@ -27,10 +27,7 @@ export default {
         const parsedPath = path.parse(context.request.url);
         if (parsedPath.ext === ".sly") {
           const { stdout, stderror } = await exec(
-            `cabal run --verbose=silent strictly ${path.join(
-              __dirname,
-              context.request.url
-            )}`
+            `strictly ${path.join(__dirname, context.request.url)}`
           );
 
           if (stderror) {
