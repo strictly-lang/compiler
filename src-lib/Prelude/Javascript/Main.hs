@@ -1,17 +1,20 @@
 module Prelude.Javascript.Main where
 
 import Parser.Types
+import Prelude.Javascript.Types (JavaScriptTypeHandler (JavaScriptTypeHandler))
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerString)
 import Prelude.Javascript.Util (Code (Br, Ind, Ln), codeToString, removeFileExtension, slashToCamelCase, slashToDash)
 import Prelude.Types
+import TypeChecker.Main (merge)
 
 webcomponent :: Macro
 webcomponent filePath ast = codeToString 0 True (webcomponent' filePath ast ast)
 
 webcomponent' :: String -> AST -> AST -> [Code]
 webcomponent' filePath ast [] = []
-webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcomponent") types assignments) : ast') =
+webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcomponent") (Just (ASTTypeDeclarationFunction parameterTypes bodyType)) assignments) : ast') =
   let filePathWithoutExtension = removeFileExtension filePath
+      typedAssigmens = map (\[ASTExpressionFunctionDeclaration functionParameter body] -> (functionParameter, merge types body)) assignments
    in algeraicDataTypes ast
         ++ [ Ln ("class " ++ slashToCamelCase filePathWithoutExtension ++ " extends HTMLElement {"),
              Ind
@@ -50,6 +53,8 @@ algeraicDataTypes (ASTRootNodeGroupedAlgebraicDataTypeDeclaration name dataTypes
     ++ algeraicDataTypes restNodes
 algeraicDataTypes (_ : restNodes) = algeraicDataTypes restNodes
 
+macros :: [Macro]
 macros = [webcomponent]
 
+types :: [JavaScriptTypeHandler]
 types = [javaScriptTypeHandlerString]
