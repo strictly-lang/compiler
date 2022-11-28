@@ -21,7 +21,6 @@
                 pkgs.cabal-install
                 pkgs.haskell-language-server
               ];
-            inputsFrom = builtins.attrValues self.packages.${system};
           };
         }
       );
