@@ -43,9 +43,9 @@ data ASTString
   | ASTStringDynamic ASTExpression
   deriving (Show)
 
-type ASTExpression = [ASTExpression']
-
 type Operator = String
+
+type ASTExpression = [ASTExpression']
 
 data ASTExpression'
   = ASTExpressionVariable String

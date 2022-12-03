@@ -1,7 +1,12 @@
 module TypeChecker.Main where
 
-import Parser.Types (ASTStatement)
+import Data.Data (dataTypeName)
+import Parser.Types (ASTExpression)
 import TypeChecker.Types
 
-merge :: TypeHandler a => [a] -> [ASTStatement] -> Bool
-merge typeHandler expressions = True
+findTypehandler :: TypeHandler a => [ASTExpression -> Maybe a] -> ASTExpression -> Maybe a
+findTypehandler [] expression = Nothing
+findTypehandler (typeHandlerContainer : restTypeHandlersContainer) expression =
+  case typeHandlerContainer expression of
+    Just typeHandler -> Just typeHandler
+    _ -> findTypehandler restTypeHandlersContainer expression

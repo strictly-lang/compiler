@@ -1,11 +1,11 @@
 module Prelude.Javascript.Main where
 
 import Parser.Types
-import Prelude.Javascript.Types (JavaScriptTypeHandler (JavaScriptTypeHandler))
-import Prelude.Javascript.Types.String (javaScriptTypeHandlerString)
+import Prelude.Javascript.Types (JavaScriptTypeHandler (JavaScriptTypeHandler, getDom))
+import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
 import Prelude.Javascript.Util (Code (Br, Ind, Ln), codeToString, removeFileExtension, slashToCamelCase, slashToDash)
 import Prelude.Types
-import TypeChecker.Main (merge)
+import TypeChecker.Main (findTypehandler)
 
 webcomponent :: Macro
 webcomponent filePath ast = codeToString 0 True (webcomponent' filePath ast ast)
@@ -14,7 +14,7 @@ webcomponent' :: String -> AST -> AST -> [Code]
 webcomponent' filePath ast [] = []
 webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcomponent") (Just (ASTTypeDeclarationFunction parameterTypes bodyType)) assignments) : ast') =
   let filePathWithoutExtension = removeFileExtension filePath
-      typedAssigmens = map (\[ASTExpressionFunctionDeclaration functionParameter body] -> (functionParameter, merge types body)) assignments
+      result = renderPatterns assignments
    in algeraicDataTypes ast
         ++ [ Ln ("class " ++ slashToCamelCase filePathWithoutExtension ++ " extends HTMLElement {"),
              Ind
@@ -27,7 +27,7 @@ webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcompone
                  Ln "}",
                  Br,
                  Ln "connectedCallback() {",
-                 Ind [Ln "this.attachShadow({ mode: \"open\" });"],
+                 Ind (Ln "this.attachShadow({ mode: \"open\" });" : Br : result),
                  Ln "}"
                ],
              Ln "}",
@@ -36,6 +36,16 @@ webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcompone
              Br
            ]
 webcomponent' filePath ast (currentNode : restNodes) = webcomponent' filePath ast restNodes
+
+renderPatterns :: [ASTExpression] -> [Code]
+renderPatterns ([ASTExpressionFunctionDeclaration functionParameter body] : restAssignment) = construction body ++ renderPatterns restAssignment
+renderPatterns [] = []
+
+construction :: [ASTStatement] -> [Code]
+construction ((ASTExpression expression) : restSatements) =
+  let Just typeHandler = findTypehandler types expression
+   in getDom typeHandler "this.shadowRoot" ++ [Br] ++ construction restSatements
+construction [] = []
 
 algeraicDataTypes :: AST -> [Code]
 algeraicDataTypes [] = []
@@ -56,5 +66,5 @@ algeraicDataTypes (_ : restNodes) = algeraicDataTypes restNodes
 macros :: [Macro]
 macros = [webcomponent]
 
-types :: [JavaScriptTypeHandler]
-types = [javaScriptTypeHandlerString]
+types :: [ASTExpression -> Maybe JavaScriptTypeHandler]
+types = [javaScriptTypeHandlerStringContainer]
