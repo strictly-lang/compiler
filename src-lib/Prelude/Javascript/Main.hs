@@ -2,6 +2,7 @@ module Prelude.Javascript.Main where
 
 import Parser.Types
 import Prelude.Javascript.Types (JavaScriptTypeHandler (JavaScriptTypeHandler, getDom))
+import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
 import Prelude.Javascript.Util (Code (Br, Ind, Ln), codeToString, removeFileExtension, slashToCamelCase, slashToDash)
 import Prelude.Types
@@ -67,4 +68,4 @@ macros :: [Macro]
 macros = [webcomponent]
 
 types :: [ASTExpression -> Maybe JavaScriptTypeHandler]
-types = [javaScriptTypeHandlerStringContainer]
+types = [javaScriptTypeHandlerStringContainer, javaScriptTypeHandlerHostContainer]

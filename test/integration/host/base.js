@@ -33,7 +33,7 @@ describe("host element handling", () => {
     expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
   });
 
-  it("nested element creation", () => {
+  xit("nested element creation", () => {
     const element = document.createElement("test-components-host-nested");
     container.appendChild(element);
 
@@ -46,7 +46,7 @@ describe("host element handling", () => {
     expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
   });
 
-  it("attribute test", () => {
+  xit("attribute test", () => {
     const element = document.createElement("test-components-host-attributes");
     element.bar = "baz";
     element.foo = "fooo";
@@ -74,7 +74,7 @@ describe("host element handling", () => {
     );
   });
 
-  describe("input", () => {
+  xdescribe("input", () => {
     it("text change", () => {
       const element = document.createElement("test-components-host-events");
       element.value = "foo";
