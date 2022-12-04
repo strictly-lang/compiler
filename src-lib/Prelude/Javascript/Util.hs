@@ -1,9 +1,10 @@
 module Prelude.Javascript.Util where
 
 import Data.Char (toUpper)
-
-data Code = Ln String | Ind [Code] | Br
-  deriving (Show)
+import Parser.Types (ASTExpression, ASTStatement (ASTExpression))
+import Prelude.Javascript.Types (Code (..), JavaScriptRenderContext (runTypes), JavaScriptTypeHandler, getDom)
+import TypeChecker.Main (findTypehandler)
+import TypeChecker.Types (TypeHandlerContext (..))
 
 codeToString :: Int -> Bool -> [Code] -> String
 codeToString indentationLevel first [] = ""
@@ -34,3 +35,9 @@ slashToCamelCase' :: String -> String
 slashToCamelCase' [] = []
 slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
+
+render :: JavaScriptRenderContext -> [ASTStatement] -> [Code]
+render renderContext ((ASTExpression expression) : restSatements) =
+  let Just typeHandler = findTypehandler (TypeHandlerContext {TypeChecker.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext}) expression
+   in (getDom typeHandler renderContext) ++ [Br] ++ render renderContext restSatements
+render renderContext [] = []

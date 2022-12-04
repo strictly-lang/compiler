@@ -1,10 +1,10 @@
 module Prelude.Javascript.Main where
 
 import Parser.Types
-import Prelude.Javascript.Types (JavaScriptTypeHandler (JavaScriptTypeHandler, getDom))
+import Prelude.Javascript.Types (Code (..), JavaScriptRenderContext (..), JavaScriptTypeHandler (JavaScriptTypeHandler, getDom))
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
-import Prelude.Javascript.Util (Code (Br, Ind, Ln), codeToString, removeFileExtension, slashToCamelCase, slashToDash)
+import Prelude.Javascript.Util (codeToString, removeFileExtension, render, slashToCamelCase, slashToDash)
 import Prelude.Types
 import TypeChecker.Main (findTypehandler)
 
@@ -39,14 +39,8 @@ webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcompone
 webcomponent' filePath ast (currentNode : restNodes) = webcomponent' filePath ast restNodes
 
 renderPatterns :: [ASTExpression] -> [Code]
-renderPatterns ([ASTExpressionFunctionDeclaration functionParameter body] : restAssignment) = construction body ++ renderPatterns restAssignment
+renderPatterns ([ASTExpressionFunctionDeclaration functionParameter body] : restAssignment) = render (JavaScriptRenderContext {runParent = "this.shadowRoot", runTypes = types}) body ++ renderPatterns restAssignment
 renderPatterns [] = []
-
-construction :: [ASTStatement] -> [Code]
-construction ((ASTExpression expression) : restSatements) =
-  let Just typeHandler = findTypehandler types expression
-   in getDom typeHandler "this.shadowRoot" ++ [Br] ++ construction restSatements
-construction [] = []
 
 algeraicDataTypes :: AST -> [Code]
 algeraicDataTypes [] = []
@@ -67,5 +61,4 @@ algeraicDataTypes (_ : restNodes) = algeraicDataTypes restNodes
 macros :: [Macro]
 macros = [webcomponent]
 
-types :: [ASTExpression -> Maybe JavaScriptTypeHandler]
 types = [javaScriptTypeHandlerStringContainer, javaScriptTypeHandlerHostContainer]

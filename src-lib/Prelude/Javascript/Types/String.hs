@@ -3,12 +3,15 @@ module Prelude.Javascript.Types.String where
 import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionString), ASTString (ASTStringStatic))
 import Prelude.Javascript.Types
 import Prelude.Javascript.Util
+import TypeChecker.Types (TypeHandlerContext)
 
-javaScriptTypeHandlerStringContainer :: ASTExpression -> Maybe JavaScriptTypeHandler
-javaScriptTypeHandlerStringContainer ((ASTExpressionString astStrings) : restExpressions) =
+javaScriptTypeHandlerStringContainer :: TypeHandlerContext JavaScriptTypeHandler -> ASTExpression -> Maybe JavaScriptTypeHandler
+javaScriptTypeHandlerStringContainer types ((ASTExpressionString astStrings) : restExpressions) =
   Just
     JavaScriptTypeHandler
       { getProperty = error "no property access implemented",
-        getDom = \parent -> [Ln (parent ++ ".append(" ++ concat ['"' : astString ++ ['"'] | ASTStringStatic astString <- astStrings] ++ ");")]
+        getDom = \renderContext ->
+          [ Ln (runParent renderContext ++ ".append(" ++ concat ['"' : astString ++ ['"'] | ASTStringStatic astString <- astStrings] ++ ");")
+          ]
       }
-javaScriptTypeHandlerStringContainer _ = Nothing
+javaScriptTypeHandlerStringContainer types _ = Nothing

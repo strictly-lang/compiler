@@ -4,9 +4,12 @@ import Data.Data (dataTypeName)
 import Parser.Types (ASTExpression)
 import TypeChecker.Types
 
-findTypehandler :: TypeHandler a => [ASTExpression -> Maybe a] -> ASTExpression -> Maybe a
-findTypehandler [] expression = Nothing
-findTypehandler (typeHandlerContainer : restTypeHandlersContainer) expression =
-  case typeHandlerContainer expression of
+findTypehandler :: TypeHandler a => TypeHandlerContext a -> ASTExpression -> Maybe a
+findTypehandler typeHandlerContext = findTypehandler' typeHandlerContext (runTypes typeHandlerContext)
+
+findTypehandler' :: TypeHandler a => TypeHandlerContext a -> [TypeHandlerContext a -> ASTExpression -> Maybe a] -> ASTExpression -> Maybe a
+findTypehandler' typeHandlerContext [] expression = Nothing
+findTypehandler' typeHandlerContext (typeHandlerContainer : restTypeHandlersContainer) expression =
+  case typeHandlerContainer typeHandlerContext expression of
     Just typeHandler -> Just typeHandler
-    _ -> findTypehandler restTypeHandlersContainer expression
+    _ -> findTypehandler' typeHandlerContext restTypeHandlersContainer expression

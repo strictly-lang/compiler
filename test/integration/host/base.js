@@ -33,7 +33,7 @@ describe("host element handling", () => {
     expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
   });
 
-  xit("nested element creation", () => {
+  it("nested element creation", () => {
     const element = document.createElement("test-components-host-nested");
     container.appendChild(element);
 
