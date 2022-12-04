@@ -10,8 +10,9 @@ javaScriptTypeHandlerStringContainer types ((ASTExpressionString astStrings) : r
   Just
     JavaScriptTypeHandler
       { getProperty = error "no property access implemented",
-        getDom = \renderContext ->
-          [ Ln (runParent renderContext ++ ".append(" ++ concat ['"' : astString ++ ['"'] | ASTStringStatic astString <- astStrings] ++ ");")
-          ]
+        getDom = \renderContext -> do
+          return
+            [ Ln (runParent renderContext ++ ".append(" ++ concat ['"' : astString ++ ['"'] | ASTStringStatic astString <- astStrings] ++ ");")
+            ]
       }
 javaScriptTypeHandlerStringContainer types _ = Nothing

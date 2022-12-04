@@ -10,13 +10,17 @@ javaScriptTypeHandlerHostContainer typeHandlerContext [ASTExpressionHost hostNam
   Just
     JavaScriptTypeHandler
       { getProperty = error "no property access implemented",
-        getDom = \renderContext ->
-          let element = "element"
-           in [ Ln ("var element = document.createElement(\"" ++ hostName ++ "\");"),
+        getDom = \renderContext -> do
+          exprId <- getGetFreshExprId
+          let element = "element" ++ show exprId
+          nestedResult <- render (JavaScriptRenderContext {runParent = element, runTypes = runTypes renderContext}) children
+          return
+            ( [ Ln ("const " ++ element ++ " = document.createElement(\"" ++ hostName ++ "\");"),
                 Br,
                 Ln (runParent renderContext ++ ".append(" ++ element ++ ");"),
                 Br
               ]
-                ++ render (JavaScriptRenderContext {runParent = element, runTypes = runTypes renderContext}) children
+                ++ nestedResult
+            )
       }
 javaScriptTypeHandlerHostContainer types _ = Nothing

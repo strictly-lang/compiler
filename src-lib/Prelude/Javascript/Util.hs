@@ -1,8 +1,9 @@
 module Prelude.Javascript.Util where
 
+import Control.Monad.State.Lazy (MonadState (state))
 import Data.Char (toUpper)
 import Parser.Types (ASTExpression, ASTStatement (ASTExpression))
-import Prelude.Javascript.Types (Code (..), JavaScriptRenderContext (runTypes), JavaScriptTypeHandler, getDom)
+import Prelude.Javascript.Types (AppState (AppState, runExpressionId), AppStateMonad, Code (..), JavaScriptRenderContext (runTypes), JavaScriptTypeHandler, getDom)
 import TypeChecker.Main (findTypehandler)
 import TypeChecker.Types (TypeHandlerContext (..))
 
@@ -36,8 +37,17 @@ slashToCamelCase' [] = []
 slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
 
-render :: JavaScriptRenderContext -> [ASTStatement] -> [Code]
-render renderContext ((ASTExpression expression) : restSatements) =
+render :: JavaScriptRenderContext -> [ASTStatement] -> AppStateMonad [Code]
+render renderContext ((ASTExpression expression) : restSatements) = do
   let Just typeHandler = findTypehandler (TypeHandlerContext {TypeChecker.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext}) expression
-   in (getDom typeHandler renderContext) ++ [Br] ++ render renderContext restSatements
-render renderContext [] = []
+  result <- getDom typeHandler renderContext
+  nextResult <- render renderContext restSatements
+  return (result ++ [Br] ++ nextResult)
+render renderContext [] = do return []
+
+getGetFreshExprId :: AppStateMonad Int
+getGetFreshExprId =
+  state
+    ( \appState ->
+        (runExpressionId appState, AppState {runExpressionId = runExpressionId appState + 1})
+    )
