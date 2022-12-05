@@ -5,7 +5,7 @@ import Prelude.Javascript.Types
 import Prelude.Javascript.Util
 
 javaScriptTypeHandlerHostContainer :: TypeHandlerContainer
-javaScriptTypeHandlerHostContainer typeHandlerContext [ASTExpressionHost hostName attributes children] =
+javaScriptTypeHandlerHostContainer typeHandlerContext _ [ASTExpressionHost hostName attributes children] =
   Just
     JavaScriptTypeHandler
       { getProperty = error "no property access implemented",
@@ -29,4 +29,4 @@ javaScriptTypeHandlerHostContainer typeHandlerContext [ASTExpressionHost hostNam
                 }
             )
       }
-javaScriptTypeHandlerHostContainer types _ = Nothing
+javaScriptTypeHandlerHostContainer typeHandlerContext _ _ = Nothing

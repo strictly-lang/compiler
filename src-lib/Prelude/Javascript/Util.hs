@@ -39,7 +39,7 @@ slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
 
 render :: JavaScriptRenderContext -> [ASTStatement] -> AppStateMonad JavaScriptDomResult
 render renderContext ((ASTExpression expression) : restSatements) = do
-  let Just typeHandler = findTypehandler (TypeHandlerContext {TypeChecker.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext}) expression
+  let Just typeHandler = findTypehandler (TypeHandlerContext {TypeChecker.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext}) Nothing expression
   result <- getDom typeHandler renderContext
   nextResult <- render renderContext restSatements
   return

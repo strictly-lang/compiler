@@ -4,10 +4,9 @@ import Data.List (intercalate)
 import Parser.Types (ASTExpression' (ASTExpressionString), ASTString (ASTStringStatic))
 import Prelude.Javascript.Types
 import Prelude.Javascript.Util
-import TypeChecker.Types (TypeHandlerContext)
 
 javaScriptTypeHandlerStringContainer :: TypeHandlerContainer
-javaScriptTypeHandlerStringContainer types ((ASTExpressionString astStrings) : restExpressions) =
+javaScriptTypeHandlerStringContainer typeHandlerContext _ ((ASTExpressionString astStrings) : restExpressions) =
   Just
     JavaScriptTypeHandler
       { getProperty = error "no property access implemented",
@@ -29,4 +28,4 @@ javaScriptTypeHandlerStringContainer types ((ASTExpressionString astStrings) : r
                 }
             )
       }
-javaScriptTypeHandlerStringContainer types _ = Nothing
+javaScriptTypeHandlerStringContainer typeHandlerContext _ _ = Nothing

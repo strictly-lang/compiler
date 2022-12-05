@@ -1,7 +1,7 @@
 module Prelude.Javascript.Types where
 
 import Control.Monad.State.Lazy (State)
-import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionString))
+import Parser.Types (ASTExpression, ASTExpression', ASTTypeDeclaration)
 import TypeChecker.Types (TypeHandler (..), TypeHandlerContext)
 
 data Code = Ln String | Ind [Code] | Br
@@ -21,13 +21,13 @@ data JavaScriptDomResult = JavaScriptDomResult
 
 data JavaScriptRenderContext = JavaScriptRenderContext
   { runParent :: String,
-    runTypes :: [TypeHandlerContext JavaScriptTypeHandler -> ASTExpression -> Maybe JavaScriptTypeHandler]
+    runTypes :: [TypeHandlerContext JavaScriptTypeHandler -> Maybe ASTTypeDeclaration -> ASTExpression -> Maybe JavaScriptTypeHandler]
   }
 
 instance TypeHandler JavaScriptTypeHandler where
   getProperty = Prelude.Javascript.Types.getProperty
 
-type TypeHandlerContainer = TypeHandlerContext JavaScriptTypeHandler -> ASTExpression -> Maybe JavaScriptTypeHandler
+type TypeHandlerContainer = TypeHandlerContext JavaScriptTypeHandler -> Maybe ASTTypeDeclaration -> ASTExpression -> Maybe JavaScriptTypeHandler
 
 data AppState = AppState
   { runExpressionId :: Int
