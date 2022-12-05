@@ -1,11 +1,10 @@
 module Prelude.Javascript.Types.Host where
 
-import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionHost, ASTExpressionString), ASTString (ASTStringStatic))
+import Parser.Types (ASTExpression' (ASTExpressionHost))
 import Prelude.Javascript.Types
 import Prelude.Javascript.Util
-import TypeChecker.Types (TypeHandlerContext)
 
-javaScriptTypeHandlerHostContainer :: TypeHandlerContext JavaScriptTypeHandler -> ASTExpression -> Maybe JavaScriptTypeHandler
+javaScriptTypeHandlerHostContainer :: TypeHandlerContainer
 javaScriptTypeHandlerHostContainer typeHandlerContext [ASTExpressionHost hostName attributes children] =
   Just
     JavaScriptTypeHandler
@@ -14,6 +13,7 @@ javaScriptTypeHandlerHostContainer typeHandlerContext [ASTExpressionHost hostNam
           exprId <- getGetFreshExprId
           let element = "element" ++ show exprId
           nestedResult <- render (JavaScriptRenderContext {runParent = element, runTypes = runTypes renderContext}) children
+
           return
             ( JavaScriptDomResult
                 { create =

@@ -7,7 +7,6 @@ import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
 import Prelude.Javascript.Util (codeToString, removeFileExtension, render, slashToCamelCase, slashToDash)
 import Prelude.Types
-import TypeChecker.Main (findTypehandler)
 
 webcomponent :: Macro
 webcomponent filePath ast =

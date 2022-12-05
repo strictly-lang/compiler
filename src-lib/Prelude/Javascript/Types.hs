@@ -27,6 +27,8 @@ data JavaScriptRenderContext = JavaScriptRenderContext
 instance TypeHandler JavaScriptTypeHandler where
   getProperty = Prelude.Javascript.Types.getProperty
 
+type TypeHandlerContainer = TypeHandlerContext JavaScriptTypeHandler -> ASTExpression -> Maybe JavaScriptTypeHandler
+
 data AppState = AppState
   { runExpressionId :: Int
   }

@@ -1,12 +1,12 @@
 module Prelude.Javascript.Types.String where
 
 import Data.List (intercalate)
-import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionString), ASTString (ASTStringStatic))
+import Parser.Types (ASTExpression' (ASTExpressionString), ASTString (ASTStringStatic))
 import Prelude.Javascript.Types
 import Prelude.Javascript.Util
 import TypeChecker.Types (TypeHandlerContext)
 
-javaScriptTypeHandlerStringContainer :: TypeHandlerContext JavaScriptTypeHandler -> ASTExpression -> Maybe JavaScriptTypeHandler
+javaScriptTypeHandlerStringContainer :: TypeHandlerContainer
 javaScriptTypeHandlerStringContainer types ((ASTExpressionString astStrings) : restExpressions) =
   Just
     JavaScriptTypeHandler
@@ -14,6 +14,7 @@ javaScriptTypeHandlerStringContainer types ((ASTExpressionString astStrings) : r
         getDom = \renderContext -> do
           exprId <- getGetFreshExprId
           let text = "text" ++ show exprId
+
           return
             ( JavaScriptDomResult
                 { create =
