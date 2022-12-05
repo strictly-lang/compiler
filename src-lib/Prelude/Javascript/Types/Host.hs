@@ -5,10 +5,10 @@ import Prelude.Javascript.Types
 import Prelude.Javascript.Util
 
 javaScriptTypeHandlerHostContainer :: TypeHandlerContainer
-javaScriptTypeHandlerHostContainer typeHandlerContext _ [ASTExpressionHost hostName attributes children] =
+javaScriptTypeHandlerHostContainer typeHandlerContext _ (ASTExpressionHost hostName attributes children) =
   Just
     JavaScriptTypeHandler
-      { getProperty = error "no property access implemented",
+      { destructure = error "no property access implemented",
         getDom = \renderContext -> do
           exprId <- getGetFreshExprId
           let element = "element" ++ show exprId

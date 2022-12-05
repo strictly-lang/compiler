@@ -38,7 +38,7 @@ slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
 
 render :: JavaScriptRenderContext -> [ASTStatement] -> AppStateMonad JavaScriptDomResult
-render renderContext ((ASTExpression expression) : restSatements) = do
+render renderContext ((ASTExpression (expression : restExpression)) : restSatements) = do
   let Just typeHandler = findTypehandler (TypeHandlerContext {TypeChecker.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext}) Nothing expression
   result <- getDom typeHandler renderContext
   nextResult <- render renderContext restSatements

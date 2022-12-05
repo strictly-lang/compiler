@@ -1,10 +1,10 @@
 module TypeChecker.Types where
 
-import Parser.Types (ASTExpression, ASTExpression', ASTLeftHandSide, ASTTypeDeclaration)
+import Parser.Types (ASTExpression', ASTLeftHandSide, ASTTypeDeclaration)
 
 data TypeHandlerContext a = TypeHandlerContext
-  { runTypes :: [TypeHandlerContext a -> Maybe ASTTypeDeclaration -> ASTExpression -> Maybe a]
+  { runTypes :: [TypeHandlerContext a -> Maybe ASTTypeDeclaration -> ASTExpression' -> Maybe a]
   }
 
 class TypeHandler a where
-  getProperty :: a -> String
+  destructure :: a -> String
