@@ -57,6 +57,7 @@ renderPatterns ([ASTExpressionFunctionDeclaration functionParameter body] : rest
         }
     )
 renderPatterns [] = do return JavaScriptDomResult {create = [], update = [], dealloc = [], delete = []}
+renderPatterns (expression : restExpressions) = error ("For the renderfunction only functions are allowed, not " ++ show expression)
 
 algeraicDataTypes :: AST -> [Code]
 algeraicDataTypes [] = []
