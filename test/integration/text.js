@@ -1,6 +1,6 @@
 import { expect } from "@esm-bundle/chai";
 import "/test/components/text/base.sly";
-// import "/test/components/text/dynamic.sly";
+import "/test/components/text/dynamic.sly";
 // import "/test/components/text/multidynamic.sly";
 // import "/test/components/text/whitespace.sly";
 
