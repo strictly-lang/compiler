@@ -15,12 +15,18 @@ javaScriptTypeHandlerHostContainer typeHandlerContext [ASTExpressionHost hostNam
           let element = "element" ++ show exprId
           nestedResult <- render (JavaScriptRenderContext {runParent = element, runTypes = runTypes renderContext}) children
           return
-            ( [ Ln ("const " ++ element ++ " = document.createElement(\"" ++ hostName ++ "\");"),
-                Br,
-                Ln (runParent renderContext ++ ".append(" ++ element ++ ");"),
-                Br
-              ]
-                ++ nestedResult
+            ( JavaScriptDomResult
+                { create =
+                    [ Ln ("const " ++ element ++ " = document.createElement(\"" ++ hostName ++ "\");"),
+                      Br,
+                      Ln (runParent renderContext ++ ".append(" ++ element ++ ");"),
+                      Br
+                    ]
+                      ++ create nestedResult,
+                  update = [] ++ update nestedResult,
+                  dealloc = [] ++ dealloc nestedResult,
+                  delete = [] ++ delete nestedResult
+                }
             )
       }
 javaScriptTypeHandlerHostContainer types _ = Nothing

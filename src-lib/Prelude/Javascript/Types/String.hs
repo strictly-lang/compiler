@@ -15,9 +15,17 @@ javaScriptTypeHandlerStringContainer types ((ASTExpressionString astStrings) : r
           exprId <- getGetFreshExprId
           let text = "text" ++ show exprId
           return
-            [ Ln ("const " ++ text ++ " = document.createTextNode(" ++ intercalate " + " (['"' : astString ++ ['"'] | ASTStringStatic astString <- astStrings]) ++ ");"),
-              Br,
-              Ln (runParent renderContext ++ ".append(" ++ text ++ ");")
-            ]
+            ( JavaScriptDomResult
+                { create =
+                    [ Ln ("const " ++ text ++ " = document.createTextNode(" ++ intercalate " + " (['"' : astString ++ ['"'] | ASTStringStatic astString <- astStrings]) ++ ");"),
+                      Br,
+                      Ln (runParent renderContext ++ ".append(" ++ text ++ ");"),
+                      Br
+                    ],
+                  update = [],
+                  dealloc = [],
+                  delete = []
+                }
+            )
       }
 javaScriptTypeHandlerStringContainer types _ = Nothing

@@ -9,7 +9,14 @@ data Code = Ln String | Ind [Code] | Br
 
 data JavaScriptTypeHandler = JavaScriptTypeHandler
   { getProperty :: String,
-    getDom :: JavaScriptRenderContext -> AppStateMonad [Code]
+    getDom :: JavaScriptRenderContext -> AppStateMonad JavaScriptDomResult
+  }
+
+data JavaScriptDomResult = JavaScriptDomResult
+  { create :: [Code],
+    update :: [(String, [Code])],
+    dealloc :: [Code],
+    delete :: [Code]
   }
 
 data JavaScriptRenderContext = JavaScriptRenderContext

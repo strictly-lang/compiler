@@ -2,7 +2,7 @@ module Prelude.Javascript.Main where
 
 import Control.Monad.State.Lazy (runState)
 import Parser.Types
-import Prelude.Javascript.Types (AppState (..), AppStateMonad, Code (..), JavaScriptRenderContext (..), JavaScriptTypeHandler (JavaScriptTypeHandler, getDom))
+import Prelude.Javascript.Types
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
 import Prelude.Javascript.Util (codeToString, removeFileExtension, render, slashToCamelCase, slashToDash)
@@ -33,7 +33,7 @@ webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcompone
                    Ln "}",
                    Br,
                    Ln "connectedCallback() {",
-                   Ind (Ln "this.attachShadow({ mode: \"open\" });" : Br : result),
+                   Ind (Ln "this.attachShadow({ mode: \"open\" });" : Br : create result),
                    Ln "}"
                  ],
                Ln "}",
@@ -44,12 +44,19 @@ webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcompone
       )
 webcomponent' filePath ast (currentNode : restNodes) = webcomponent' filePath ast restNodes
 
-renderPatterns :: [ASTExpression] -> AppStateMonad [Code]
+renderPatterns :: [ASTExpression] -> AppStateMonad JavaScriptDomResult
 renderPatterns ([ASTExpressionFunctionDeclaration functionParameter body] : restAssignment) = do
   result <- render (JavaScriptRenderContext {runParent = "this.shadowRoot", runTypes = types}) body
   nextResult <- renderPatterns restAssignment
-  return (result ++ nextResult)
-renderPatterns [] = do return []
+  return
+    ( JavaScriptDomResult
+        { create = create result ++ create nextResult,
+          update = update result ++ update nextResult,
+          dealloc = dealloc result ++ dealloc nextResult,
+          delete = delete result ++ delete nextResult
+        }
+    )
+renderPatterns [] = do return JavaScriptDomResult {create = [], update = [], dealloc = [], delete = []}
 
 algeraicDataTypes :: AST -> [Code]
 algeraicDataTypes [] = []
