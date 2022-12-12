@@ -3,16 +3,25 @@ module Prelude.Javascript.Types.Host where
 import Parser.Types (ASTExpression' (ASTExpressionHost))
 import Prelude.Javascript.Types
 import Prelude.Javascript.Util
+import TypeChecker.Types (TypeValue (TypeValueByLiteral))
 
 javaScriptTypeHandlerHostContainer :: TypeHandlerContainer
-javaScriptTypeHandlerHostContainer typeHandlerContext _ (ASTExpressionHost hostName attributes children) =
+javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (ASTExpressionHost hostName attributes children)) =
   Just
     JavaScriptTypeHandler
       { destructure = error "no property access implemented",
         getDom = \renderContext -> do
           exprId <- getGetFreshExprId
           let element = "element" ++ show exprId
-          nestedResult <- render (JavaScriptRenderContext {runParent = element, runTypes = runTypes renderContext}) children
+          nestedResult <-
+            render
+              ( JavaScriptRenderContext
+                  { runParent = element,
+                    runTypes = runTypes renderContext,
+                    runStack = runStack renderContext
+                  }
+              )
+              children
 
           return
             ( JavaScriptDomResult

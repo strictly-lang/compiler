@@ -4,9 +4,12 @@ import Control.Monad.State.Lazy (runState)
 import Parser.Types
 import Prelude.Javascript.Types
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
+import Prelude.Javascript.Types.Record (javaScriptTypeHandlerRecordContainer)
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
 import Prelude.Javascript.Util (codeToString, removeFileExtension, render, slashToCamelCase, slashToDash)
 import Prelude.Types
+import TypeChecker.Main (findTypehandler)
+import TypeChecker.Types (Property (DotNotation), TypeHandlerContext (..), TypeValue (TypeValueByReference))
 
 webcomponent :: Macro
 webcomponent filePath ast =
@@ -15,10 +18,11 @@ webcomponent filePath ast =
 
 webcomponent' :: String -> AST -> AST -> AppStateMonad [Code]
 webcomponent' filePath ast [] = do return []
-webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcomponent") (Just (ASTTypeDeclarationFunction parameterTypes bodyType)) assignments) : ast') =
+webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcomponent") (Just (ASTTypeDeclarationFunction [propertyTypes, attributeTypes] bodyType)) assignments) : ast') =
   do
     let filePathWithoutExtension = removeFileExtension filePath
-    result <- renderPatterns assignments
+    let Just propertiesTypeHandler = findTypehandler (TypeHandlerContext {TypeChecker.Types.runTypes = types}) (Just propertyTypes) (TypeValueByReference [DotNotation "this", DotNotation "properties"])
+    result <- renderPatterns propertiesTypeHandler assignments
     return
       ( algeraicDataTypes ast
           ++ [ Ln ("class " ++ slashToCamelCase filePathWithoutExtension ++ " extends HTMLElement {"),
@@ -43,10 +47,11 @@ webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcompone
       )
 webcomponent' filePath ast (currentNode : restNodes) = webcomponent' filePath ast restNodes
 
-renderPatterns :: [ASTExpression] -> AppStateMonad JavaScriptDomResult
-renderPatterns ([ASTExpressionFunctionDeclaration functionParameter body] : restAssignment) = do
-  result <- render (JavaScriptRenderContext {runParent = "this.shadowRoot", runTypes = types}) body
-  nextResult <- renderPatterns restAssignment
+renderPatterns :: JavaScriptTypeHandler -> [ASTExpression] -> AppStateMonad JavaScriptDomResult
+renderPatterns propertiesTypeHandler ([ASTExpressionFunctionDeclaration [propertiesLeftHandSide, attributesLeftHandSide] body] : restAssignment) = do
+  parameterTypeHandler <- destructure propertiesTypeHandler propertiesLeftHandSide
+  result <- render (JavaScriptRenderContext {runParent = "this.shadowRoot", Prelude.Javascript.Types.runTypes = types, runStack = map fst parameterTypeHandler}) body
+  nextResult <- renderPatterns propertiesTypeHandler restAssignment
   return
     ( JavaScriptDomResult
         { create = create result ++ create nextResult,
@@ -55,8 +60,8 @@ renderPatterns ([ASTExpressionFunctionDeclaration functionParameter body] : rest
           delete = delete result ++ delete nextResult
         }
     )
-renderPatterns [] = do return JavaScriptDomResult {create = [], update = [], dealloc = [], delete = []}
-renderPatterns (expression : restExpressions) = error ("For the renderfunction only functions are allowed, not " ++ show expression)
+renderPatterns propertiesTypeHandler [] = do return JavaScriptDomResult {create = [], update = [], dealloc = [], delete = []}
+renderPatterns propertiesTypeHandler (expression : restExpressions) = error ("For the renderfunction only functions are allowed, not " ++ show expression)
 
 algeraicDataTypes :: AST -> [Code]
 algeraicDataTypes [] = []
@@ -77,4 +82,4 @@ algeraicDataTypes (_ : restNodes) = algeraicDataTypes restNodes
 macros :: [Macro]
 macros = [webcomponent]
 
-types = [javaScriptTypeHandlerStringContainer, javaScriptTypeHandlerHostContainer]
+types = [javaScriptTypeHandlerStringContainer, javaScriptTypeHandlerRecordContainer, javaScriptTypeHandlerHostContainer]
