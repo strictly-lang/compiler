@@ -24,6 +24,7 @@ library
                        Prelude.Main,
                        Prelude.Javascript.Main,
                        Prelude.Javascript.Util,
+                       Prelude.Javascript.ReferenceTypeHandler,
                        Prelude.Javascript.Types,
                        Prelude.Javascript.Types.Host,
                        Prelude.Javascript.Types.Record,

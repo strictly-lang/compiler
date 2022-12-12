@@ -2,18 +2,18 @@ module Prelude.Javascript.Types where
 
 import Control.Monad.State.Lazy (State)
 import Parser.Types (ASTExpression', ASTLeftHandSide, ASTTypeDeclaration)
-import TypeChecker.Types (Property, TypeHandler (..), TypeHandlerContext, TypeValue)
+import TypeChecker.Types (TypeHandler (..), TypeHandlerContext, TypeValue)
 
 data Code = Ln String | Ind [Code] | Br
   deriving (Show)
 
-type VariableStackEntry = (String, [Property], JavaScriptTypeHandler)
+type VariableStackEntry = (String, [Code], JavaScriptTypeHandler)
 
 type VariableStack = [VariableStackEntry]
 
 data JavaScriptRenderContext = JavaScriptRenderContext
   { runParent :: String,
-    runTypes :: [TypeHandlerContext JavaScriptTypeHandler -> Maybe ASTTypeDeclaration -> TypeValue -> Maybe JavaScriptTypeHandler],
+    runTypes :: [TypeHandlerContext JavaScriptTypeHandler -> Maybe ASTTypeDeclaration -> TypeValue JavaScriptTypeHandler -> Maybe JavaScriptTypeHandler],
     runStack :: VariableStack
   }
 
@@ -25,18 +25,18 @@ data JavaScriptDomResult = JavaScriptDomResult
   }
 
 data JavaScriptTypeHandler = JavaScriptTypeHandler
-  { destructure :: ASTLeftHandSide -> AppStateMonad [(VariableStackEntry, [Code])],
+  { destructure :: JavaScriptRenderContext -> ASTLeftHandSide -> AppStateMonad [(VariableStackEntry, [Code])],
     getDom :: JavaScriptRenderContext -> AppStateMonad JavaScriptDomResult,
-    getExpression :: JavaScriptRenderContext -> [Code] -> AppStateMonad JavaScriptExpressionResult
+    getExpressionContainer :: JavaScriptRenderContext -> AppStateMonad JavaScriptExpressionResult
   }
 
 instance TypeHandler JavaScriptTypeHandler
 
 data JavaScriptExpressionResult = JavaScriptExpressionResult
-  { expression :: [Code]
+  { getExpressionCode :: [Code]
   }
 
-type TypeHandlerContainer = TypeHandlerContext JavaScriptTypeHandler -> Maybe ASTTypeDeclaration -> TypeValue -> Maybe JavaScriptTypeHandler
+type TypeHandlerContainer = TypeHandlerContext JavaScriptTypeHandler -> Maybe ASTTypeDeclaration -> TypeValue JavaScriptTypeHandler -> Maybe JavaScriptTypeHandler
 
 data AppState = AppState
   { runExpressionId :: Int

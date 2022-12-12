@@ -3,10 +3,10 @@ module Prelude.Javascript.Util where
 import Control.Monad.State.Lazy (MonadState (state))
 import Data.Char (toUpper)
 import Data.Foldable (find)
-import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionVariable), ASTStatement (ASTExpression))
+import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionVariable), ASTLeftHandSide (ASTLeftHandSideRecord), ASTStatement (ASTExpression))
 import Prelude.Javascript.Types
 import TypeChecker.Main (findTypehandler)
-import TypeChecker.Types (TypeHandlerContext (..), TypeValue (TypeValueByLiteral))
+import TypeChecker.Types (TypeHandler, TypeHandlerContext (..), TypeValue (TypeValueByLiteral))
 
 codeToString :: Int -> Bool -> [Code] -> String
 codeToString indentationLevel first [] = ""
@@ -71,10 +71,19 @@ nestedExpression renderContext (firstExpression : restExpression) = do
                   (TypeValueByLiteral firstExpression)
            in typeHandler
 
-  return
-    firstTypeHandler
-nestedExpression renderCOntext [] =
+  nestedExpression' renderContext firstTypeHandler restExpression
+nestedExpression renderContext [] =
   error "empty expression"
+
+nestedExpression' :: JavaScriptRenderContext -> JavaScriptTypeHandler -> ASTExpression -> AppStateMonad JavaScriptTypeHandler
+nestedExpression' renderContext javaScriptTypeHandler ((ASTExpressionVariable variableName) : restExpression) = do
+  result <- destructure javaScriptTypeHandler renderContext (ASTLeftHandSideRecord [(variableName, Nothing)])
+  case result of
+    [((_, _, nestedTypeHandler), [])] ->
+      nestedExpression' renderContext nestedTypeHandler restExpression
+    _ -> error "destructuring failed"
+nestedExpression' _ javaScriptTypeHandler [] = do return javaScriptTypeHandler
+nestedExpression' _ _ (expression : restExpression) = error ("nesting expression with that doesnt work " ++ show expression)
 
 getGetFreshExprId :: AppStateMonad Int
 getGetFreshExprId =
