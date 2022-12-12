@@ -13,7 +13,7 @@ type VariableStack = [VariableStackEntry]
 
 data JavaScriptRenderContext = JavaScriptRenderContext
   { runParent :: String,
-    runTypes :: [TypeHandlerContext JavaScriptTypeHandler -> Maybe ASTTypeDeclaration -> TypeValue JavaScriptTypeHandler -> Maybe JavaScriptTypeHandler],
+    runTypes :: [TypeHandlerContext JavaScriptTypeHandler JavaScriptExpressionResult -> Maybe ASTTypeDeclaration -> TypeValue JavaScriptExpressionResult -> Maybe JavaScriptTypeHandler],
     runStack :: VariableStack
   }
 
@@ -33,10 +33,11 @@ data JavaScriptTypeHandler = JavaScriptTypeHandler
 instance TypeHandler JavaScriptTypeHandler
 
 data JavaScriptExpressionResult = JavaScriptExpressionResult
-  { getExpressionCode :: [Code]
+  { getExpressionCode :: [Code],
+    dependencies :: [String]
   }
 
-type TypeHandlerContainer = TypeHandlerContext JavaScriptTypeHandler -> Maybe ASTTypeDeclaration -> TypeValue JavaScriptTypeHandler -> Maybe JavaScriptTypeHandler
+type TypeHandlerContainer = TypeHandlerContext JavaScriptTypeHandler JavaScriptExpressionResult -> Maybe ASTTypeDeclaration -> TypeValue JavaScriptExpressionResult -> Maybe JavaScriptTypeHandler
 
 data AppState = AppState
   { runExpressionId :: Int

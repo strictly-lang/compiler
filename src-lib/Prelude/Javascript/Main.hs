@@ -3,7 +3,6 @@ module Prelude.Javascript.Main where
 import Control.Monad.State.Lazy (runState)
 import Data.List (intercalate)
 import Parser.Types
-import Prelude.Javascript.ReferenceTypeHandler (referenceTypeHandlerFactory)
 import Prelude.Javascript.Types
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
 import Prelude.Javascript.Types.Record (javaScriptTypeHandlerRecordContainer)
@@ -23,7 +22,20 @@ webcomponent' filePath ast [] = do return []
 webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcomponent") (Just (ASTTypeDeclarationFunction [propertyTypes, attributeTypes] bodyType)) assignments) : ast') =
   do
     let filePathWithoutExtension = removeFileExtension filePath
-    let Just propertiesTypeHandler = findTypehandler (TypeHandlerContext {TypeChecker.Types.runTypes = types}) (Just propertyTypes) (TypeValueByReference (referenceTypeHandlerFactory [Ln "this.properties"]))
+    let Just propertiesTypeHandler =
+          findTypehandler
+            ( TypeHandlerContext
+                { TypeChecker.Types.runTypes = types
+                }
+            )
+            (Just propertyTypes)
+            ( TypeValueByReference
+                ( JavaScriptExpressionResult
+                    { getExpressionCode = [Ln "this.properties"],
+                      dependencies = []
+                    }
+                )
+            )
     result <- renderPatterns propertiesTypeHandler assignments
     let propertiesScope = "this.properties"
     setters <- case propertyTypes of

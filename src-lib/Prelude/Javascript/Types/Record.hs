@@ -2,7 +2,6 @@ module Prelude.Javascript.Types.Record where
 
 import Data.List (find, intercalate)
 import Parser.Types (ASTExpression' (ASTExpressionRecord), ASTLeftHandSide (ASTLeftHandSideHole, ASTLeftHandSideRecord, ASTLeftHandSideVariable), ASTTypeDeclaration (ASTTypeDeclarationRecord))
-import Prelude.Javascript.ReferenceTypeHandler (referenceTypeHandlerFactory)
 import Prelude.Javascript.Types
 import Prelude.Javascript.Util
 import TypeChecker.Main (findTypehandler)
@@ -16,27 +15,37 @@ javaScriptTypeHandlerRecordContainer typeHandlerContext _ (TypeValueByLiteral (A
         getDom = \renderContext -> do
           error "a record is not mountable inside the dom"
       }
-javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclarationRecord recordTypes)) (TypeValueByReference reference) =
+javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclarationRecord recordTypes)) (TypeValueByReference referenceExpressionResult) =
   let result =
         JavaScriptTypeHandler
           { destructure = \renderContext leftHandSide -> do
               case leftHandSide of
                 ASTLeftHandSideHole -> do return []
                 ASTLeftHandSideVariable variableName -> do
-                  originCode <- getExpressionCode <$> getExpressionContainer reference renderContext
+                  let originCode = getExpressionCode referenceExpressionResult
 
                   return [((variableName, originCode, result), [])]
                 ASTLeftHandSideRecord leftHandSideRecords -> do
                   result <-
                     mapM
                       ( \(leftHandSideRecordName, maybeNestedLeftHandSide) -> do
-                          originCode <- getExpressionCode <$> getExpressionContainer reference renderContext
+                          let originCode = getExpressionCode referenceExpressionResult
                           let propertyType = find (\(propertyName, _) -> leftHandSideRecordName == propertyName) recordTypes
 
                           case propertyType of
                             Just (_, propertyType) -> do
                               let nestedCode = originCode ++ [Ln ".", Ln leftHandSideRecordName]
-                              let (Just typeHandler) = findTypehandler typeHandlerContext (Just propertyType) (TypeValueByReference (referenceTypeHandlerFactory nestedCode))
+                              let (Just typeHandler) =
+                                    findTypehandler
+                                      typeHandlerContext
+                                      (Just propertyType)
+                                      ( TypeValueByReference
+                                          ( JavaScriptExpressionResult
+                                              { getExpressionCode = nestedCode,
+                                                dependencies = dependencies referenceExpressionResult
+                                              }
+                                          )
+                                      )
                               return [((leftHandSideRecordName, nestedCode, typeHandler), [])]
                             Nothing ->
                               error ("could not find property" ++ leftHandSideRecordName)
@@ -47,14 +56,7 @@ javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclaratio
                 leftHandSide -> error ("such lefthandside is not implemented on record " ++ show leftHandSide),
             getDom = \renderContext -> do
               error "a record is not mountable inside the dom",
-            getExpressionContainer = \renderContext -> do
-              referenceExpressionCode <- getExpressionContainer reference renderContext
-              return
-                ( JavaScriptExpressionResult
-                    { getExpressionCode =
-                        getExpressionCode referenceExpressionCode
-                    }
-                )
+            getExpressionContainer = \_ -> do return referenceExpressionResult
           }
    in Just result
 javaScriptTypeHandlerRecordContainer typeHandlerContext _ _ = Nothing

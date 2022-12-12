@@ -57,13 +57,12 @@ javaScriptTypeHandlerStringContainer typeHandlerContext _ (TypeValueByLiteral (A
         getExpressionContainer =
           expressionCode astStrings
       }
-javaScriptTypeHandlerStringContainer typeHandlerContext (Just (ASTTypeDeclarationAlgebraicDataType "String" [])) (TypeValueByReference referenceTypeHandler) =
+javaScriptTypeHandlerStringContainer typeHandlerContext (Just (ASTTypeDeclarationAlgebraicDataType "String" [])) (TypeValueByReference referenceExpressionResult) =
   Just
     JavaScriptTypeHandler
       { destructure = error "no property access implemented",
         Prelude.Javascript.Types.getDom = \renderContext -> do
-          result <- getExpressionCode <$> getExpressionContainer referenceTypeHandler renderContext
-          Prelude.Javascript.Types.String.getDom renderContext result,
-        getExpressionContainer = getExpressionContainer referenceTypeHandler
+          Prelude.Javascript.Types.String.getDom renderContext (getExpressionCode referenceExpressionResult),
+        getExpressionContainer = \_ -> do return referenceExpressionResult
       }
 javaScriptTypeHandlerStringContainer typeHandlerContext _ _ = Nothing
