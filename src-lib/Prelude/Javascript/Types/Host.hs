@@ -18,7 +18,8 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
               ( JavaScriptRenderContext
                   { runParent = element,
                     runTypes = runTypes renderContext,
-                    runStack = runStack renderContext
+                    runStack = runStack renderContext,
+                    runScope = runScope renderContext
                   }
               )
               children

@@ -22,7 +22,7 @@ describe("text element handling", () => {
     expect(element.shadowRoot.childNodes[0].textContent).to.equal("foo");
   });
 
-  xit("dynamic text", () => {
+  it("dynamic text", () => {
     const element = document.createElement("test-components-text-dynamic");
     element.foo = "bar";
     container.appendChild(element);

@@ -24,7 +24,7 @@ javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclaratio
                 ASTLeftHandSideVariable variableName -> do
                   let originCode = getExpressionCode referenceExpressionResult
 
-                  return [((variableName, originCode, result), [])]
+                  return [((variableName, selfDependency referenceExpressionResult, result), [])]
                 ASTLeftHandSideRecord leftHandSideRecords -> do
                   result <-
                     mapM
@@ -35,6 +35,8 @@ javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclaratio
                           case propertyType of
                             Just (_, propertyType) -> do
                               let nestedCode = originCode ++ [Ln ".", Ln leftHandSideRecordName]
+                              let nestedSelfDependency = (\selfDependency -> selfDependency ++ [DotNotation leftHandSideRecordName]) <$> selfDependency referenceExpressionResult
+
                               let (Just typeHandler) =
                                     findTypehandler
                                       typeHandlerContext
@@ -42,17 +44,18 @@ javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclaratio
                                       ( TypeValueByReference
                                           ( JavaScriptExpressionResult
                                               { getExpressionCode = nestedCode,
-                                                dependencies = dependencies referenceExpressionResult
+                                                selfDependency = nestedSelfDependency,
+                                                extraDependencies = extraDependencies referenceExpressionResult
                                               }
                                           )
                                       )
-                              return [((leftHandSideRecordName, nestedCode, typeHandler), [])]
+                              return [((leftHandSideRecordName, nestedSelfDependency, typeHandler), [])]
                             Nothing ->
                               error ("could not find property" ++ leftHandSideRecordName)
                       )
                       leftHandSideRecords
 
-                  return (concat result)
+                  return (reverse (concat result))
                 leftHandSide -> error ("such lefthandside is not implemented on record " ++ show leftHandSide),
             getDom = \renderContext -> do
               error "a record is not mountable inside the dom",

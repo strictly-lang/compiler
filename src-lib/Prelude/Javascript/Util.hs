@@ -91,3 +91,11 @@ getGetFreshExprId =
     ( \appState ->
         (runExpressionId appState, AppState {runExpressionId = runExpressionId appState + 1})
     )
+
+propertyToCode :: [Property] -> [Code]
+propertyToCode ((DotNotation firstNotation) : restNotations) = [Ln firstNotation] ++ propertyToCode' restNotations
+
+propertyToCode' :: [Property] -> [Code]
+propertyToCode' ((DotNotation currentNotation) : restNotations) = Ln ("." ++ currentNotation) : propertyToCode' restNotations
+propertyToCode' ((BracketNotation currentNotation) : restNotations) = Ln ("[" ++ currentNotation ++ "]") : propertyToCode' restNotations
+propertyToCode' [] = []
