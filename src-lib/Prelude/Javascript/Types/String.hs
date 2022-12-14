@@ -19,11 +19,13 @@ getDom renderContext expressionResult = do
               ++ [Ln " = document.createTextNode("]
               ++ getExpressionCode expressionResult
               ++ [ Ln ");",
-                   Br,
-                   Ln (runParent renderContext ++ ".append(")
+                   Br
+                 ]
+              ++ propertyToCode (runParent renderContext)
+              ++ [ Ln ".append("
                  ]
               ++ propertyToCode text
-              ++ [ Ln ")",
+              ++ [ Ln ");",
                    Br
                  ],
           update =

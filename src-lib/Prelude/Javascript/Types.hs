@@ -15,7 +15,7 @@ type VariableStackEntry = (String, Maybe [Property], JavaScriptTypeHandler)
 type VariableStack = [VariableStackEntry]
 
 data JavaScriptRenderContext = JavaScriptRenderContext
-  { runParent :: String,
+  { runParent :: [Property],
     runTypes :: [TypeHandlerContext JavaScriptTypeHandler JavaScriptExpressionResult -> Maybe ASTTypeDeclaration -> TypeValue JavaScriptExpressionResult -> Maybe JavaScriptTypeHandler],
     runStack :: VariableStack,
     runScope :: [Property]

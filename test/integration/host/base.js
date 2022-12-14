@@ -3,8 +3,8 @@ import "/test/components/host/base.sly";
 import "/test/components/host/siblings.sly";
 import "/test/components/host/nested.sly";
 import "/test/components/host/attributes.sly";
-import "/test/components/host/events.sly";
-import "/test/components/host/checkbox.sly";
+// import "/test/components/host/events.sly";
+// import "/test/components/host/checkbox.sly";
 
 describe("host element handling", () => {
   let container;
@@ -46,7 +46,7 @@ describe("host element handling", () => {
     expect(element.shadowRoot.childNodes[1].tagName).to.equal("SPAN");
   });
 
-  xit("attribute test", () => {
+  it("attribute test", () => {
     const element = document.createElement("test-components-host-attributes");
     element.bar = "baz";
     element.foo = "fooo";

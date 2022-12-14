@@ -59,10 +59,9 @@ webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcompone
                 [ Ln ("set " ++ propertyName ++ "(" ++ propertyValue ++ ") {"),
                   Ind
                     ( propertyToCode (propertiesScope ++ [DotNotation propertyName])
-                        ++ [ Ln (" = " ++ propertyValue ++ ";"),
-                             Br
+                        ++ [ Ln (" = " ++ propertyValue ++ ";")
                            ]
-                        ++ if not (null propertyUpdates) then [Ln "if ("] ++ propertyToCode isMounted ++ [Ln ") {", Ind (intercalate [Br] (map snd propertyUpdates)), Ln "}"] else []
+                        ++ if not (null propertyUpdates) then [Br, Ln "if ("] ++ propertyToCode isMounted ++ [Ln ") {", Ind (intercalate [Br] (map snd propertyUpdates)), Ln "}"] else []
                     ),
                   Ln "}",
                   Br
@@ -101,6 +100,7 @@ webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcompone
                            : Br
                            : propertyToCode isMounted
                            ++ [ Ln " = true;",
+                                Br,
                                 Br
                               ]
                            ++ create result
@@ -125,7 +125,7 @@ renderPatterns propertiesTypeHandler ([ASTExpressionFunctionDeclaration [propert
     destructure
       propertiesTypeHandler
       ( JavaScriptRenderContext
-          { runParent = "this.shadowRoot",
+          { runParent = [DotNotation "this", DotNotation "shadowRoot"],
             Prelude.Javascript.Types.runTypes = types,
             runStack = [],
             runScope = nestedScope
@@ -135,7 +135,7 @@ renderPatterns propertiesTypeHandler ([ASTExpressionFunctionDeclaration [propert
   result <-
     render
       ( JavaScriptRenderContext
-          { runParent = "this.shadowRoot",
+          { runParent = [DotNotation "this", DotNotation "shadowRoot"],
             Prelude.Javascript.Types.runTypes = types,
             runStack = map fst parameterTypeHandler,
             runScope = nestedScope
