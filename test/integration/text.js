@@ -1,8 +1,8 @@
 import { expect } from "@esm-bundle/chai";
 import "/test/components/text/base.sly";
 import "/test/components/text/dynamic.sly";
-// import "/test/components/text/multidynamic.sly";
-// import "/test/components/text/whitespace.sly";
+import "/test/components/text/multidynamic.sly";
+import "/test/components/text/whitespace.sly";
 
 describe("text element handling", () => {
   let container;
@@ -40,7 +40,7 @@ describe("text element handling", () => {
     );
   });
 
-  xit("dynamic text with number", () => {
+  it("dynamic text with number", () => {
     const element = document.createElement("test-components-text-dynamic");
     element.foo = 1;
     container.appendChild(element);
@@ -56,7 +56,7 @@ describe("text element handling", () => {
     );
   });
 
-  xit("multi dynamic text", () => {
+  it("multi dynamic text", () => {
     const element = document.createElement("test-components-text-multidynamic");
     element.foo = "foo";
     element.bar = "bar";
@@ -75,7 +75,7 @@ describe("text element handling", () => {
     );
   });
 
-  xit("whitespace", () => {
+  it("whitespace", () => {
     const element = document.createElement("test-components-text-whitespace");
     element.bar = "bar";
     container.appendChild(element);
