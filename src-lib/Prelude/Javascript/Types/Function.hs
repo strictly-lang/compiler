@@ -37,6 +37,7 @@ javaScriptTypeHandlerFunctionContainer typeHandlerContext (Just (ASTTypeDeclarat
                     return (parameterScope, variableStack')
                 )
                 (zip parameterTypes parameters)
+            let variableStack' = reverse (map fst (concatMap snd parameterHandler)) ++ runStack renderContext
 
             return
               JavaScriptExpressionResult
@@ -51,7 +52,7 @@ javaScriptTypeHandlerFunctionContainer typeHandlerContext (Just (ASTTypeDeclarat
                            Ln "})"
                          ],
                   selfDependency = Nothing,
-                  extraDependencies = []
+                  extraDependencies = [] -- TODO
                 }
         }
     )
