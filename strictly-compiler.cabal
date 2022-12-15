@@ -28,6 +28,7 @@ library
                        Prelude.Javascript.Types.Host,
                        Prelude.Javascript.Types.Record,
                        Prelude.Javascript.Types.String,
+                       Prelude.Javascript.Types.Function,
                        Parser.Types,
                        Parser.Util,
                        Parser.Main,

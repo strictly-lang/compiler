@@ -3,7 +3,7 @@ module Prelude.Javascript.Util where
 import Control.Monad.State.Lazy (MonadState (state))
 import Data.Char (toUpper)
 import Data.Foldable (find)
-import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionVariable), ASTLeftHandSide (ASTLeftHandSideRecord), ASTStatement (ASTExpression))
+import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionVariable), ASTLeftHandSide (ASTLeftHandSideRecord), ASTStatement (ASTExpression), ASTTypeDeclaration)
 import Prelude.Javascript.Types
 import TypeChecker.Main (findTypehandler)
 import TypeChecker.Types (TypeHandler, TypeHandlerContext (..), TypeValue (TypeValueByLiteral))
@@ -40,7 +40,7 @@ slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
 
 render :: JavaScriptRenderContext -> [ASTStatement] -> AppStateMonad JavaScriptDomResult
 render renderContext ((ASTExpression expression) : restSatements) = do
-  typeHandler <- nestedExpression renderContext expression
+  typeHandler <- nestedExpression renderContext Nothing [expression]
   result <- getDom typeHandler renderContext
   nextResult <- render renderContext restSatements
 
@@ -52,27 +52,35 @@ render renderContext ((ASTExpression expression) : restSatements) = do
           delete = delete result ++ delete nextResult
         }
     )
-render renderContext [] = do return (JavaScriptDomResult {create = [], update = [], dealloc = [], delete = []})
+render renderContext [] = do
+  return
+    ( JavaScriptDomResult
+        { create = [],
+          update = [],
+          dealloc = [],
+          delete = []
+        }
+    )
 
-nestedExpression :: JavaScriptRenderContext -> ASTExpression -> AppStateMonad JavaScriptTypeHandler
-nestedExpression renderContext (firstExpression : restExpression) = do
-  let firstTypeHandler = case firstExpression of
+nestedExpression :: JavaScriptRenderContext -> Maybe ASTTypeDeclaration -> [ASTExpression] -> AppStateMonad JavaScriptTypeHandler
+nestedExpression renderContext typeDeclaration [firstExpressionPart : restExpressionPart] = do
+  let firstTypeHandler = case firstExpressionPart of
         (ASTExpressionVariable variableName) ->
           let (Just (_, scope, typeHandler)) = find (\(variableName', _, _) -> variableName' == variableName) (runStack renderContext)
            in typeHandler
-        firstExpression ->
+        firstExpressionPart ->
           let Just typeHandler =
                 findTypehandler
                   ( TypeHandlerContext
                       { TypeChecker.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext
                       }
                   )
-                  Nothing
-                  (TypeValueByLiteral firstExpression)
+                  typeDeclaration
+                  [TypeValueByLiteral firstExpressionPart]
            in typeHandler
 
-  nestedExpression' renderContext firstTypeHandler restExpression
-nestedExpression renderContext [] =
+  nestedExpression' renderContext firstTypeHandler restExpressionPart
+nestedExpression renderContext typeDeclaration _ =
   error "empty expression"
 
 nestedExpression' :: JavaScriptRenderContext -> JavaScriptTypeHandler -> ASTExpression -> AppStateMonad JavaScriptTypeHandler

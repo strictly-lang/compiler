@@ -3,7 +3,7 @@ import "/test/components/host/base.sly";
 import "/test/components/host/siblings.sly";
 import "/test/components/host/nested.sly";
 import "/test/components/host/attributes.sly";
-// import "/test/components/host/events.sly";
+import "/test/components/host/events.sly";
 // import "/test/components/host/checkbox.sly";
 
 describe("host element handling", () => {
@@ -74,7 +74,7 @@ describe("host element handling", () => {
     );
   });
 
-  xdescribe("input", () => {
+  describe("input", () => {
     it("text change", () => {
       const element = document.createElement("test-components-host-events");
       element.value = "foo";
@@ -96,7 +96,7 @@ describe("host element handling", () => {
       expect(element.shadowRoot.childNodes[0].value).to.equal("fooa");
     });
 
-    xit("text non-change", () => {
+    it("text non-change", () => {
       const element = document.createElement("test-components-host-events");
       element.value = "foo";
       element.oninput = (_evt) => {
@@ -117,7 +117,7 @@ describe("host element handling", () => {
       expect(element.shadowRoot.childNodes[0].value).to.equal("foo");
     });
 
-    xit("text different-change", () => {
+    it("text different-change", () => {
       const element = document.createElement("test-components-host-events");
       element.value = "foo";
       element.oninput = (_evt) => {
@@ -138,7 +138,7 @@ describe("host element handling", () => {
       expect(element.shadowRoot.childNodes[0].value).to.equal("foob");
     });
 
-    it("checkbox change", () => {
+    xit("checkbox change", () => {
       const element = document.createElement("test-components-host-checkbox");
       element.value = true;
       element.oninput = (value) => {

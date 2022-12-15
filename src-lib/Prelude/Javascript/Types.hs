@@ -16,7 +16,7 @@ type VariableStack = [VariableStackEntry]
 
 data JavaScriptRenderContext = JavaScriptRenderContext
   { runParent :: [Property],
-    runTypes :: [TypeHandlerContext JavaScriptTypeHandler JavaScriptExpressionResult -> Maybe ASTTypeDeclaration -> TypeValue JavaScriptExpressionResult -> Maybe JavaScriptTypeHandler],
+    runTypes :: [TypeHandlerContext JavaScriptTypeHandler JavaScriptExpressionResult -> Maybe ASTTypeDeclaration -> [TypeValue JavaScriptExpressionResult] -> Maybe JavaScriptTypeHandler],
     runStack :: VariableStack,
     runScope :: [Property]
   }
@@ -42,7 +42,7 @@ data JavaScriptExpressionResult = JavaScriptExpressionResult
     extraDependencies :: [[Property]]
   }
 
-type TypeHandlerContainer = TypeHandlerContext JavaScriptTypeHandler JavaScriptExpressionResult -> Maybe ASTTypeDeclaration -> TypeValue JavaScriptExpressionResult -> Maybe JavaScriptTypeHandler
+type TypeHandlerContainer = TypeHandlerContext JavaScriptTypeHandler JavaScriptExpressionResult -> Maybe ASTTypeDeclaration -> [TypeValue JavaScriptExpressionResult] -> Maybe JavaScriptTypeHandler
 
 data AppState = AppState
   { runExpressionId :: Int

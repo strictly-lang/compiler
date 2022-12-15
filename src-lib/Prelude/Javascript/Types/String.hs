@@ -44,7 +44,7 @@ getDom renderContext expressionResult = do
     )
 
 javaScriptTypeHandlerStringContainer :: TypeHandlerContainer
-javaScriptTypeHandlerStringContainer typeHandlerContext _ (TypeValueByLiteral (ASTExpressionString astStrings)) =
+javaScriptTypeHandlerStringContainer typeHandlerContext _ ((TypeValueByLiteral (ASTExpressionString astStrings)) : restTypeValues) =
   let expressionCode astStrings renderContext = do
         result <-
           mapM
@@ -61,7 +61,7 @@ javaScriptTypeHandlerStringContainer typeHandlerContext _ (TypeValueByLiteral (A
                           )
                         )
                     ASTStringDynamic expression -> do
-                      typeHandler <- nestedExpression renderContext expression
+                      typeHandler <- nestedExpression renderContext (Just (ASTTypeDeclarationAlgebraicDataType "String" [])) [expression]
                       getExpressionContainer typeHandler renderContext
             )
             astStrings
@@ -81,7 +81,7 @@ javaScriptTypeHandlerStringContainer typeHandlerContext _ (TypeValueByLiteral (A
             getExpressionContainer =
               expressionCode astStrings
           }
-javaScriptTypeHandlerStringContainer typeHandlerContext (Just (ASTTypeDeclarationAlgebraicDataType "String" [])) (TypeValueByReference referenceExpressionResult) =
+javaScriptTypeHandlerStringContainer typeHandlerContext (Just (ASTTypeDeclarationAlgebraicDataType "String" [])) ((TypeValueByReference referenceExpressionResult) : restTypeValues) =
   Just
     JavaScriptTypeHandler
       { destructure = error "no property access implemented",

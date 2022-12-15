@@ -4,6 +4,7 @@ import Control.Monad.State.Lazy (runState)
 import Data.List (intercalate, isPrefixOf)
 import Parser.Types
 import Prelude.Javascript.Types
+import Prelude.Javascript.Types.Function (javaScriptTypeHandlerFunctionContainer)
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
 import Prelude.Javascript.Types.Record (javaScriptTypeHandlerRecordContainer)
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
@@ -34,14 +35,14 @@ webcomponent' filePath ast ((ASTRootNodeGroupedAssignment name (Just "webcompone
                 }
             )
             (Just propertyTypes)
-            ( TypeValueByReference
+            [ TypeValueByReference
                 ( JavaScriptExpressionResult
                     { getExpressionCode = propertyToCode propertiesScope,
                       selfDependency = Just propertiesScope,
                       extraDependencies = []
                     }
                 )
-            )
+            ]
 
     result <- renderPatterns propertiesTypeHandler assignments
     let updates = update result
@@ -173,4 +174,10 @@ algeraicDataTypes (_ : restNodes) = algeraicDataTypes restNodes
 macros :: [Macro]
 macros = [webcomponent]
 
-types = [javaScriptTypeHandlerStringContainer, javaScriptTypeHandlerRecordContainer, javaScriptTypeHandlerHostContainer]
+types :: [TypeHandlerContainer]
+types =
+  [ javaScriptTypeHandlerStringContainer,
+    javaScriptTypeHandlerRecordContainer,
+    javaScriptTypeHandlerHostContainer,
+    javaScriptTypeHandlerFunctionContainer
+  ]

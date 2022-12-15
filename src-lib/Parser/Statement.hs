@@ -126,19 +126,20 @@ rightHandSideRecordParser indentationLevel = do
 
 recordParser :: IndentationLevel -> Parser ASTRecord
 recordParser indentationLevel = do
-  properties <- blockParser recordOpenParser (lookAhead (recordCloseParser <|> baseOfParser)) recordOptionParser indentationLevel
-
+  ungroupedProperties <- recordOptionGrouper <$> blockParser recordOpenParser (lookAhead (recordCloseParser <|> baseOfParser)) recordOptionParser indentationLevel
   hasSource <- lookAhead (optional baseOfParser)
 
   case hasSource of
     Just _ -> do
       basedOn <- blockParser baseOfParser recordCloseParser statementParser indentationLevel
-      return (properties, basedOn)
+      return (ungroupedProperties, basedOn)
     Nothing -> do
       _ <- recordCloseParser
-      return (properties, [])
+      return (ungroupedProperties, [])
 
-recordOptionParser :: IndentationLevel -> Parser (String, ASTRecordValue)
+type UngroupedOption = (String, Either ASTTypeDeclaration (Maybe String, ASTExpression))
+
+recordOptionParser :: IndentationLevel -> Parser UngroupedOption
 recordOptionParser indentationLevel = do
   key <- lowercaseIdentifierParser
 
@@ -153,12 +154,42 @@ recordOptionParser indentationLevel = do
   kind <- Left <$> assignParser <|> Right <$> typeAssignParser
 
   value <- case kind of
-    Left _ ->
-      RecordExpression condition <$> expressionParser indentationLevel
+    Left _ -> do
+      expressionResult <- expressionParser indentationLevel
+      return (Right (condition, expressionResult))
     Right _ ->
-      RecordType <$> typeDefinitionParser indentationLevel
+      Left <$> typeDefinitionParser indentationLevel
 
   return (key, value)
+
+recordOptionGrouper :: [UngroupedOption] -> [GroupedRecordOption]
+recordOptionGrouper [] = []
+recordOptionGrouper ((currentUngroupedOptionName, Left typeDeclaration) : restUngroupedOptions) =
+  let nextGroupedOptions = recordOptionGrouper restUngroupedOptions
+   in case nextGroupedOptions of
+        [] -> [(currentUngroupedOptionName, (Just typeDeclaration, []))]
+        ((nextGroupedOptionName, (nextGroupedOptionTypeDelcaration, expressions)) : restNextGroupedOptions) ->
+          if nextGroupedOptionName == currentUngroupedOptionName
+            then
+              ( case nextGroupedOptionTypeDelcaration of
+                  Nothing -> (nextGroupedOptionName, (Just typeDeclaration, expressions))
+                  (Just _) -> error ("Record contains two typedeclarations for " ++ currentUngroupedOptionName)
+              )
+                : restNextGroupedOptions
+            else (currentUngroupedOptionName, (Just typeDeclaration, [])) : nextGroupedOptions
+recordOptionGrouper ((currentUngroupedOptionName, Right expression) : restUngroupedOptions) =
+  let nextGroupedOptions = recordOptionGrouper restUngroupedOptions
+   in case nextGroupedOptions of
+        [] -> [(currentUngroupedOptionName, (Nothing, [expression]))]
+        ((nextGroupedOptionName, (nextGroupedOptionTypeDelcaration, expressions)) : restNextGroupedOptions) ->
+          if nextGroupedOptionName == currentUngroupedOptionName
+            then
+              ( case nextGroupedOptionTypeDelcaration of
+                  Nothing -> (nextGroupedOptionName, (Nothing, expressions))
+                  (Just _) -> error ("Record contains a typedeclarations in the middle for " ++ currentUngroupedOptionName)
+              )
+                : restNextGroupedOptions
+            else (currentUngroupedOptionName, (Nothing, [expression])) : nextGroupedOptions
 
 rightHandSideFunctionDefinitionParser :: IndentationLevel -> Parser ASTExpression'
 rightHandSideFunctionDefinitionParser indentationLevel = do

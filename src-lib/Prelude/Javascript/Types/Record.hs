@@ -8,14 +8,16 @@ import TypeChecker.Main (findTypehandler)
 import TypeChecker.Types (TypeValue (TypeValueByLiteral, TypeValueByReference))
 
 javaScriptTypeHandlerRecordContainer :: TypeHandlerContainer
-javaScriptTypeHandlerRecordContainer typeHandlerContext _ (TypeValueByLiteral (ASTExpressionRecord astRecords)) =
+javaScriptTypeHandlerRecordContainer typeHandlerContext _ (TypeValueByLiteral (ASTExpressionRecord astRecords) : restTypeValues) =
   Just
     JavaScriptTypeHandler
       { destructure = error "no property access implemented",
         getDom = \renderContext -> do
-          error "a record is not mountable inside the dom"
+          error "a record is not mountable inside the dom",
+        getExpressionContainer = \renderContext -> do
+          error "expression container is not yet implemented"
       }
-javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclarationRecord recordTypes)) (TypeValueByReference referenceExpressionResult) =
+javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclarationRecord recordTypes)) ((TypeValueByReference referenceExpressionResult) : restTypeValues) =
   let result =
         JavaScriptTypeHandler
           { destructure = \renderContext leftHandSide -> do
@@ -41,14 +43,14 @@ javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclaratio
                                     findTypehandler
                                       typeHandlerContext
                                       (Just propertyType)
-                                      ( TypeValueByReference
+                                      [ TypeValueByReference
                                           ( JavaScriptExpressionResult
                                               { getExpressionCode = nestedCode,
                                                 selfDependency = nestedSelfDependency,
                                                 extraDependencies = extraDependencies referenceExpressionResult
                                               }
                                           )
-                                      )
+                                      ]
                               return [((leftHandSideRecordName, nestedSelfDependency, typeHandler), [])]
                             Nothing ->
                               error ("could not find property" ++ leftHandSideRecordName)

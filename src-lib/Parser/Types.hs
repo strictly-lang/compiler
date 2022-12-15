@@ -33,10 +33,9 @@ data ASTStatement
   | ASTStream ASTLeftHandSide ASTExpression
   deriving (Show)
 
-type ASTRecord = ([(String, ASTRecordValue)], [ASTStatement])
+type GroupedRecordOption = (String, (Maybe ASTTypeDeclaration, [(Maybe String, ASTExpression)]))
 
-data ASTRecordValue = RecordExpression (Maybe String) ASTExpression | RecordType ASTTypeDeclaration
-  deriving (Show)
+type ASTRecord = ([GroupedRecordOption], [ASTStatement])
 
 data ASTString
   = ASTStringStatic String

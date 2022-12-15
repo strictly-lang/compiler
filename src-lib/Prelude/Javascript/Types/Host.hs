@@ -1,14 +1,16 @@
 module Prelude.Javascript.Types.Host where
 
-import Data.List (intercalate)
+import Data.List (intercalate, isPrefixOf)
 import Data.Maybe (maybeToList)
-import Parser.Types (ASTExpression' (ASTExpressionHost), ASTRecordValue (RecordExpression))
+import Parser.Types (ASTExpression' (ASTExpressionHost))
 import Prelude.Javascript.Types
 import Prelude.Javascript.Util
 import TypeChecker.Types (TypeValue (TypeValueByLiteral))
 
+eventPrefix = "on"
+
 javaScriptTypeHandlerHostContainer :: TypeHandlerContainer
-javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (ASTExpressionHost hostName (attributes, []) children)) =
+javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (ASTExpressionHost hostName (attributes, []) children) : restTypeValues) =
   Just
     JavaScriptTypeHandler
       { destructure = error "no property access implemented",
@@ -16,13 +18,13 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
           exprId <- getGetFreshExprId
           let element = runScope renderContext ++ [DotNotation ("element" ++ show exprId)]
 
-          attributesExpressions <-
+          options <-
             mapM
-              ( \(attributeName, RecordExpression Nothing expression) -> do
-                  typeHandler <- nestedExpression renderContext expression
+              ( \(optionName, (typedefinition, expressions)) -> do
+                  typeHandler <- nestedExpression renderContext typedefinition (map snd expressions)
                   result <- getExpressionContainer typeHandler renderContext
 
-                  return (attributeName, result)
+                  return (optionName, result)
               )
               attributes
 
@@ -45,10 +47,16 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
                            Br
                          ]
                       ++ concatMap
-                        ( \(attributeName, attributeExpressions) ->
-                            propertyToCode element ++ [Ln (".setAttribute(\"" ++ attributeName ++ "\", ")] ++ getExpressionCode attributeExpressions ++ [Ln ");", Br]
+                        ( \(optionName, attributeExpressions) ->
+                            propertyToCode element
+                              ++ [ if eventPrefix `isPrefixOf` optionName
+                                     then Ln (".addEventListener(\"" ++ drop (length eventPrefix) optionName ++ "\", ")
+                                     else Ln (".setAttribute(\"" ++ optionName ++ "\", ")
+                                 ]
+                              ++ getExpressionCode attributeExpressions
+                              ++ [Ln ");", Br]
                         )
-                        attributesExpressions
+                        options
                       ++ propertyToCode (runParent renderContext)
                       ++ [ Ln ".append("
                          ]
@@ -67,7 +75,8 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
                               )
                           )
                           (maybeToList (selfDependency attributeExpressionResult) ++ extraDependencies attributeExpressionResult)
-                        | (attributeName, attributeExpressionResult) <- attributesExpressions
+                        | (attributeName, attributeExpressionResult) <- options,
+                          not (eventPrefix `isPrefixOf` attributeName)
                       ]
                       ++ update nestedResult,
                   dealloc = [] ++ dealloc nestedResult,
