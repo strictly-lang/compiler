@@ -15,7 +15,8 @@ javaScriptTypeHandlerRecordContainer typeHandlerContext _ (TypeValueByLiteral (A
         getDom = \renderContext -> do
           error "a record is not mountable inside the dom",
         getExpressionContainer = \renderContext -> do
-          error "expression container is not yet implemented"
+          error "expression container is not yet implemented",
+        call = \_ -> error "no functioncall available for record"
       }
 javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclarationRecord recordTypes)) ((TypeValueByReference referenceExpressionResult) : restTypeValues) =
   let result =
@@ -61,7 +62,8 @@ javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclaratio
                 leftHandSide -> error ("such lefthandside is not implemented on record " ++ show leftHandSide),
             getDom = \renderContext -> do
               error "a record is not mountable inside the dom",
-            getExpressionContainer = \_ -> do return referenceExpressionResult
+            getExpressionContainer = \_ -> do return referenceExpressionResult,
+            call = \_ -> error "no functioncall available for record"
           }
    in Just result
 javaScriptTypeHandlerRecordContainer typeHandlerContext _ _ = Nothing

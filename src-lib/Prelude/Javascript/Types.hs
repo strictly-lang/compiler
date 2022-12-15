@@ -1,7 +1,7 @@
 module Prelude.Javascript.Types where
 
 import Control.Monad.State.Lazy (State)
-import Parser.Types (ASTExpression', ASTLeftHandSide, ASTTypeDeclaration)
+import Parser.Types (ASTExpression, ASTExpression', ASTLeftHandSide, ASTTypeDeclaration)
 import TypeChecker.Types (TypeHandler (..), TypeHandlerContext, TypeValue)
 
 data Property = DotNotation String | BracketNotation String
@@ -31,7 +31,8 @@ data JavaScriptDomResult = JavaScriptDomResult
 data JavaScriptTypeHandler = JavaScriptTypeHandler
   { destructure :: JavaScriptRenderContext -> ASTLeftHandSide -> AppStateMonad [(VariableStackEntry, [Code])],
     getDom :: JavaScriptRenderContext -> AppStateMonad JavaScriptDomResult,
-    getExpressionContainer :: JavaScriptRenderContext -> AppStateMonad JavaScriptExpressionResult
+    getExpressionContainer :: JavaScriptRenderContext -> AppStateMonad JavaScriptExpressionResult,
+    call :: JavaScriptRenderContext -> [ASTExpression] -> AppStateMonad JavaScriptTypeHandler
   }
 
 instance TypeHandler JavaScriptTypeHandler

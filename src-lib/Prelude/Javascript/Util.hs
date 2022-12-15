@@ -3,7 +3,8 @@ module Prelude.Javascript.Util where
 import Control.Monad.State.Lazy (MonadState (state))
 import Data.Char (toUpper)
 import Data.Foldable (find)
-import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionVariable), ASTLeftHandSide (ASTLeftHandSideRecord), ASTStatement (ASTExpression), ASTTypeDeclaration)
+import Data.Type.Equality (apply)
+import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionFunctionCall, ASTExpressionVariable), ASTLeftHandSide (ASTLeftHandSideRecord), ASTStatement (ASTExpression), ASTTypeDeclaration)
 import Prelude.Javascript.Types
 import TypeChecker.Main (findTypehandler)
 import TypeChecker.Types (TypeHandler, TypeHandlerContext (..), TypeValue (TypeValueByLiteral))
@@ -90,6 +91,9 @@ nestedExpression' renderContext javaScriptTypeHandler ((ASTExpressionVariable va
     [((_, _, nestedTypeHandler), [])] ->
       nestedExpression' renderContext nestedTypeHandler restExpression
     _ -> error "destructuring failed"
+nestedExpression' renderContext javaScriptTypeHandler ((ASTExpressionFunctionCall parameter) : restExpression) = do
+  result <- call javaScriptTypeHandler renderContext parameter
+  nestedExpression' renderContext result restExpression
 nestedExpression' _ javaScriptTypeHandler [] = do return javaScriptTypeHandler
 nestedExpression' _ _ (expression : restExpression) = error ("nesting expression with that doesnt work " ++ show expression)
 

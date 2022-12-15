@@ -79,7 +79,8 @@ javaScriptTypeHandlerStringContainer typeHandlerContext _ ((TypeValueByLiteral (
               result <- expressionCode astStrings renderContext
               Prelude.Javascript.Types.String.getDom renderContext result,
             getExpressionContainer =
-              expressionCode astStrings
+              expressionCode astStrings,
+            call = \_ -> error "no functioncall available for string"
           }
 javaScriptTypeHandlerStringContainer typeHandlerContext (Just (ASTTypeDeclarationAlgebraicDataType "String" [])) ((TypeValueByReference referenceExpressionResult) : restTypeValues) =
   Just
@@ -87,6 +88,7 @@ javaScriptTypeHandlerStringContainer typeHandlerContext (Just (ASTTypeDeclaratio
       { destructure = error "no property access implemented",
         Prelude.Javascript.Types.getDom = \renderContext -> do
           Prelude.Javascript.Types.String.getDom renderContext referenceExpressionResult,
-        getExpressionContainer = \_ -> do return referenceExpressionResult
+        getExpressionContainer = \_ -> do return referenceExpressionResult,
+        call = \_ -> error "no functioncall available for string"
       }
 javaScriptTypeHandlerStringContainer typeHandlerContext _ _ = Nothing

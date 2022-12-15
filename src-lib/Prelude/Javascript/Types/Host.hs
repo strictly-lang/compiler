@@ -83,6 +83,7 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
                   delete = [] ++ delete nestedResult
                 }
             ),
-        getExpressionContainer = error "no expression container available for host"
+        getExpressionContainer = error "no expression container available for host",
+        call = \_ -> error "no functioncall available for host"
       }
 javaScriptTypeHandlerHostContainer typeHandlerContext _ _ = Nothing
