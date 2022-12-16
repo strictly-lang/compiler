@@ -66,7 +66,7 @@ javaScriptTypeHandlerFunctionContainer typeHandlerContext (Just (ASTTypeDeclarat
                     { runParent =
                         runParent renderContext,
                       runTypes = runTypes renderContext,
-                      runStack = runStack renderContext,
+                      runStack = variableStack',
                       runScope = runScope renderContext
                     }
                 )

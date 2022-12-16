@@ -8,6 +8,7 @@ import Prelude.Javascript.Types.Function (javaScriptTypeHandlerFunctionContainer
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
 import Prelude.Javascript.Types.Record (javaScriptTypeHandlerRecordContainer)
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
+import Prelude.Javascript.Types.Void (javaScriptTypeHandlerVoidContainer)
 import Prelude.Javascript.Util (codeToString, getGetFreshExprId, propertyToCode, removeFileExtension, render, slashToCamelCase, slashToDash)
 import Prelude.Types
 import TypeChecker.Main (findTypehandler)
@@ -179,5 +180,6 @@ types =
   [ javaScriptTypeHandlerStringContainer,
     javaScriptTypeHandlerRecordContainer,
     javaScriptTypeHandlerHostContainer,
-    javaScriptTypeHandlerFunctionContainer
+    javaScriptTypeHandlerFunctionContainer,
+    javaScriptTypeHandlerVoidContainer
   ]

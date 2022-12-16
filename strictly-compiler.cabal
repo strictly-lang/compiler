@@ -29,6 +29,7 @@ library
                        Prelude.Javascript.Types.Record,
                        Prelude.Javascript.Types.String,
                        Prelude.Javascript.Types.Function,
+                       Prelude.Javascript.Types.Void,
                        Parser.Types,
                        Parser.Util,
                        Parser.Main,

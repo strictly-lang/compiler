@@ -67,8 +67,9 @@ nestedExpression :: JavaScriptRenderContext -> Maybe ASTTypeDeclaration -> [ASTE
 nestedExpression renderContext typeDeclaration [firstExpressionPart : restExpressionPart] = do
   let firstTypeHandler = case firstExpressionPart of
         (ASTExpressionVariable variableName) ->
-          let (Just (_, scope, typeHandler)) = find (\(variableName', _, _) -> variableName' == variableName) (runStack renderContext)
-           in typeHandler
+          case find (\(variableName', _, _) -> variableName' == variableName) (runStack renderContext) of
+            (Just (_, scope, typeHandler)) -> typeHandler
+            result -> error ("finding variable failed failed for " ++ variableName)
         firstExpressionPart ->
           let Just typeHandler =
                 findTypehandler
