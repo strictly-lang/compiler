@@ -99,8 +99,8 @@ javaScriptTypeHandlerFunctionContainer typeHandlerContext (Just (ASTTypeDeclarat
           parameters <-
             mapM
               ( \(parameterType, parameterExpression) -> do
-                  result <- nestedExpression renderContext (Just parameterType) ([parameterExpression])
-                  return result
+                  result <- nestedExpression renderContext (Just parameterType) [parameterExpression]
+                  getExpressionContainer result renderContext
               )
               (zip parameterTypes parameterExpressions)
           let Just resultTypeHandler =
@@ -110,7 +110,7 @@ javaScriptTypeHandlerFunctionContainer typeHandlerContext (Just (ASTTypeDeclarat
                   [ TypeValueByReference
                       ( JavaScriptExpressionResult
                           { getExpressionCode =
-                              getExpressionCode referenceExpressionResult ++ [Ln "()"],
+                              getExpressionCode referenceExpressionResult ++ [Ln "("] ++ intercalate [Ln ", "] (map getExpressionCode parameters) ++ [Ln ")"],
                             selfDependency = Nothing,
                             extraDependencies = [] -- TODO
                           }
