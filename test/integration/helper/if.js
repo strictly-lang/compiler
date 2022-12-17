@@ -2,7 +2,7 @@ import { expect } from "@esm-bundle/chai";
 import "/test/components/helper/if/base.sly";
 import "/test/components/helper/if/remove.sly";
 
-describe("if condition handling", () => {
+xdescribe("if condition handling", () => {
   let container;
   beforeEach(() => {
     container = document.createElement("div");

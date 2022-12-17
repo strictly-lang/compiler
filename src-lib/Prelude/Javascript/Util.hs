@@ -43,14 +43,25 @@ render :: JavaScriptRenderContext -> [ASTStatement] -> AppStateMonad JavaScriptD
 render renderContext ((ASTExpression expression) : restSatements) = do
   typeHandler <- nestedExpression renderContext Nothing [expression]
   result <- getDom typeHandler renderContext
-  nextResult <- render renderContext restSatements
+  nextResult <-
+    render
+      ( JavaScriptRenderContext
+          { runParent = runParent renderContext,
+            runSiblings = siblings result,
+            Prelude.Javascript.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext,
+            runStack = runStack renderContext,
+            runScope = runScope renderContext
+          }
+      )
+      restSatements
 
   return
     ( JavaScriptDomResult
         { create = create result ++ create nextResult,
           update = update result ++ update nextResult,
           dealloc = dealloc result ++ dealloc nextResult,
-          delete = delete result ++ delete nextResult
+          delete = delete result ++ delete nextResult,
+          siblings = siblings nextResult
         }
     )
 render renderContext [] = do
@@ -59,7 +70,8 @@ render renderContext [] = do
         { create = [],
           update = [],
           dealloc = [],
-          delete = []
+          delete = [],
+          siblings = []
         }
     )
 
@@ -112,3 +124,108 @@ propertyToCode' :: [Property] -> [Code]
 propertyToCode' ((DotNotation currentNotation) : restNotations) = Ln ("." ++ currentNotation) : propertyToCode' restNotations
 propertyToCode' ((BracketNotation currentNotation) : restNotations) = Ln ("[" ++ currentNotation ++ "]") : propertyToCode' restNotations
 propertyToCode' [] = []
+
+data Predecessor = PredecessorNone | PredecessorAlways [Code] | PredecessorMaybe [Code] [Code]
+
+appendElement :: JavaScriptRenderContext -> [Property] -> [Code]
+appendElement renderContext target =
+  let result = appendElement' (runSiblings renderContext)
+      parent' = propertyToCode (runParent renderContext)
+      target' = propertyToCode target
+      siblingsAfter sibling = sibling ++ [Ln ".after("] ++ target' ++ [Ln ");", Br]
+      siblingsNone = parent' ++ [Ln ".append("] ++ target' ++ [Ln ");", Br]
+   in case result of
+        PredecessorAlways predecessor ->
+          siblingsAfter predecessor
+        PredecessorMaybe condition predecessor ->
+          Ln "if ("
+            : condition
+            ++ [ Ln ") {",
+                 Ind (siblingsAfter predecessor),
+                 Ln "} else {",
+                 Ind siblingsNone,
+                 Ln "}",
+                 Br
+               ]
+        PredecessorNone ->
+          siblingsNone
+
+appendElement' :: [Sibling] -> Predecessor
+appendElement' [] = PredecessorNone
+appendElement' ((SiblingAlways sibling) : restSiblings) = PredecessorAlways (propertyToCode sibling)
+appendElement' ((SiblingCondition condition thenSiblings elseSiblings) : restSiblings) =
+  let thenResult = appendElement' thenSiblings
+      elseResult = appendElement' elseSiblings
+   in case thenResult of
+        PredecessorAlways thenResult' ->
+          case elseResult of
+            PredecessorAlways elseResult' ->
+              PredecessorAlways
+                ( Ln "("
+                    : condition
+                    ++ [Ln " ? "]
+                    ++ thenResult'
+                    ++ [Ln " : "]
+                    ++ elseResult'
+                    ++ [Ln ")"]
+                )
+            PredecessorMaybe elseCondition elseResult' ->
+              PredecessorMaybe
+                (Ln "(" : condition ++ [Ln " || "] ++ elseCondition ++ [Ln ")"])
+                (Ln "(" : condition ++ [Ln " ? "] ++ thenResult' ++ Ln " : " : elseResult' ++ [Ln ")"])
+            PredecessorNone ->
+              PredecessorMaybe condition thenResult'
+        PredecessorMaybe thenCondition thenResult' ->
+          case elseResult of
+            PredecessorAlways elseResult' ->
+              PredecessorMaybe
+                ( Ln "("
+                    : condition
+                    ++ [Ln " === false || "]
+                    ++ thenCondition
+                    ++ [Ln ")"]
+                )
+                ( Ln "("
+                    : condition
+                    ++ [Ln " ? "]
+                    ++ thenResult'
+                    ++ [Ln " ? "]
+                    ++ elseResult'
+                    ++ [Ln ")"]
+                )
+            PredecessorMaybe elseCondition elseResult' ->
+              PredecessorMaybe
+                ( Ln "(("
+                    : condition
+                    ++ [Ln " && "]
+                    ++ thenCondition
+                    ++ [Ln ") || ("]
+                    ++ condition
+                    ++ [Ln " === false && "]
+                    ++ elseCondition
+                    ++ [Ln "))"]
+                )
+                ( Ln "("
+                    : condition
+                    ++ [Ln " ? "]
+                    ++ thenResult'
+                    ++ [Ln " ? "]
+                    ++ elseResult'
+                    ++ [Ln ")"]
+                )
+            PredecessorNone ->
+              PredecessorMaybe
+                (Ln "(" : condition ++ [Ln " && "] ++ thenCondition ++ [Ln ")"])
+                thenResult'
+        PredecessorNone ->
+          case elseResult of
+            PredecessorAlways elseResult' ->
+              PredecessorMaybe
+                (Ln "(" : condition ++ [Ln " === false)"])
+                elseResult'
+            PredecessorMaybe elseCondition elseResult' ->
+              PredecessorMaybe
+                (Ln "(" : condition ++ [Ln " === false && "] ++ elseCondition ++ [Ln ")"])
+                elseResult'
+            PredecessorNone ->
+              PredecessorNone

@@ -9,14 +9,8 @@ javaScriptTypeHandlerVoidContainer typeHandlerContext (Just (ASTTypeDeclarationA
   let result =
         JavaScriptTypeHandler
           { destructure = \renderContext leftHandSide -> do
-              case leftHandSide of
-                ASTLeftHandSideHole -> do return []
-                ASTLeftHandSideVariable variableName -> do
-                  let originCode = getExpressionCode referenceExpressionResult
-
-                  return [((variableName, selfDependency referenceExpressionResult, result), [])]
-                leftHandSide -> error ("such lefthandside is not implemented on record " ++ show leftHandSide),
-            getDom = \_ -> error "no functioncall available for Void",
+              error "no destructure available for Void",
+            getDom = \_ -> error "no dom available for Void",
             getExpressionContainer = \_ -> do return referenceExpressionResult,
             call = \_ -> error "no functioncall available for Void"
           }

@@ -12,7 +12,7 @@ export default {
   files: [
     "test/integration/text.js",
     "test/integration/host/base.js",
-    // "test/integration/helper/if.js",
+    "test/integration/helper/if.js",
     // "test/integration/helper/each.js",
   ],
   nodeResolve: true,

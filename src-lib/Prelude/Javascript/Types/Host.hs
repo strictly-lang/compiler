@@ -34,7 +34,8 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
                   { runParent = element,
                     runTypes = runTypes renderContext,
                     runStack = runStack renderContext,
-                    runScope = runScope renderContext
+                    runScope = runScope renderContext,
+                    runSiblings = []
                   }
               )
               children
@@ -57,12 +58,8 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
                               ++ [Ln ");", Br]
                         )
                         options
-                      ++ propertyToCode (runParent renderContext)
-                      ++ [ Ln ".append("
-                         ]
-                      ++ propertyToCode element
-                      ++ [ Ln ");",
-                           Br,
+                      ++ appendElement renderContext element
+                      ++ [ Br,
                            Br
                          ]
                       ++ create nestedResult,
@@ -80,7 +77,8 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
                       ]
                       ++ update nestedResult,
                   dealloc = [] ++ dealloc nestedResult,
-                  delete = [] ++ delete nestedResult
+                  delete = [] ++ delete nestedResult,
+                  siblings = [SiblingAlways element]
                 }
             ),
         getExpressionContainer = error "no expression container available for host",

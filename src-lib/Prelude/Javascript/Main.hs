@@ -4,6 +4,7 @@ import Control.Monad.State.Lazy (runState)
 import Data.List (intercalate, isPrefixOf)
 import Parser.Types
 import Prelude.Javascript.Types
+import Prelude.Javascript.Types.Condition (javaScriptTypeHandlerConditionContainer)
 import Prelude.Javascript.Types.Function (javaScriptTypeHandlerFunctionContainer)
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
 import Prelude.Javascript.Types.Record (javaScriptTypeHandlerRecordContainer)
@@ -128,6 +129,7 @@ renderPatterns propertiesTypeHandler ([ASTExpressionFunctionDeclaration [propert
       propertiesTypeHandler
       ( JavaScriptRenderContext
           { runParent = [DotNotation "this", DotNotation "shadowRoot"],
+            runSiblings = [],
             Prelude.Javascript.Types.runTypes = types,
             runStack = [],
             runScope = nestedScope
@@ -138,6 +140,7 @@ renderPatterns propertiesTypeHandler ([ASTExpressionFunctionDeclaration [propert
     render
       ( JavaScriptRenderContext
           { runParent = [DotNotation "this", DotNotation "shadowRoot"],
+            runSiblings = [],
             Prelude.Javascript.Types.runTypes = types,
             runStack = map fst parameterTypeHandler,
             runScope = nestedScope
@@ -150,7 +153,8 @@ renderPatterns propertiesTypeHandler ([ASTExpressionFunctionDeclaration [propert
         { create = create result ++ create nextResult,
           update = update result ++ update nextResult,
           dealloc = dealloc result ++ dealloc nextResult,
-          delete = delete result ++ delete nextResult
+          delete = delete result ++ delete nextResult,
+          siblings = siblings nextResult
         }
     )
 renderPatterns propertiesTypeHandler [] = do return JavaScriptDomResult {create = [], update = [], dealloc = [], delete = []}
@@ -181,5 +185,6 @@ types =
     javaScriptTypeHandlerRecordContainer,
     javaScriptTypeHandlerHostContainer,
     javaScriptTypeHandlerFunctionContainer,
-    javaScriptTypeHandlerVoidContainer
+    javaScriptTypeHandlerVoidContainer,
+    javaScriptTypeHandlerConditionContainer
   ]

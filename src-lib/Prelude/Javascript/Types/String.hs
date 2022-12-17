@@ -21,12 +21,8 @@ getDom renderContext expressionResult = do
               ++ [ Ln ");",
                    Br
                  ]
-              ++ propertyToCode (runParent renderContext)
-              ++ [ Ln ".append("
-                 ]
-              ++ propertyToCode text
-              ++ [ Ln ");",
-                   Br
+              ++ appendElement renderContext text
+              ++ [ Br
                  ],
           update =
             map
@@ -39,7 +35,8 @@ getDom renderContext expressionResult = do
               )
               (maybeToList (selfDependency expressionResult) ++ extraDependencies expressionResult),
           dealloc = [],
-          delete = []
+          delete = [],
+          siblings = [SiblingAlways text]
         }
     )
 

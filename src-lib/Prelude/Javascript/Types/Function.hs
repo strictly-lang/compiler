@@ -67,7 +67,8 @@ javaScriptTypeHandlerFunctionContainer typeHandlerContext (Just (ASTTypeDeclarat
                         runParent renderContext,
                       runTypes = runTypes renderContext,
                       runStack = variableStack',
-                      runScope = runScope renderContext
+                      runScope = runScope renderContext,
+                      runSiblings = runSiblings renderContext
                     }
                 )
                 body

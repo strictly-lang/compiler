@@ -26,6 +26,7 @@ library
                        Prelude.Javascript.Util,
                        Prelude.Javascript.Types,
                        Prelude.Javascript.Types.Host,
+                       Prelude.Javascript.Types.Condition,
                        Prelude.Javascript.Types.Record,
                        Prelude.Javascript.Types.String,
                        Prelude.Javascript.Types.Function,
