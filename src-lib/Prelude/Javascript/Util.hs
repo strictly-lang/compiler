@@ -47,7 +47,7 @@ render renderContext ((ASTExpression expression) : restSatements) = do
     render
       ( JavaScriptRenderContext
           { runParent = runParent renderContext,
-            runSiblings = siblings result,
+            runSiblings = siblings result ++ runSiblings renderContext,
             Prelude.Javascript.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext,
             runStack = runStack renderContext,
             runScope = runScope renderContext
@@ -61,7 +61,7 @@ render renderContext ((ASTExpression expression) : restSatements) = do
           update = update result ++ update nextResult,
           dealloc = dealloc result ++ dealloc nextResult,
           delete = delete result ++ delete nextResult,
-          siblings = siblings nextResult
+          siblings = siblings result ++ siblings nextResult
         }
     )
 render renderContext [] = do

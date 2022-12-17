@@ -59,9 +59,7 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
                         )
                         options
                       ++ appendElement renderContext element
-                      ++ [ Br,
-                           Br
-                         ]
+                      ++ [Br]
                       ++ create nestedResult,
                   update =
                     concat
@@ -77,7 +75,7 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
                       ]
                       ++ update nestedResult,
                   dealloc = [] ++ dealloc nestedResult,
-                  delete = [] ++ delete nestedResult,
+                  delete = propertyToCode element ++ [Ln ".remove();", Br],
                   siblings = [SiblingAlways element]
                 }
             ),

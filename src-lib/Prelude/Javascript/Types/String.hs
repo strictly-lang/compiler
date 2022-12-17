@@ -31,11 +31,12 @@ getDom renderContext expressionResult = do
                     propertyToCode (text ++ [DotNotation "textContent"])
                       ++ [Ln " = "]
                       ++ getExpressionCode expressionResult
+                      ++ [Ln ";"]
                   )
               )
               (maybeToList (selfDependency expressionResult) ++ extraDependencies expressionResult),
           dealloc = [],
-          delete = [],
+          delete = propertyToCode text ++ [Ln ".remove();", Br],
           siblings = [SiblingAlways text]
         }
     )

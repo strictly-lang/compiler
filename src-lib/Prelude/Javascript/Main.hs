@@ -4,6 +4,7 @@ import Control.Monad.State.Lazy (runState)
 import Data.List (intercalate, isPrefixOf)
 import Parser.Types
 import Prelude.Javascript.Types
+import Prelude.Javascript.Types.Boolean (javaScriptTypeHandlerBooleanContainer)
 import Prelude.Javascript.Types.Condition (javaScriptTypeHandlerConditionContainer)
 import Prelude.Javascript.Types.Function (javaScriptTypeHandlerFunctionContainer)
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
@@ -157,7 +158,15 @@ renderPatterns propertiesTypeHandler ([ASTExpressionFunctionDeclaration [propert
           siblings = siblings nextResult
         }
     )
-renderPatterns propertiesTypeHandler [] = do return JavaScriptDomResult {create = [], update = [], dealloc = [], delete = []}
+renderPatterns propertiesTypeHandler [] = do
+  return
+    JavaScriptDomResult
+      { create = [],
+        update = [],
+        dealloc = [],
+        delete = [],
+        siblings = []
+      }
 renderPatterns propertiesTypeHandler (expression : restExpressions) = error ("For the renderfunction only functions are allowed, not " ++ show expression)
 
 algeraicDataTypes :: AST -> [Code]
@@ -186,5 +195,6 @@ types =
     javaScriptTypeHandlerHostContainer,
     javaScriptTypeHandlerFunctionContainer,
     javaScriptTypeHandlerVoidContainer,
-    javaScriptTypeHandlerConditionContainer
+    javaScriptTypeHandlerConditionContainer,
+    javaScriptTypeHandlerBooleanContainer
   ]
