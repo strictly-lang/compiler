@@ -78,48 +78,47 @@ javaScriptTypeHandlerConditionContainer typeHandlerContext typeDefinition ((Type
                         ++ propertyToCode conditionCache
                         ++ [Ln ");", Br],
                     update =
-                      ( map
-                          ( \dependency ->
-                              ( dependency,
-                                propertyToCode conditionCompareCache
-                                  ++ [Ln " = "]
-                                  ++ getExpressionCode conditionExpression
-                                  ++ [ Ln ";",
-                                       Br,
-                                       Ln "if ("
-                                     ]
-                                  ++ propertyToCode (conditionCompareCache)
-                                  ++ [Ln " != "]
-                                  ++ propertyToCode conditionCache
-                                  ++ [ Ln ") {",
-                                       Ind
-                                         ( propertyToCode conditionCache
-                                             ++ [Ln " = "]
-                                             ++ propertyToCode conditionCompareCache
-                                             ++ [ Ln ";",
-                                                  Br
-                                                ]
-                                             ++ propertyToCode deleteCallback
-                                             ++ [Ln "(!"]
-                                             ++ propertyToCode conditionCache
-                                             ++ [ Ln ");",
-                                                  Br
-                                                ]
-                                             ++ propertyToCode createCallback
-                                             ++ [Ln "("]
-                                             ++ propertyToCode conditionCache
-                                             ++ [ Ln ");"
-                                                ]
-                                         ),
-                                       Ln "}",
-                                       Br
-                                     ]
-                              )
-                          )
-                          (maybeToList (selfDependency conditionExpression) ++ extraDependencies conditionExpression)
-                      )
-                        ++ map ((\(property, code) -> (property, Ln "if (" : propertyToCode conditionCache ++ [Ln ") {", Ind code, Ln "}"]))) (update thenResult)
-                        ++ map ((\(property, code) -> (property, Ln "if (!" : propertyToCode conditionCache ++ [Ln ") {", Ind code, Ln "}"]))) (update elseResult),
+                      map
+                        ( \dependency ->
+                            ( dependency,
+                              propertyToCode conditionCompareCache
+                                ++ [Ln " = "]
+                                ++ getExpressionCode conditionExpression
+                                ++ [ Ln ";",
+                                     Br,
+                                     Ln "if ("
+                                   ]
+                                ++ propertyToCode (conditionCompareCache)
+                                ++ [Ln " != "]
+                                ++ propertyToCode conditionCache
+                                ++ [ Ln ") {",
+                                     Ind
+                                       ( propertyToCode conditionCache
+                                           ++ [Ln " = "]
+                                           ++ propertyToCode conditionCompareCache
+                                           ++ [ Ln ";",
+                                                Br
+                                              ]
+                                           ++ propertyToCode deleteCallback
+                                           ++ [Ln "(!"]
+                                           ++ propertyToCode conditionCache
+                                           ++ [ Ln ");",
+                                                Br
+                                              ]
+                                           ++ propertyToCode createCallback
+                                           ++ [Ln "("]
+                                           ++ propertyToCode conditionCache
+                                           ++ [ Ln ");"
+                                              ]
+                                       ),
+                                     Ln "}",
+                                     Br
+                                   ]
+                            )
+                        )
+                        (maybeToList (selfDependency conditionExpression) ++ extraDependencies conditionExpression)
+                        ++ map (\(property, code) -> (property, Ln "if (" : propertyToCode conditionCache ++ [Ln ") {", Ind code, Ln "}"])) (update thenResult)
+                        ++ map (\(property, code) -> (property, Ln "if (!" : propertyToCode conditionCache ++ [Ln ") {", Ind code, Ln "}"])) (update elseResult),
                     dealloc = [],
                     delete =
                       propertyToCode deleteCallback
