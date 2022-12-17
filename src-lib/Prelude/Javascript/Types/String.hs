@@ -21,9 +21,7 @@ getDom renderContext expressionResult = do
               ++ [ Ln ");",
                    Br
                  ]
-              ++ appendElement renderContext text
-              ++ [ Br
-                 ],
+              ++ appendElement renderContext text,
           update =
             map
               ( \dependency ->

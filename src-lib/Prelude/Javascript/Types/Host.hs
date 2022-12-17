@@ -59,7 +59,6 @@ javaScriptTypeHandlerHostContainer typeHandlerContext _ (TypeValueByLiteral (AST
                         )
                         options
                       ++ appendElement renderContext element
-                      ++ [Br]
                       ++ create nestedResult,
                   update =
                     concat
