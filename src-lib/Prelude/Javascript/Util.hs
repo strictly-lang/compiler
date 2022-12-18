@@ -4,7 +4,7 @@ import Control.Monad.State.Lazy (MonadState (state))
 import Data.Char (toUpper)
 import Data.Foldable (find)
 import Data.Type.Equality (apply)
-import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionFunctionCall, ASTExpressionFunctionDeclaration, ASTExpressionVariable), ASTLeftHandSide (ASTLeftHandSideRecord), ASTStatement (ASTExpression, ASTStream), ASTTypeDeclaration)
+import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionFunctionCall, ASTExpressionFunctionDeclaration, ASTExpressionOperator, ASTExpressionVariable), ASTLeftHandSide (ASTLeftHandSideRecord), ASTStatement (ASTExpression, ASTStream), ASTTypeDeclaration)
 import Prelude.Javascript.Types
 import TypeChecker.Main (findTypehandler)
 import TypeChecker.Types (TypeHandler, TypeHandlerContext (..), TypeValue (TypeValueByLiteral))
@@ -81,21 +81,30 @@ render renderContext ((ASTStream leftHandSide expression) : restSatements) = do
 
 nestedExpression :: JavaScriptRenderContext -> Maybe ASTTypeDeclaration -> [ASTExpression] -> AppStateMonad JavaScriptTypeHandler
 nestedExpression renderContext typeDeclaration [firstExpressionPart : restExpressionPart] = do
-  let firstTypeHandler = case firstExpressionPart of
-        (ASTExpressionVariable variableName) ->
-          case find (\(variableName', _, _) -> variableName' == variableName) (runStack renderContext) of
-            (Just (_, scope, typeHandler)) -> typeHandler
-            result -> error ("finding variable failed failed for " ++ variableName)
-        firstExpressionPart ->
-          let Just typeHandler =
-                findTypehandler
-                  ( TypeHandlerContext
-                      { TypeChecker.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext
-                      }
-                  )
-                  typeDeclaration
-                  [TypeValueByLiteral firstExpressionPart]
-           in typeHandler
+  firstTypeHandler <- case firstExpressionPart of
+    (ASTExpressionVariable variableName) -> do
+      case find (\(variableName', _, _) -> variableName' == variableName) (runStack renderContext) of
+        (Just (_, scope, typeHandler)) -> return typeHandler
+        result -> error ("finding variable failed failed for " ++ variableName)
+    (ASTExpressionOperator operator aExpression bExpression) -> do
+      aTypeHandler <- nestedExpression renderContext Nothing [aExpression]
+      operatorResult <- destructure aTypeHandler renderContext (ASTLeftHandSideRecord [(operator, Nothing)])
+      case operatorResult of
+        [((_, _, operatorTypeHandler), [])] ->
+          call operatorTypeHandler renderContext [bExpression]
+        _ -> error "destructuring of operator failed"
+    firstExpressionPart ->
+      case findTypehandler
+        ( TypeHandlerContext
+            { TypeChecker.Types.runTypes = Prelude.Javascript.Types.runTypes renderContext
+            }
+        )
+        typeDeclaration
+        [TypeValueByLiteral firstExpressionPart] of
+        Just typeHandler -> do
+          return typeHandler
+        Nothing ->
+          error ("could not find typehandler " ++ show firstExpressionPart)
 
   nestedExpression' renderContext firstTypeHandler restExpressionPart
 nestedExpression renderContext typeDeclaration _ =

@@ -30,6 +30,7 @@ library
                        Prelude.Javascript.Types.Function,
                        Prelude.Javascript.Types.Host,
                        Prelude.Javascript.Types.List,
+                       Prelude.Javascript.Types.Number,
                        Prelude.Javascript.Types.Record,
                        Prelude.Javascript.Types.String,
                        Prelude.Javascript.Types.Void,

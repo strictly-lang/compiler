@@ -9,6 +9,7 @@ import Prelude.Javascript.Types.Condition (javaScriptTypeHandlerConditionContain
 import Prelude.Javascript.Types.Function (javaScriptTypeHandlerFunctionContainer)
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
 import Prelude.Javascript.Types.List (javaScriptTypeHandlerListContainer)
+import Prelude.Javascript.Types.Number (javaScriptTypeHandlerNumberContainer)
 import Prelude.Javascript.Types.Record (javaScriptTypeHandlerRecordContainer)
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
 import Prelude.Javascript.Types.Void (javaScriptTypeHandlerVoidContainer)
@@ -196,6 +197,7 @@ types =
     javaScriptTypeHandlerFunctionContainer,
     javaScriptTypeHandlerHostContainer,
     javaScriptTypeHandlerListContainer,
+    javaScriptTypeHandlerNumberContainer,
     javaScriptTypeHandlerRecordContainer,
     javaScriptTypeHandlerStringContainer,
     javaScriptTypeHandlerVoidContainer

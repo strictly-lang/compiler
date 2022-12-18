@@ -54,7 +54,7 @@ javaScriptTypeHandlerRecordContainer typeHandlerContext (Just (ASTTypeDeclaratio
                                       ]
                               return [((leftHandSideRecordName, nestedSelfDependency, typeHandler), [])]
                             Nothing ->
-                              error ("could not find property" ++ leftHandSideRecordName)
+                              error ("could not find property " ++ leftHandSideRecordName)
                       )
                       leftHandSideRecords
 
