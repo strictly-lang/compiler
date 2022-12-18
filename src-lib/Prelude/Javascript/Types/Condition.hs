@@ -124,7 +124,8 @@ javaScriptTypeHandlerConditionContainer typeHandlerContext typeDefinition ((Type
                       propertyToCode deleteCallback
                         ++ [Ln "("]
                         ++ propertyToCode conditionCache
-                        ++ [ Ln ")"
+                        ++ [ Ln ");",
+                             Br
                            ],
                     siblings = [SiblingCondition (propertyToCode conditionCache) (siblings thenResult) (siblings elseResult)]
                   },

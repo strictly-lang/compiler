@@ -4,7 +4,7 @@ import Control.Monad.State.Lazy (MonadState (state))
 import Data.Char (toUpper)
 import Data.Foldable (find)
 import Data.Type.Equality (apply)
-import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionFunctionCall, ASTExpressionVariable), ASTLeftHandSide (ASTLeftHandSideRecord), ASTStatement (ASTExpression), ASTTypeDeclaration)
+import Parser.Types (ASTExpression, ASTExpression' (ASTExpressionFunctionCall, ASTExpressionFunctionDeclaration, ASTExpressionVariable), ASTLeftHandSide (ASTLeftHandSideRecord), ASTStatement (ASTExpression, ASTStream), ASTTypeDeclaration)
 import Prelude.Javascript.Types
 import TypeChecker.Main (findTypehandler)
 import TypeChecker.Types (TypeHandler, TypeHandlerContext (..), TypeValue (TypeValueByLiteral))
@@ -57,7 +57,9 @@ render renderContext ((ASTExpression expression) : restSatements) = do
 
   return
     ( JavaScriptDomResult
-        { create = create result ++ create nextResult,
+        { create =
+            let nextCreateResult = create nextResult
+             in create result ++ if (null nextCreateResult) then [] else [Br] ++ nextCreateResult,
           update = update result ++ update nextResult,
           dealloc = dealloc result ++ dealloc nextResult,
           delete = delete result ++ delete nextResult,
@@ -74,6 +76,8 @@ render renderContext [] = do
           siblings = []
         }
     )
+render renderContext ((ASTStream leftHandSide expression) : restSatements) = do
+  render renderContext [ASTExpression (expression ++ [ASTExpressionVariable "map", ASTExpressionFunctionCall [[(ASTExpressionFunctionDeclaration [leftHandSide] restSatements)]]])]
 
 nestedExpression :: JavaScriptRenderContext -> Maybe ASTTypeDeclaration -> [ASTExpression] -> AppStateMonad JavaScriptTypeHandler
 nestedExpression renderContext typeDeclaration [firstExpressionPart : restExpressionPart] = do

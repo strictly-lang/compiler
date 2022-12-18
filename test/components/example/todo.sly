@@ -20,7 +20,7 @@ store = {
 				else
 					isDone
 			| todo }
-		| let [ todo@{ isDone }, index' ] <- zip(todos, 0..);];
+		| let [ todo@{ isDone }, index' ] <- todos.zip(0..);];
 
 		{ todos = todos' | state }
 }

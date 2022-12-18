@@ -11,6 +11,6 @@ main = \_, _ ->
 	$button{
 		onclick = \_ -> mainDispatch(2)
 	}
-	let [value, index] <- zip(mainState, 0..);
+	let [value, index] <- mainState.zip(0..);
 	$div
 		"${index}: ${value}"

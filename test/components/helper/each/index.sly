@@ -7,7 +7,7 @@ main = \props, _ ->
 			$span
 				"Empty list ${props.bar}"
 		else
-			let [value, index] <- zip(props.foo, 0..;
+			let [value, index] <- props.foo.zip(0..);
 			$div
 				"${index}-${value}-${props.bar}"
 	else

@@ -8,6 +8,7 @@ import Prelude.Javascript.Types.Boolean (javaScriptTypeHandlerBooleanContainer)
 import Prelude.Javascript.Types.Condition (javaScriptTypeHandlerConditionContainer)
 import Prelude.Javascript.Types.Function (javaScriptTypeHandlerFunctionContainer)
 import Prelude.Javascript.Types.Host (javaScriptTypeHandlerHostContainer)
+import Prelude.Javascript.Types.List (javaScriptTypeHandlerListContainer)
 import Prelude.Javascript.Types.Record (javaScriptTypeHandlerRecordContainer)
 import Prelude.Javascript.Types.String (javaScriptTypeHandlerStringContainer)
 import Prelude.Javascript.Types.Void (javaScriptTypeHandlerVoidContainer)
@@ -190,11 +191,12 @@ macros = [webcomponent]
 
 types :: [TypeHandlerContainer]
 types =
-  [ javaScriptTypeHandlerStringContainer,
-    javaScriptTypeHandlerRecordContainer,
-    javaScriptTypeHandlerHostContainer,
-    javaScriptTypeHandlerFunctionContainer,
-    javaScriptTypeHandlerVoidContainer,
+  [ javaScriptTypeHandlerBooleanContainer,
     javaScriptTypeHandlerConditionContainer,
-    javaScriptTypeHandlerBooleanContainer
+    javaScriptTypeHandlerFunctionContainer,
+    javaScriptTypeHandlerHostContainer,
+    javaScriptTypeHandlerListContainer,
+    javaScriptTypeHandlerRecordContainer,
+    javaScriptTypeHandlerStringContainer,
+    javaScriptTypeHandlerVoidContainer
   ]

@@ -11,5 +11,6 @@ main = \_, _ ->
 	$input{
 		type = "text"
 		value = mainState
-		oninput = \String(value) -> mainDispatch(value)
+		oninput : \{ currentTarget : { value: String }} -> Void
+		oninput = \value -> mainDispatch(value.currentTarget.value)
 	}

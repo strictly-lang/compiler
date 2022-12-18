@@ -11,6 +11,6 @@ main = \props, _ ->
 		case \[firstValue, secondValue | restValues] ->
 			$span
 				"first: ${firstValue}, second: ${secondValue}"
-			let [value, index] <- zip(restValues, [0..]);
+			let [value, index] <- restValues.zip(0..);
 			$div
 				"${index}: ${value}"

@@ -88,7 +88,7 @@ typeListParser typeValue = do
   case hasList of
     Just _ -> do
       _ <- listOpenParser <* listCloseParser
-      typeListParser (ASTTypeDeclarationList typeValue)
+      typeListParser (ASTTypeDeclarationAlgebraicDataType "List" [typeValue])
     Nothing ->
       return typeValue
 

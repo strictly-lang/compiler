@@ -21,8 +21,7 @@ data ASTRootNodeGrouped
   | ASTRootNodeGroupedAssignment String (Maybe String) (Maybe ASTTypeDeclaration) [ASTExpression]
 
 data ASTTypeDeclaration
-  = ASTTypeDeclarationList ASTTypeDeclaration
-  | ASTTypeDeclarationAlgebraicDataType String [ASTTypeDeclaration]
+  = ASTTypeDeclarationAlgebraicDataType String [ASTTypeDeclaration]
   | ASTTypeDeclarationFunction [ASTTypeDeclaration] ASTTypeDeclaration
   | ASTTypeDeclarationRecord [(String, ASTTypeDeclaration)]
   deriving (Show)
