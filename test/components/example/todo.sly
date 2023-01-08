@@ -35,8 +35,8 @@ main = \_, _ ->
 		$input{
 			type = "text"
 			value = state.textValue
-			oninput = \String(textValue) ->
-				reducer(state, ChangeText(textValue))
+			oninput = \evt ->
+				state = reducer(state, ChangeText(evt.currentTarget.value));
 		}
 		$button{
 			type = "submit"
