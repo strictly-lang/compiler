@@ -4,7 +4,7 @@ data Action = RemoveSelection, AddSelection;
 main : \{ page: Number }, {} -> Output
 main = \props, _ ->
 	let entity <- [props.page * 10 .. (props.page * 10 + 10)];
-	let selectionState = false
+	let selectionState = false;
 
 	$div{
 		class?selected = selectionState

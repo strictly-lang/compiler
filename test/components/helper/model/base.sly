@@ -13,5 +13,5 @@ main = \_, _ ->
 		type = "text"
 		value = mainState
 		oninput : \{ currentTarget : { value: String }} -> Void
-		oninput = \value -> mainState = value;
+		oninput = \evt -> mainState = evt.currentTarget.value;
 	}

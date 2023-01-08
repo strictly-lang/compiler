@@ -1,6 +1,6 @@
 main = \props, _ ->
 	if props.load then
-		let stateState = fetch("/api/${id}");
+		let stateState = fetch<String>!("/api/${id}");
 
 		match stateState
 			case \Pending ->
