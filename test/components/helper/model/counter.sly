@@ -1,22 +1,21 @@
 data Action = Increment, Decrement;
 
-store = {
-	init = 0
-	reducer : \Integer, Action -> Integer
-	reducer = \state, Increment -> state + 1
-	reducer = \state, Decrement -> state - 1
-}
+reducer : \Number, Action -> Number
+reducer = \state, Increment -> state + 1
+reducer = \state, Decrement -> state - 1
 
 #[webcomponent]
 main : \ {}, {} -> Output
 main = \_, _ ->
-	let [counterState, counterDispatch] <- model(store);
+	let counterState = 0;
 	$button{
-		onclick = \_ -> counterDispatch(Decrement)
+		onclick = \_ ->
+			counterState = reducer(counterState, Decrement);
 	}
 		"Decrement"
 	$button{
-		onclick = \_ -> counterDispatch(Increment)
+		onclick = \_ ->
+			counterState = reducer(counterState, Increment);
 	}
 		"Increment"
 	"${counterState}"

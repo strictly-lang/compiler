@@ -7,7 +7,7 @@ main = \props, _ ->
 			$span
 				"Empty list ${props.bar}"
 		else
-			let value <- props.foo;
+			let value = props.foo;
 			$div
 				"${value}-${props.bar}"
 	else

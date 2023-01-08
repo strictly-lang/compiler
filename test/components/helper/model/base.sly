@@ -7,10 +7,11 @@ store = {
 #[webcomponent]
 main : \ {}, {} -> Output
 main = \_, _ ->
-	let [mainState, mainDispatch] <- model(store);
+	let mainState = "";
+
 	$input{
 		type = "text"
 		value = mainState
 		oninput : \{ currentTarget : { value: String }} -> Void
-		oninput = \value -> mainDispatch(value.currentTarget.value)
+		oninput = \value -> mainState = value;
 	}

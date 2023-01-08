@@ -1,23 +1,22 @@
-data States = First, Second(States, Integer);
+data State = First(Number), Second(Number);
 
-store = {
-	init = First( 1 )
-	reducer = \ First( value ), action -> Second( value + action )
-	reducer = \ Second( value ), action -> Second( value + action + action)
-}
+reducer : \ State, Number -> State
+reducer = \ First( value ), action -> Second( value + action )
+reducer = \ Second( value ), action -> Second( value + action + action)
 
 main = \props, _ ->
 	$div
-		let [stateState, stateDispatch] <- model(store);
+		let state = First( 1 );
+
 		match stateState
 			case \First( value ) ->
 				$button{
-					onclick = \_ -> stateDispatch(1)
+					onclick = \_ -> state = reducer(1);
 				}
 					"first: ${value} ${props.foo}"
 			case \Second( value ) ->
 				$button{
-					onclick = \_ -> stateDispatch(3)
+					onclick = \_ -> state = reducer(3);
 				}
 					"second: ${value} ${props.foo}"
 		$span

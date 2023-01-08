@@ -1,15 +1,13 @@
-store = {
-	init = [0, 1, 3]
-	reducer  : \Integer[], Integer -> Integer[] 
-	reducer = \state, multiply -> [ value, value * 2 | let value <- state;, value != 0]
-}
+reducer  : \Number[], Number -> Number[] 
+reducer = \state, multiply -> [ value, value * 2 | let value <- state;, value != 0]
 
 #[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
-	let [mainState, mainDispatch] <- model(store);
+	let state = [0, 1, 3];
+
 	$button{
-		onclick = \_ -> mainDispatch(2)
+		onclick = \_ -> state = reducer(state, 2);
 	}
 	let [value, index] <- mainState.zip(0..);
 	$div

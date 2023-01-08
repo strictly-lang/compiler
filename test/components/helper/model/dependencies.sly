@@ -1,20 +1,14 @@
 data Action = RemoveSelection, AddSelection;
 
-store = \_ -> {
-	init = false
-	reducer : \Boolean, Action -> Boolean
-	reducer = \_, RemoveSelection -> False
-	reducer = \_, AddSelection    -> True
-}
-
 #[webcomponent]
-main : \{ page: Integer }, {} -> Output
+main : \{ page: Number }, {} -> Output
 main = \props, _ ->
 	let entity <- [props.page * 10 .. (props.page * 10 + 10)];
-	let [selectionState, selectionDispatch] <- model(store(props.page));
+	let selectionState = false
 
 	$div{
 		class?selected = selectionState
-		onclick = \_ -> selectionDispatch(if selectionState then RemoveSelection else AddSelection)
+		onclick = \_ ->
+			selectionState = if selectionState then False else True;
 	}
 		"${entity}"

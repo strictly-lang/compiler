@@ -1,16 +1,7 @@
-store = \id ->
-	let result <- fetchText("/api/${id}");
-	{
-		init = match result
-			case \Pending -> Pending
-			case \Done(Ok(response)) -> Result(response)
-			case \Done(error@Error(_)) -> error
-		reducer = \state, action -> state
-	}
-
 main = \props, _ ->
 	if props.load then
-		let [stateState, _] <- model(store(props.id));
+		let stateState = fetch("/api/${id}");
+
 		match stateState
 			case \Pending ->
 				"Loading..."

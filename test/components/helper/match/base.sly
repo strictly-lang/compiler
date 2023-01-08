@@ -1,26 +1,24 @@
-data State = First, Second(Integer), Third(Integer);
+data State = First, Second(Number), Third(Number);
 
-store = {
-	init = First
-	reducer : \States, Integer -> State
-	reducer = \First, action -> Second[ action ]
-	reducer = \Second[ value ], action -> Third[ value + action ]
-}
+reducer : \States, Number -> State
+reducer = \First, action -> Second[ action ]
+reducer = \Second[ value ], action -> Third[ value + action ]
 
 #[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
 	$div
-		let [stateState, stateDispatch] <- model(store);
+		let state = First;
+
 		match stateState
 			case \First ->
 				$button{
-					onclick = \_ -> stateDispatch(1)
+					onclick = \_ -> state = reducer(state, 1);
 				}
 					"first"
 			case \Second[ value ] ->
 				$button{
-					onclick = \_ -> stateDispatch(2)
+					onclick = \_ -> state = reducer(state, 2);
 				}
 					"second: ${value}"
 			case \Third[ value ] ->

@@ -1,17 +1,14 @@
-type State = { x: Ingeger, deep: { y: Integer }};
+type State = { x: Ingeger, deep: { y: Number }};
 
-store = {
-	init = { x = 1, deep = { y = 0 } }
-	reducer : \State, Integer -> State
-	reducer = \state, x -> { x = state.x + x | state}
-}
+reducer : \State, Number -> State
+reducer = \state, x -> { x = state.x + x | state}
 
 #[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
-	let [{x, deep = { y = yValue }}, mainDispatch] <- model(store);
+	let state@{x, deep = { y = yValue }} = { x = 1, deep = { y = 0 } };
 	$button{
-		onclick = \_ -> mainDispatch(2)
+		onclick = \_ -> state = reducer(state, 2);
 	}
 	$div
 		"${x} ${yValue}"

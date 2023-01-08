@@ -1,21 +1,15 @@
 data State = First, Second;
 
-store = {
-	init = First
-	reducer : \State, State -> State 
-	reducer = \_, action -> action
-}
-
 #[webcomponent]
 main : \{ foo: Boolean, }, {} -> Output
 main = \props, _ ->
 	$header
-	let [stateState, stateDispatch] <- model(store);
+	let state = First;
 		if props.foo then
 			match stateState
 				case \First ->
 					$div{
-						onclick = \_ -> stateDispatch(Second)
+						onclick = \_ -> state = Second;
 					}
 		else
 			$section

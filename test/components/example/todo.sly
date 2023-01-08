@@ -1,60 +1,55 @@
-data Action = ChangeText(String), CreateTodo, ToggleDone(Integer);
+data Action = ChangeText(String), CreateTodo, ToggleDone(Number);
 
 type Todo = { value: String, isDone: Boolean};
 type State = { currentText: String, todos: Todo[] };
 
-store = {
-	init : State
-	init = { currentText = "", todos = [] }
+reducer : \State, Action -> State
+reducer = \state, ChangeText(text) ->
+	{ currentText = text | state }
+reducer = \{ todos, currentText }, CreateTodo ->
+	{ currentText = "", todos = [{ value = currentText, isDone = False }] ++ todos }
+reducer = \state@{ todos }, ToggleDone(index) ->
+	let todos' = [
+		{
+			isDone = if index == index' then
+				todo.isDone == False
+			else
+				isDone
+		| todo }
+	| let [ todo@{ isDone }, index' ] <- todos.zip(0..);];
 
-	reducer : \State, Action -> State
-	reducer = \state, ChangeText(text) ->
-		{ currentText = text | state }
-	reducer = \{ todos, currentText }, CreateTodo ->
-		{ currentText = "", todos = [{ value = currentText, isDone = False }] ++ todos }
-	reducer = \state@{ todos }, ToggleDone(index) ->
-		let todos' = [
-			{
-				isDone = if index == index' then
-					todo.isDone == False
-				else
-					isDone
-			| todo }
-		| let [ todo@{ isDone }, index' ] <- todos.zip(0..);];
-
-		{ todos = todos' | state }
-}
+	{ todos = todos' | state }
 
 #[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
-	let [{todos, textValue}, todosDispatch] <- model(store);
+	let state = { currentText = "", todos = [] };
 
 	$link{
 		href="./todo.css"
 		rel="stylesheet"
 	}
 	$form{
-		onsubmit = \_ -> todosDispatch(CreateTodo)
+		onsubmit = \_ -> state = reducer(state, CreateTodo);
 	}
 		$input{
 			type = "text"
-			value = textValue
+			value = state.textValue
 			oninput = \String(textValue) ->
-				todosDispatch(ChangeText(textValue))
+				reducer(state, ChangeText(textValue))
 		}
 		$button{
 			type = "submit"
 		}
 
 	$ul
-		if todos.length == 0 then
+		if state.todos.length == 0 then
 			"You don't have any todos left"
 		else
-			let [{value, isDone}, index] <- zip(todos, 0..);
+			let [{value, isDone}, index] <- state.todos.zip(0..);
 			$li{
 				class = "row"
 				class?done = isDone
-				onclick = \_ -> todosDispatch(ToggleDone(index))
+				onclick = \_ -> state = reducer(state, ToggleDone(index));
 			}
 				"${value}"

@@ -1,4 +1,4 @@
-data State = Odd(Integer), Even(Integer), Never(Integer);
+data State = Odd(Number), Even(Number), Never(Number);
 
 #[webcomponent]
 main : \{}, {} -> Output
