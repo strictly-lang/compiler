@@ -20,7 +20,6 @@ reducer = \state@{ todos }, ToggleDone(index) ->
 
 	{ todos = todos' | state }
 
-#[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
 	let state = { currentText = "", todos = [] };

@@ -1,4 +1,3 @@
-#[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
 	$div

@@ -3,7 +3,6 @@ type State = { x: Ingeger, deep: { y: Number }};
 reducer : \State, Number -> State
 reducer = \state, x -> { x = state.x + x | state}
 
-#[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
 	let state@{x, deep = { y = yValue }} = { x = 1, deep = { y = 0 } };

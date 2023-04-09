@@ -4,7 +4,6 @@ reducer : \States, Number -> State
 reducer = \First, action -> Second[ action ]
 reducer = \Second[ value ], action -> Third[ value + action ]
 
-#[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
 	$div

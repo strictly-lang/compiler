@@ -1,6 +1,5 @@
 data State = First, Second;
 
-#[webcomponent]
 main : \{ foo: Boolean, }, {} -> Output
 main = \props, _ ->
 	$header

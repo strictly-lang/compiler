@@ -4,7 +4,6 @@ reducer : \Number, Action -> Number
 reducer = \state, Increment -> state + 1
 reducer = \state, Decrement -> state - 1
 
-#[webcomponent]
 main : \ {}, {} -> Output
 main = \_, _ ->
 	let counterState = 0;

@@ -1,4 +1,3 @@
-#[webcomponent]
 main : \{ foo: String }, {} -> Output
 main = \props, _ ->
 	$div

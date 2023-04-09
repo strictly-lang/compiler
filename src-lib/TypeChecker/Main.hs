@@ -1,15 +1,24 @@
 module TypeChecker.Main where
 
 import Data.Data (dataTypeName)
-import Parser.Types (ASTExpression', ASTTypeDeclaration)
+import Parser.Types (AST, ASTExpression, ASTExpression', ASTLeftHandSide (ASTLeftHandSideVariable), ASTStatement (ASTStatementVariableExpressionAssignment, ASTStatementVariableTypeAssignment), ASTTypeDeclaration (ASTTypeDeclarationAlgebraicDataType, ASTTypeDeclarationFunction, ASTTypeDeclarationRecord))
 import TypeChecker.Types
 
-findTypehandler :: TypeHandler a => TypeHandlerContext a b -> Maybe ASTTypeDeclaration -> [TypeValue b] -> Maybe a
-findTypehandler typeHandlerContext = findTypehandler' typeHandlerContext (runTypes typeHandlerContext)
+typecheck :: TypeHandler a => [ASTExpression' -> Maybe a] -> [ASTStatement] -> Either String [TypedStatement]
+typecheck typeHandlerContainers [] =
+  do return []
+typecheck typeHandlerContainers (currentStatement@(ASTStatementVariableTypeAssignment variableName typeDeclaration) : restStatements) = do
+  let (groupedAssignments, restStatements') = groupStatements currentStatement restStatements
+  return []
 
-findTypehandler' :: TypeHandler a => TypeHandlerContext a b -> [TypeHandlerContext a b -> Maybe ASTTypeDeclaration -> [TypeValue b] -> Maybe a] -> Maybe ASTTypeDeclaration -> [TypeValue b] -> Maybe a
-findTypehandler' typeHandlerContext [] typeDeclaration expression = Nothing
-findTypehandler' typeHandlerContext (typeHandlerContainer : restTypeHandlersContainer) typeDeclaration expression =
-  case typeHandlerContainer typeHandlerContext typeDeclaration expression of
-    Just typeHandler -> Just typeHandler
-    _ -> findTypehandler' typeHandlerContext restTypeHandlersContainer typeDeclaration expression
+groupStatements :: ASTStatement -> [ASTStatement] -> ((Maybe ASTTypeDeclaration, [ASTExpression]), [ASTStatement])
+groupStatements (ASTStatementVariableTypeAssignment variableName typeDeclaration) restStatements =
+  case restStatements of
+    [] -> ((Just typeDeclaration, []), restStatements)
+    (nestStatement@(ASTStatementVariableExpressionAssignment (ASTLeftHandSideVariable variableName') expression) : restStatements') ->
+      if variableName == variableName'
+        then
+          let ((_, restGroupedStatements), restStatements'') = groupStatements nestStatement restStatements'
+           in ((Just typeDeclaration, restGroupedStatements), restStatements'')
+        else ((Just typeDeclaration, []), restStatements)
+    _ -> ((Just typeDeclaration, []), restStatements)

@@ -20,34 +20,28 @@ extra-source-files:  CHANGELOG.md,README.md
 library
   exposed-modules:     Compiler
   other-modules:
-                       Prelude.Types,
-                       Prelude.Main,
-                       Prelude.Javascript.Main,
-                       Prelude.Javascript.Util,
-                       Prelude.Javascript.Types,
-                       Prelude.Javascript.Types.Boolean,
-                       Prelude.Javascript.Types.Condition,
-                       Prelude.Javascript.Types.Function,
-                       Prelude.Javascript.Types.Host,
-                       Prelude.Javascript.Types.List,
-                       Prelude.Javascript.Types.Number,
-                       Prelude.Javascript.Types.Record,
-                       Prelude.Javascript.Types.String,
-                       Prelude.Javascript.Types.Void,
-                       Parser.Types,
+                      Parser.Types,
                        Parser.Util,
                        Parser.Main,
                        Parser.Root,
                        Parser.LeftHandSide,
                        Parser.Statement
+                      --  Prelude.Main,
+                       Prelude.Javascript.Main,
+                      --  Prelude.Javascript.Util,
+                       Prelude.Javascript.Types,
+                      --  Prelude.Javascript.Types.Boolean,
+                      --  Prelude.Javascript.Types.Condition,
+                       Prelude.Javascript.Types.Function,
+                      --  Prelude.Javascript.Types.Host,
+                      --  Prelude.Javascript.Types.List,
+                      --  Prelude.Javascript.Types.Number,
+                       Prelude.Javascript.Types.Output,
+                       Prelude.Javascript.Types.Record,
+                       Prelude.Javascript.Types.String,
+                      --  Prelude.Javascript.Types.Void,
                        TypeChecker.Types,
                        TypeChecker.Main
-  --                      Emitter.Types
-  --                      Emitter.Util,
-  --                      Emitter.Kinds.Root,
-  --                      Emitter.Kinds.RootDeclaration,
-  --                      Emitter.Kinds.Expression
-  --                      Emitter.Kinds.RootAssignment
 
   -- other-extensions:
   build-depends:       base, megaparsec, mtl

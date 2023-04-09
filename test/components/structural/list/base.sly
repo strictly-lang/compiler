@@ -1,7 +1,6 @@
 reducer  : \Number[], Number -> Number[] 
 reducer = \state, multiply -> [ value, value * 2 | let value <- state;, value != 0]
 
-#[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
 	let state = [0, 1, 3];

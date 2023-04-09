@@ -1,6 +1,5 @@
 data Action = RemoveSelection, AddSelection;
 
-#[webcomponent]
 main : \{ page: Number }, {} -> Output
 main = \props, _ ->
 	let entity <- [props.page * 10 .. (props.page * 10 + 10)];

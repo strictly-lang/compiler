@@ -1,4 +1,3 @@
-#[webcomponent]
 main : \{ foo: Boolean, bar: String }, {} -> Output
 main = \props, _ ->
 	$header

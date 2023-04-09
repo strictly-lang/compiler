@@ -26,7 +26,7 @@ letParser indentationLevel = do
 
   result <- case kind of
     Left _ ->
-      return (ASTStatementVariableAssignment leftHandSide expression)
+      return (ASTStatementVariableExpressionAssignment leftHandSide expression)
     Right _ ->
       return (ASTStream leftHandSide expression)
   _ <- statementTerminationParser

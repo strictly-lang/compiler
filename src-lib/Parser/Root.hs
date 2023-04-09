@@ -3,18 +3,18 @@ module Parser.Root (rootParser) where
 import Control.Applicative (Alternative (some), (<|>))
 import Parser.Statement
 import Parser.Types
-import Parser.Util (assignParser, blockParser, eol', functionCallCloseParser, functionCallOpenParser, functionMacroCloseParser, functionMacroOpenParser, lowercaseIdentifierParser, sc, statementTerminationParser, typeAssignParser, typeDefinitionParser, uppercaseIdentifierParser)
+import Parser.Util (assignParser, blockParser, eol', functionCallCloseParser, functionCallOpenParser, lowercaseIdentifierParser, sc, statementTerminationParser, typeAssignParser, typeDefinitionParser, uppercaseIdentifierParser)
 import Text.Megaparsec (MonadParsec (lookAhead), between, many, optional, sepBy)
 import Text.Megaparsec.Char (char, letterChar, space, space1, string)
 
-rootParser :: Parser ASTRootNodeUngrouped
-rootParser = dataParser <|> typeDeclarationParser <|> macroParser <|> assignmentParser
+rootParser :: Parser ASTStatement
+rootParser = dataParser <|> typeDeclarationParser <|> assignmentParser
 
-dataParser :: Parser ASTRootNodeUngrouped
+dataParser :: Parser ASTStatement
 dataParser = do
   name <- string "data " *> sc *> uppercaseIdentifierParser <* sc
   dataDeclarations <- blockParser assignParser statementTerminationParser algebraicDataTypeParser 0
-  return (ASTRootNodeUngroupedAlgebraicDataTypeDeclaration name dataDeclarations)
+  return (ASTStatementAlgebraicDataTypeDeclaration name dataDeclarations)
 
 algebraicDataTypeParser :: IndentationLevel -> Parser (String, [ASTTypeDeclaration])
 algebraicDataTypeParser indentationLevel = do
@@ -26,21 +26,17 @@ algebraicDataTypeParser indentationLevel = do
       Nothing -> do return []
   return (name, parameters)
 
-typeDeclarationParser :: Parser ASTRootNodeUngrouped
+typeDeclarationParser :: Parser ASTStatement
 typeDeclarationParser = do
   name <- string "type " *> sc *> uppercaseIdentifierParser <* sc <* assignParser
   typeDefinition <- typeDefinitionParser 0
   _ <- statementTerminationParser
-  return (ASTRootNodeUngroupedTypeAssignment name typeDefinition)
+  return (ASTStatementTypeDeclaration name typeDefinition)
 
-macroParser :: Parser ASTRootNodeUngrouped
-macroParser = do
-  ASTRootNodeUngroupedMacro <$> between functionMacroOpenParser functionMacroCloseParser (some letterChar)
-
-assignmentParser :: Parser ASTRootNodeUngrouped
+assignmentParser :: Parser ASTStatement
 assignmentParser = do
   name <- lowercaseIdentifierParser <* sc
   kind <- Left <$> typeAssignParser <|> Right <$> assignParser
   case kind of
-    Left _ -> ASTRootNodeUngroupedTypeAssignment name <$> typeDefinitionParser 0
-    Right _ -> ASTRootNodeUngroupedAssignment name <$> expressionParser 0
+    Left _ -> ASTStatementVariableTypeAssignment name <$> typeDefinitionParser 0
+    Right _ -> ASTStatementVariableExpressionAssignment (ASTLeftHandSideVariable name) <$> expressionParser 0

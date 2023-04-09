@@ -1,6 +1,5 @@
 data State = Odd(Number), Even(Number), Never(Number);
 
-#[webcomponent]
 main : \{}, {} -> Output
 main = \_, _ ->
 	$header

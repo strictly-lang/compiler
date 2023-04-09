@@ -4,7 +4,6 @@ store = {
 	reducer = \_, action -> action
 }
 
-#[webcomponent]
 main : \ {}, {} -> Output
 main = \_, _ ->
 	let mainState = "";

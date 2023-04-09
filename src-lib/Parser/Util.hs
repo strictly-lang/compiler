@@ -156,18 +156,6 @@ baseOfParser = do
 
   return ()
 
-functionMacroOpenParser :: Parser ()
-functionMacroOpenParser = do
-  _ <- string "#[" <* sc
-
-  return ()
-
-functionMacroCloseParser :: Parser ()
-functionMacroCloseParser = do
-  _ <- char ']' <* sc
-
-  return ()
-
 functionDefinitionParser :: Parser ()
 functionDefinitionParser = do
   _ <- char '\\' <* sc
