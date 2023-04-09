@@ -5,9 +5,10 @@ reducer = \state, x -> { x = state.x + x | state}
 
 main : \{}, {} -> Output
 main = \_, _ ->
-	let state@{x, deep = { y = yValue }} = { x = 1, deep = { y = 0 } };
+	let action: Action;
+	let state@{x, deep = { y = yValue }} =  action:scan(reducer, { x = 1, deep = { y = 0 } });
 	$button{
-		onclick = \_ -> state = reducer(state, 2);
+		onclick = \_ -> action = 2;
 	}
 	$div
 		"${x} ${yValue}"

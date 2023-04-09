@@ -6,7 +6,7 @@ reducer = \ Second( value ), action -> Second( value + action + action)
 
 main = \props, _ ->
 	$div
-		let state = First( 1 );
+		let state = action:scan(reducer, First( 1 );
 
 		match stateState
 			case \First( value ) ->

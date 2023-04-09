@@ -6,15 +6,17 @@ reducer = \state, Decrement -> state - 1
 
 main : \ {}, {} -> Output
 main = \_, _ ->
-	let counterState = 0;
+	let action: Action;
+	let state = action:scan(reducer,  0);
+
 	$button{
 		onclick = \_ ->
-			counterState = reducer(counterState, Decrement);
+			action = Decrement;
 	}
 		"Decrement"
 	$button{
 		onclick = \_ ->
-			counterState = reducer(counterState, Increment);
+			action = Increment;
 	}
 		"Increment"
 	"${counterState}"

@@ -3,10 +3,11 @@ reducer = \state, multiply -> [ value, value * 2 | let value <- state;, value !=
 
 main : \{}, {} -> Output
 main = \_, _ ->
-	let state = [0, 1, 3];
+	let action: Action;
+	let state = action:scan(reducer, [0, 1, 3]);
 
 	$button{
-		onclick = \_ -> state = reducer(state, 2);
+		onclick = \_ -> action = 2;
 	}
 	let [value, index] <- mainState.zip(0..);
 	$div

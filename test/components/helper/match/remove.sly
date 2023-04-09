@@ -3,7 +3,7 @@ data State = First, Second;
 main : \{ foo: Boolean, }, {} -> Output
 main = \props, _ ->
 	$header
-	let state = First;
+	let state = action:scan(reducer, First;
 		if props.foo then
 			match stateState
 				case \First ->

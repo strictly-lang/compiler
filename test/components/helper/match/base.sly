@@ -7,17 +7,18 @@ reducer = \Second[ value ], action -> Third[ value + action ]
 main : \{}, {} -> Output
 main = \_, _ ->
 	$div
-		let state = First;
+		let action: Action;
+		let state = action:scan(reducer, First);
 
 		match stateState
 			case \First ->
 				$button{
-					onclick = \_ -> state = reducer(state, 1);
+					onclick = \_ -> action = 1;
 				}
 					"first"
 			case \Second[ value ] ->
 				$button{
-					onclick = \_ -> state = reducer(state, 2);
+					onclick = \_ -> action = 2;
 				}
 					"second: ${value}"
 			case \Third[ value ] ->
