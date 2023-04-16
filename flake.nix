@@ -16,7 +16,6 @@
           devShell = pkgs.mkShell {
             buildInputs = [
                 pkgs.nodejs
-                pkgs.yarn
                 pkgs.ghc
                 pkgs.cabal-install
                 pkgs.haskell-language-server
