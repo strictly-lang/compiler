@@ -13,5 +13,5 @@ data TypedUsage
 
 newtype TypedLeftHandSide = TypedLeftHandSide ([ASTTypeDeclaration], ASTLeftHandSide)
 
-data TypedStatement = TypedVariableAssignments ASTTypeDeclaration [ASTExpression]
+data GroupedStatement = TypedVariableAssignment (Maybe ASTTypeDeclaration) [(ASTLeftHandSide, ASTExpression)]
   deriving (Show)
