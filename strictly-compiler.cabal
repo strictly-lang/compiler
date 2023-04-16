@@ -41,6 +41,7 @@ library
                        Prelude.Javascript.Types.String,
                        --  Prelude.Javascript.Types.Void,
                        TypeChecker.Types,
+                       TypeChecker.Util,
                        TypeChecker.Main
 
   -- other-extensions:
