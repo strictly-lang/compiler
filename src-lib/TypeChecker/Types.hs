@@ -5,6 +5,10 @@ import Parser.Types (ASTExpression, ASTExpression', ASTLeftHandSide, ASTTypeDecl
 class TypeHandler a where
   destructure :: a -> String
 
+type Stack a = [(String, a)]
+
+type TypeHandlerContainer a = ASTExpression' -> Maybe a
+
 data TypedUsage
   = TypedUsageNone
   | TypedUsageAlgebraicDataType String [TypedUsage]
