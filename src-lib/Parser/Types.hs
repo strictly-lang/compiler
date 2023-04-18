@@ -13,6 +13,7 @@ data ASTTypeDeclaration
   = ASTTypeDeclarationAlgebraicDataType String [ASTTypeDeclaration]
   | ASTTypeDeclarationFunction [ASTTypeDeclaration] ASTTypeDeclaration
   | ASTTypeDeclarationRecord [(String, ASTTypeDeclaration)]
+  | ASTTypeDeclarationGeneric String
   deriving (Show)
 
 data ASTStatement

@@ -5,12 +5,10 @@ import Parser.Types (ASTExpression, ASTExpression', ASTLeftHandSide, ASTTypeDecl
 class TypeHandler a where
   destructure :: a -> String -> a
   call :: a -> [a] -> a
-  toDom :: a -> String
-  toCode :: a -> String
 
 type Stack a = [(String, a)]
 
-type TypeHandlerContainer a = Maybe ASTTypeDeclaration -> [ASTExpression] -> Maybe a
+type TypeHandlerContainer a = ASTTypeDeclaration -> Maybe a
 
 newtype TypedLeftHandSide = TypedLeftHandSide ([ASTTypeDeclaration], ASTLeftHandSide)
 
@@ -20,6 +18,6 @@ data GroupedStatement
   deriving (Show)
 
 data TypedStatement a
-  = TypedStatementVariableAssignment a
+  = TypedStatementVariableAssignment [(ASTLeftHandSide, [(ASTExpression', a)])]
   | TypedExpression a
   deriving (Show)
