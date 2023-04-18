@@ -6,5 +6,10 @@ import TypeChecker.Types (TypeHandlerContainer)
 
 typeHandlerContainerFunction :: TypeHandlerContainer JavascriptTypeHandler
 typeHandlerContainerFunction (ASTTypeDeclarationFunction parameter returnType) =
-  Just (JavascriptTypeHandler {})
+  Just
+    ( JavascriptTypeHandler
+        { destructure = const Nothing,
+          call = \parameters -> Nothing
+        }
+    )
 typeHandlerContainerFunction typeDefinition = Nothing

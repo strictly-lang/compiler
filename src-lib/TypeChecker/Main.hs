@@ -69,5 +69,5 @@ getTypeDefinitionFromExpression stack (ASTExpressionFunctionDeclaration paramete
 getNestedTypeHandler :: TypeHandler a => Stack a -> a -> ASTExpression -> [(ASTExpression', a)]
 getNestedTypeHandler stack typeHandler [] = []
 getNestedTypeHandler stack typeHandler (currentExpression@(ASTExpressionVariable variableName) : restNestedExpressions) =
-  let nestedTypeHandler = destructure typeHandler variableName
+  let Just nestedTypeHandler = destructure typeHandler variableName
    in (currentExpression, nestedTypeHandler) : getNestedTypeHandler stack nestedTypeHandler restNestedExpressions

@@ -3,8 +3,8 @@ module TypeChecker.Types where
 import Parser.Types (ASTExpression, ASTExpression', ASTLeftHandSide, ASTTypeDeclaration, Operator)
 
 class TypeHandler a where
-  destructure :: a -> String -> a
-  call :: a -> [a] -> a
+  destructure :: a -> String -> Maybe a
+  call :: a -> [a] -> Maybe a
 
 type Stack a = [(String, a)]
 
