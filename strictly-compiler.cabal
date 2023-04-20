@@ -25,7 +25,9 @@ library
                        Parser.Main,
                        Parser.Root,
                        Parser.LeftHandSide,
-                       Parser.Statement
+                       Parser.Statement,
+                       TypeChecker.Types,
+                       TypeChecker.Main,
                        --  Prelude.Main,
                        Prelude.Javascript.Main,
                        --  Prelude.Javascript.Util,
@@ -38,10 +40,9 @@ library
                        --  Prelude.Javascript.Types.Number,
                        Prelude.Javascript.Types.Output,
                        Prelude.Javascript.Types.Record,
-                       Prelude.Javascript.Types.String,
+                       Prelude.Javascript.Types.String
                        --  Prelude.Javascript.Types.Void,
-                       TypeChecker.Types,
-                       TypeChecker.Main
+
 
   -- other-extensions:
   build-depends:       base, megaparsec, mtl

@@ -3,10 +3,14 @@ module TypeChecker.Types where
 import Parser.Types (ASTExpression, ASTExpression', ASTLeftHandSide, ASTTypeDeclaration, Operator)
 
 class TypeHandler a where
-  destructure :: a -> String -> Maybe a
-  call :: a -> [a] -> Maybe a
+  properties :: a -> [TypeHandlerContainer a] -> [(String, a)]
+  call :: a -> [TypeHandlerContainer a] -> Stack a -> [a] -> [ASTExpression'] -> Maybe a
 
-type Stack a = [(String, a)]
+type Stack a = [StackEntry a]
+
+type StackEntry a = (String, a)
+
+data TypeHandlerType = TypeHandlerContainerByReference String | TypeHandlerContainerByLiteral [ASTExpression']
 
 type TypeHandlerContainer a = ASTTypeDeclaration -> Maybe a
 

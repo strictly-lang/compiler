@@ -1,6 +1,7 @@
 module TypeChecker.Main where
 
 import Data.Data (dataTypeName)
+import Data.Foldable (find)
 import Data.Maybe (fromMaybe)
 import Parser.Types
 import TypeChecker.Types
@@ -40,34 +41,32 @@ groupStatements (currentStatement : restStatements) = error ("this is not implem
 
 groupedStatementToTypedStatement :: TypeHandler a => [TypeHandlerContainer a] -> Stack a -> GroupedStatement -> (TypedStatement a, Stack a)
 groupedStatementToTypedStatement typehandlerContainers stack (GroupedStatementVariableAssignment typeDefinition assignments) =
-  let headTypeHandler = findTypeHandler typehandlerContainers (fromMaybe (getTypeDefinitionFromExpression stack (head (snd (head assignments)))) typeDefinition)
+  let headTypeHandler = findTypeHandler typehandlerContainers (fromMaybe (getTypeDefinitionFromExpression stack (head (snd (head assignments)))) typeDefinition) [headExpression | (_, headExpression : restExpressions) <- assignments]
       typedAssignments =
-        [ (leftHandSide, (headExpression, headTypeHandler) : getNestedTypeHandler stack headTypeHandler restNestedExpressions)
+        [ (leftHandSide, (headExpression, headTypeHandler) : getNestedTypeHandler typehandlerContainers stack headTypeHandler restNestedExpressions)
           | (leftHandSide, headExpression : restNestedExpressions) <- assignments,
-            let headTypeHandler = findTypeHandler typehandlerContainers (getTypeDefinitionFromExpression stack headExpression)
+            let headTypeHandler = findTypeHandler typehandlerContainers (getTypeDefinitionFromExpression stack headExpression) [headExpression]
         ]
-      foo = last (snd (head typedAssignments))
    in ( TypedStatementVariableAssignment typedAssignments,
-        getStackEntries (snd (last (snd (head typedAssignments)))) (map fst assignments) ++ stack
+        getStackEntries (snd (last (snd (head typedAssignments)))) (head (map fst assignments)) ++ stack
       )
 
-findTypeHandler :: TypeHandler a => [TypeHandlerContainer a] -> ASTTypeDeclaration -> a
-findTypeHandler [] typedefinition = error ("could not find typehandler for " ++ show typedefinition)
-findTypeHandler (currentTypeHandlerContainer : restTypeHandlerContainers) typeDefinition =
+findTypeHandler :: TypeHandler a => [TypeHandlerContainer a] -> ASTTypeDeclaration -> [ASTExpression'] -> a
+findTypeHandler [] typedefinition expressions = error ("could not find typehandler for " ++ show typedefinition)
+findTypeHandler (currentTypeHandlerContainer : restTypeHandlerContainers) typeDefinition expressions =
   case currentTypeHandlerContainer typeDefinition of
     Just typeHandlerContainer -> typeHandlerContainer
-    Nothing -> findTypeHandler restTypeHandlerContainers typeDefinition
+    Nothing -> findTypeHandler restTypeHandlerContainers typeDefinition expressions
 
-getStackEntries :: TypeHandler a => a -> [ASTLeftHandSide] -> Stack a
-getStackEntries typeHandler [] = []
-getStackEntries typeHandler ((ASTLeftHandSideVariable name) : restLeftHandSides) = getStackEntries typeHandler restLeftHandSides ++ [(name, typeHandler)]
+getStackEntries :: TypeHandler a => a -> ASTLeftHandSide -> [StackEntry a]
+getStackEntries typeHandler ((ASTLeftHandSideVariable name)) = [(name, typeHandler)]
 
 getTypeDefinitionFromExpression :: TypeHandler a => Stack a -> ASTExpression' -> ASTTypeDeclaration
 getTypeDefinitionFromExpression stack (ASTExpressionVariable name) = error "no lookup implemented"
 getTypeDefinitionFromExpression stack (ASTExpressionFunctionDeclaration parameters body) = ASTTypeDeclarationFunction [ASTTypeDeclarationGeneric (show index) | (parameter, index) <- zip parameters [0 ..]] (ASTTypeDeclarationGeneric (show (length parameters)))
 
-getNestedTypeHandler :: TypeHandler a => Stack a -> a -> ASTExpression -> [(ASTExpression', a)]
-getNestedTypeHandler stack typeHandler [] = []
-getNestedTypeHandler stack typeHandler (currentExpression@(ASTExpressionVariable variableName) : restNestedExpressions) =
-  let Just nestedTypeHandler = destructure typeHandler variableName
-   in (currentExpression, nestedTypeHandler) : getNestedTypeHandler stack nestedTypeHandler restNestedExpressions
+getNestedTypeHandler :: TypeHandler a => [TypeHandlerContainer a] -> Stack a -> a -> ASTExpression -> [(ASTExpression', a)]
+getNestedTypeHandler typehandlerContainers stack typeHandler [] = []
+getNestedTypeHandler typehandlerContainers stack typeHandler (currentExpression@(ASTExpressionVariable variableName) : restNestedExpressions) =
+  let Just (_, nestedTypeHandler) = find (\(property, _) -> property == variableName) (properties typeHandler typehandlerContainers)
+   in (currentExpression, nestedTypeHandler) : getNestedTypeHandler typehandlerContainers stack nestedTypeHandler restNestedExpressions

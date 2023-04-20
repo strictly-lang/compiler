@@ -1,8 +1,8 @@
 module Prelude.Javascript.Main (preludedTypehandlerContainer) where
 
-import Prelude.Javascript.Types (JavascriptTypeHandler)
+import Prelude.Javascript.Types
 import Prelude.Javascript.Types.Function (typeHandlerContainerFunction)
-import TypeChecker.Types (TypeHandlerContainer)
+import TypeChecker.Types
 
 preludedTypehandlerContainer :: [TypeHandlerContainer JavascriptTypeHandler]
 preludedTypehandlerContainer = [typeHandlerContainerFunction]
