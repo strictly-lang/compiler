@@ -54,7 +54,7 @@ groupedStatementToTypedStatement typehandlerContainers stack (GroupedStatementVa
 findTypeHandler :: TypeHandler a => [TypeHandlerContainer a] -> ASTTypeDeclaration -> [ASTExpression'] -> a
 findTypeHandler [] typedefinition expressions = error ("could not find typehandler for " ++ show typedefinition)
 findTypeHandler (currentTypeHandlerContainer : restTypeHandlerContainers) typeDefinition expressions =
-  case currentTypeHandlerContainer typeDefinition of
+  case currentTypeHandlerContainer typeDefinition expressions of
     Just typeHandlerContainer -> typeHandlerContainer
     Nothing -> findTypeHandler restTypeHandlerContainers typeDefinition expressions
 

@@ -4,7 +4,7 @@ import Parser.Types (ASTExpression, ASTExpression', ASTLeftHandSide, ASTTypeDecl
 
 class TypeHandler a where
   properties :: a -> [TypeHandlerContainer a] -> [(String, a)]
-  call :: a -> [TypeHandlerContainer a] -> Stack a -> [a] -> [ASTExpression'] -> Maybe a
+  call :: a -> [TypeHandlerContainer a] -> Stack a -> [a] -> Maybe a
 
 type Stack a = [StackEntry a]
 
@@ -12,7 +12,7 @@ type StackEntry a = (String, a)
 
 data TypeHandlerType = TypeHandlerContainerByReference String | TypeHandlerContainerByLiteral [ASTExpression']
 
-type TypeHandlerContainer a = ASTTypeDeclaration -> Maybe a
+type TypeHandlerContainer a = ASTTypeDeclaration -> [ASTExpression'] -> Maybe a
 
 newtype TypedLeftHandSide = TypedLeftHandSide ([ASTTypeDeclaration], ASTLeftHandSide)
 

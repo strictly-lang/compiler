@@ -6,14 +6,14 @@ import TypeChecker.Main (getStackEntries, typecheck)
 import TypeChecker.Types
 
 typeHandlerContainerFunction :: TypeHandlerContainer JavascriptTypeHandler
-typeHandlerContainerFunction (ASTTypeDeclarationFunction parameter returnType) =
+typeHandlerContainerFunction (ASTTypeDeclarationFunction parameter returnType) functionExpressions =
   let self =
         ( JavascriptTypeHandler
             { Prelude.Javascript.Types.properties = const [],
-              Prelude.Javascript.Types.call = \typehandlerContainers stack parametersTypeHandlers (((ASTExpressionFunctionDeclaration parametersVariables body) : functionOverloads)) ->
+              Prelude.Javascript.Types.call = \typehandlerContainers stack parametersTypeHandlers ->
                 Just
-                  ( case returnType of
-                      (ASTTypeDeclarationGeneric _) ->
+                  ( case (returnType, functionExpressions) of
+                      (ASTTypeDeclarationGeneric _, (ASTExpressionFunctionDeclaration parametersVariables body) : functionOverloads) ->
                         let stack' = concat (reverse (zipWith getStackEntries parametersTypeHandlers parametersVariables)) ++ stack
                             (Right typedBody) = typecheck typehandlerContainers stack' body
                             (TypedExpression typeHandler) = last typedBody
@@ -26,4 +26,4 @@ typeHandlerContainerFunction (ASTTypeDeclarationFunction parameter returnType) =
             }
         )
    in Just self
-typeHandlerContainerFunction typeDefinition = Nothing
+typeHandlerContainerFunction typeDefinition expressions = Nothing
