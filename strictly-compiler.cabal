@@ -40,8 +40,11 @@ library
                        --  Prelude.Javascript.Types.Number,
                        Prelude.Javascript.Types.Output,
                        Prelude.Javascript.Types.Record,
-                       Prelude.Javascript.Types.String
+                       Prelude.Javascript.Types.String,
                        --  Prelude.Javascript.Types.Void,
+                       WebcomponentEmitter.Main,
+                       WebcomponentEmitter.Types
+                       WebcomponentEmitter.Util
 
 
   -- other-extensions:
