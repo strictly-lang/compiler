@@ -10,7 +10,7 @@ compile :: String -> String -> Either String (String, String)
 compile filePath fileContent = do
   ast <- parse fileContent
   typeCheckedResults <- typecheck preludedTypehandlerContainer [] ast
-  emitResult <- emit filePath typeCheckedResults
+  emitResult <- emit preludedTypehandlerContainer filePath typeCheckedResults
   return (filePath, emitResult)
 
 -- emit macros filePath ast

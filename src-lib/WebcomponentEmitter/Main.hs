@@ -1,26 +1,31 @@
 module WebcomponentEmitter.Main (emit) where
 
 import Control.Monad.State.Lazy (runState)
-import Parser.Types (ASTLeftHandSide (ASTLeftHandSideVariable))
+import Parser.Types (ASTLeftHandSide (ASTLeftHandSideVariable), ASTTypeDeclaration (ASTTypeDeclarationAlgebraicDataType, ASTTypeDeclarationFunction))
 import Prelude.Javascript.Types (JavascriptTypeHandler)
-import TypeChecker.Types (TypedStatement (TypedStatementVariableAssignment))
+import TypeChecker.Main (findTypeHandler)
+import TypeChecker.Types (TypeHandler (call, getTypeDeclaration), TypeHandlerContainer, TypedStatement (TypedStatementVariableAssignment))
 import WebcomponentEmitter.Types
-import WebcomponentEmitter.Util (codeToString, removeFileExtension, slashToCamelCase, slashToDash)
+import WebcomponentEmitter.Util (codeToString, propertyToCode, removeFileExtension, slashToCamelCase, slashToDash)
 
-emit :: String -> [TypedStatement JavascriptTypeHandler] -> Either String String
-emit filePath typedStatements =
-  let (result, appState) = runState (emitRoot filePath typedStatements) (AppState {runExpressionId = 0})
+emit :: [TypeHandlerContainer JavascriptTypeHandler] -> String -> [TypedStatement JavascriptTypeHandler] -> Either String String
+emit typeHandlerContainers filePath typedStatements =
+  let (result, appState) = runState (emitRoot typeHandlerContainers filePath typedStatements) (AppState {runExpressionId = 0})
    in Right (codeToString 0 True result)
 
-emitRoot :: String -> [TypedStatement JavascriptTypeHandler] -> AppStateMonad [Code]
-emitRoot filePath ((TypedStatementVariableAssignment assignments) : restStatements) = do
+emitRoot :: [TypeHandlerContainer JavascriptTypeHandler] -> String -> [TypedStatement JavascriptTypeHandler] -> AppStateMonad [Code]
+emitRoot typeHandlerContainers filePath ((TypedStatementVariableAssignment assignments) : restStatements) = do
   case assignments of
-    (ASTLeftHandSideVariable variableName, _) : _
+    [(ASTLeftHandSideVariable variableName, [(_, mainFunctionHandler)])]
       | variableName == "main" -> do
           let filePath' = removeFileExtension filePath
               mounted = [DotNotation "this", DotNotation "_mounted"]
-              attributeScope = [DotNotation "this", DotNotation "_attributes"]
+              attributesScope = [DotNotation "this", DotNotation "_attributes"]
               popertyScope = [DotNotation "this", DotNotation "_properties"]
+              (ASTTypeDeclarationFunction [propertiesType, attributesType] (ASTTypeDeclarationAlgebraicDataType "Output" [])) = getTypeDeclaration mainFunctionHandler
+              propertyHandler = findTypeHandler typeHandlerContainers propertiesType (Left (propertyToCode popertyScope))
+              attributeHandler = findTypeHandler typeHandlerContainers attributesType (Left (propertyToCode attributesScope))
+              mainFunction = call mainFunctionHandler typeHandlerContainers [] [propertyHandler, attributeHandler]
 
           return
             [ Ln ("class " ++ slashToCamelCase filePath' ++ " extends HTMLElement {"),

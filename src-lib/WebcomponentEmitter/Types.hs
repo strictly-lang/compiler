@@ -1,7 +1,7 @@
 module WebcomponentEmitter.Types where
 
 import Control.Monad.State.Lazy (State)
-import Prelude.Javascript.Types (JavascriptTypeHandler)
+import Parser.Types (ASTExpression', ASTTypeDeclaration)
 
 data Property = DotNotation String | BracketNotation String
   deriving (Eq, Show)

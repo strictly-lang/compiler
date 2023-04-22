@@ -5,6 +5,7 @@ import Data.Foldable (find)
 import Data.Maybe (fromMaybe)
 import Parser.Types
 import TypeChecker.Types
+import WebcomponentEmitter.Types (Code)
 
 typecheck :: TypeHandler a => [TypeHandlerContainer a] -> Stack a -> [ASTStatement] -> Either String [TypedStatement a]
 typecheck typeHandlerContainers stack ungroupedStatements =
@@ -41,22 +42,22 @@ groupStatements (currentStatement : restStatements) = error ("this is not implem
 
 groupedStatementToTypedStatement :: TypeHandler a => [TypeHandlerContainer a] -> Stack a -> GroupedStatement -> (TypedStatement a, Stack a)
 groupedStatementToTypedStatement typehandlerContainers stack (GroupedStatementVariableAssignment typeDefinition assignments) =
-  let headTypeHandler = findTypeHandler typehandlerContainers (fromMaybe (getTypeDefinitionFromExpression stack (head (snd (head assignments)))) typeDefinition) [headExpression | (_, headExpression : restExpressions) <- assignments]
+  let headTypeHandler = findTypeHandler typehandlerContainers (fromMaybe (getTypeDefinitionFromExpression stack (head (snd (head assignments)))) typeDefinition) (Right [headExpression | (_, headExpression : restExpressions) <- assignments])
       typedAssignments =
         [ (leftHandSide, (headExpression, headTypeHandler) : getNestedTypeHandler typehandlerContainers stack headTypeHandler restNestedExpressions)
           | (leftHandSide, headExpression : restNestedExpressions) <- assignments,
-            let headTypeHandler = findTypeHandler typehandlerContainers (getTypeDefinitionFromExpression stack headExpression) [headExpression]
+            let headTypeHandler = findTypeHandler typehandlerContainers (getTypeDefinitionFromExpression stack headExpression) (Right [headExpression])
         ]
    in ( TypedStatementVariableAssignment typedAssignments,
         getStackEntries (snd (last (snd (head typedAssignments)))) (head (map fst assignments)) ++ stack
       )
 
-findTypeHandler :: TypeHandler a => [TypeHandlerContainer a] -> ASTTypeDeclaration -> [ASTExpression'] -> a
+findTypeHandler :: TypeHandler a => [TypeHandlerContainer a] -> ASTTypeDeclaration -> Either [Code] [ASTExpression'] -> a
 findTypeHandler [] typedefinition expressions = error ("could not find typehandler for " ++ show typedefinition)
-findTypeHandler (currentTypeHandlerContainer : restTypeHandlerContainers) typeDefinition expressions =
-  case currentTypeHandlerContainer typeDefinition expressions of
+findTypeHandler (currentTypeHandlerContainer : restTypeHandlerContainers) typeDefinition reference =
+  case currentTypeHandlerContainer typeDefinition reference of
     Just typeHandlerContainer -> typeHandlerContainer
-    Nothing -> findTypeHandler restTypeHandlerContainers typeDefinition expressions
+    Nothing -> findTypeHandler restTypeHandlerContainers typeDefinition reference
 
 getStackEntries :: TypeHandler a => a -> ASTLeftHandSide -> [StackEntry a]
 getStackEntries typeHandler ((ASTLeftHandSideVariable name)) = [(name, typeHandler)]
