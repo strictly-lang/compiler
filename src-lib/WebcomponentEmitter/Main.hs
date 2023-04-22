@@ -18,6 +18,10 @@ emitRoot filePath ((TypedStatementVariableAssignment assignments) : restStatemen
     (ASTLeftHandSideVariable variableName, _) : _
       | variableName == "main" -> do
           let filePath' = removeFileExtension filePath
+              mounted = [DotNotation "this", DotNotation "_mounted"]
+              attributeScope = [DotNotation "this", DotNotation "_attributes"]
+              popertyScope = [DotNotation "this", DotNotation "_properties"]
+
           return
             [ Ln ("class " ++ slashToCamelCase filePath' ++ " extends HTMLElement {"),
               Ind
@@ -27,7 +31,9 @@ emitRoot filePath ((TypedStatementVariableAssignment assignments) : restStatemen
                       Br,
                       Ln "this._mounted = false;",
                       Br,
-                      Ln "this.properties = {};"
+                      Ln "this._properties = {};",
+                      Br,
+                      Ln "this._attributes = {};"
                     ],
                   Ln "}",
                   Br,
@@ -40,5 +46,8 @@ emitRoot filePath ((TypedStatementVariableAssignment assignments) : restStatemen
                     ],
                   Ln "}"
                 ],
-              Ln ("customElements.define(\"" ++ slashToDash filePath' ++ "\", " ++ slashToCamelCase filePath' ++ ");")
+              Ln "}",
+              Br,
+              Ln
+                ("customElements.define(\"" ++ slashToDash filePath' ++ "\", " ++ slashToCamelCase filePath' ++ ");")
             ]

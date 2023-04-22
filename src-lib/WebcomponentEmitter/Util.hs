@@ -1,5 +1,6 @@
 module WebcomponentEmitter.Util where
 
+import Control.Monad.State.Lazy (MonadState (state))
 import Data.Char (toUpper)
 import WebcomponentEmitter.Types
 
@@ -32,3 +33,18 @@ slashToCamelCase' :: String -> String
 slashToCamelCase' [] = []
 slashToCamelCase' ('/' : p : ps) = toUpper p : slashToCamelCase' ps
 slashToCamelCase' (p : ps) = p : slashToCamelCase' ps
+
+getGetFreshExprId :: AppStateMonad Int
+getGetFreshExprId =
+  state
+    ( \appState ->
+        (runExpressionId appState, AppState {runExpressionId = runExpressionId appState + 1})
+    )
+
+propertyToCode :: [Property] -> [Code]
+propertyToCode ((DotNotation firstNotation) : restNotations) = Ln firstNotation : propertyToCode' restNotations
+
+propertyToCode' :: [Property] -> [Code]
+propertyToCode' ((DotNotation currentNotation) : restNotations) = Ln ("." ++ currentNotation) : propertyToCode' restNotations
+propertyToCode' ((BracketNotation currentNotation) : restNotations) = Ln ("[" ++ currentNotation ++ "]") : propertyToCode' restNotations
+propertyToCode' [] = []
