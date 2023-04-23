@@ -6,7 +6,7 @@ import Parser.Types (ASTExpression', ASTTypeDeclaration)
 data Property = DotNotation String | BracketNotation String
   deriving (Eq, Show)
 
-data Code = Ln String | Ind [Code] | Br
+data Code = Ln String | Ind [Code] | Inl [Code] | Br
   deriving (Show)
 
 data Sibling = SiblingAlways [Property] | SiblingCondition [Code] [Sibling] [Sibling]

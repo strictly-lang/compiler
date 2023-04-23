@@ -36,9 +36,11 @@ emitRoot typeHandlerContainers filePath ((TypedStatementVariableAssignment assig
                       Br,
                       Ln "this._mounted = false;",
                       Br,
-                      Ln "this._properties = {};",
+                      Inl (propertyToCode popertyScope),
+                      Ln " = {};",
                       Br,
-                      Ln "this._attributes = {};"
+                      Inl (propertyToCode attributesScope),
+                      Ln " = {};"
                     ],
                   Ln "}",
                   Br,

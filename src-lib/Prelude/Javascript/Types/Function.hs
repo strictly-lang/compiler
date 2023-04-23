@@ -15,7 +15,14 @@ typeHandlerContainerFunction typeDeclaration@(ASTTypeDeclarationFunction paramet
                       let stack' = concat (reverse (zipWith getStackEntries parametersTypeHandlers parametersVariables)) ++ stack
                           (Right typedBody) = typecheck typehandlerContainers stack' body
                           (TypedExpression typeHandler) = last typedBody
-                       in typeHandler
+                       in ( typeHandler,
+                            \returnType -> do
+                              return
+                                FunctionBuildResult
+                                  { create = [],
+                                    reconcile = []
+                                  }
+                          )
                     _ ->
                       error "mop"
                 ),

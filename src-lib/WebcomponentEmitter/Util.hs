@@ -16,6 +16,8 @@ codeToString indentationLevel first (Ln code : restCode)
   | otherwise = code'
   where
     code' = code ++ codeToString indentationLevel False restCode
+codeToString indentationLevel first ((Inl lines) : restCode) =
+  codeToString indentationLevel first lines ++ codeToString indentationLevel False restCode
 codeToString indentationLevel first (Br : restCode) = '\n' : codeToString indentationLevel True restCode
 
 removeFileExtension :: String -> String
