@@ -2,11 +2,13 @@ module WebcomponentEmitter.Main (emit) where
 
 import Control.Monad.State.Lazy (runState)
 import Parser.Types (ASTLeftHandSide (ASTLeftHandSideVariable), ASTTypeDeclaration (ASTTypeDeclarationAlgebraicDataType, ASTTypeDeclarationFunction))
-import Prelude.Javascript.Types (JavascriptTypeHandler)
+import Prelude.Javascript.Types
 import TypeChecker.Main (findTypeHandler)
-import TypeChecker.Types (TypeHandler (call, getTypeDeclaration), TypeHandlerContainer, TypedStatement (TypedStatementVariableAssignment))
+import TypeChecker.Types (TypeHandlerContainer, TypedStatement (TypedStatementVariableAssignment))
 import WebcomponentEmitter.Types
 import WebcomponentEmitter.Util (codeToString, propertyToCode, removeFileExtension, slashToCamelCase, slashToDash)
+
+abortController = [DotNotation "abortController"]
 
 emit :: [TypeHandlerContainer JavascriptTypeHandler] -> String -> [TypedStatement JavascriptTypeHandler] -> Either String String
 emit typeHandlerContainers filePath typedStatements =
@@ -22,10 +24,16 @@ emitRoot typeHandlerContainers filePath ((TypedStatementVariableAssignment assig
               mounted = [DotNotation "this", DotNotation "_mounted"]
               attributesScope = [DotNotation "this", DotNotation "_attributes"]
               popertyScope = [DotNotation "this", DotNotation "_properties"]
+              mainScope = [DotNotation "this", DotNotation "_main"]
               (ASTTypeDeclarationFunction [propertiesType, attributesType] (ASTTypeDeclarationAlgebraicDataType "Output" [])) = getTypeDeclaration mainFunctionHandler
               propertyHandler = findTypeHandler typeHandlerContainers propertiesType (Left (propertyToCode popertyScope))
               attributeHandler = findTypeHandler typeHandlerContainers attributesType (Left (propertyToCode attributesScope))
-              mainFunction = call mainFunctionHandler typeHandlerContainers [] [propertyHandler, attributeHandler]
+              mainFunction =
+                call
+                  mainFunctionHandler
+                  typeHandlerContainers
+                  []
+                  [propertyHandler, attributeHandler]
 
           return
             [ Ln ("class " ++ slashToCamelCase filePath' ++ " extends HTMLElement {"),
@@ -40,7 +48,15 @@ emitRoot typeHandlerContainers filePath ((TypedStatementVariableAssignment assig
                       Ln " = {};",
                       Br,
                       Inl (propertyToCode attributesScope),
-                      Ln " = {};"
+                      Ln " = {};",
+                      Br,
+                      Inl (propertyToCode mainScope),
+                      Ln " = { ",
+                      Inl
+                        ( propertyToCode
+                            abortController
+                        ),
+                      Ln ": new AbortController() };"
                     ],
                   Ln "}",
                   Br,
