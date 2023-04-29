@@ -16,6 +16,7 @@
               overlays = [ (import rust-overlay) ];
             };
             rustWithWasmTarget = rustPkgs.rust-bin.nightly.latest.default.override {
+              extensions = [ "rust-src" ];
               targets = [ "wasm32-wasi" ];
             };
             naerskLib = pkgs.callPackage naersk {};
@@ -38,9 +39,8 @@
             buildInputs = [
                 pkgs.nodejs
                 pkgs.wasmtime
-                pkgs.cargo
-                pkgs.cargo-expand
-                pkgs.rustfmt
+                rustWithWasmTarget
+                pkgs.rust-analyzer
                 pkgs.wasm-tools
               ];
           };
