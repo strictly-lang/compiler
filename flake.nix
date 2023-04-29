@@ -15,8 +15,8 @@
               inherit system;
               overlays = [ (import rust-overlay) ];
             };
-            rustWithWasmTarget = rustPkgs.rust-bin.stable.latest.default.override {
-              targets = [ "wasm32-unknown-unknown" ];
+            rustWithWasmTarget = rustPkgs.rust-bin.nightly.latest.default.override {
+              targets = [ "wasm32-wasi" ];
             };
             naerskLib = pkgs.callPackage naersk {};
 
@@ -28,7 +28,7 @@
               src = ./.;
               cargoBuildOptions = x: x ++ [ "-p" "strictly" ];
               copyLibs = true;
-              CARGO_BUILD_TARGET = "wasm32-unknown-unknown";
+              CARGO_BUILD_TARGET = "wasm32-wasi";
             };
         in {
           packages.${packageName} = app;
@@ -37,9 +37,11 @@
           devShell = pkgs.mkShell {
             buildInputs = [
                 pkgs.nodejs
-                pkgs.wasmer
+                pkgs.wasmtime
                 pkgs.cargo
+                pkgs.cargo-expand
                 pkgs.rustfmt
+                pkgs.wasm-tools
               ];
           };
         }
