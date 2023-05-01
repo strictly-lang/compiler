@@ -20,7 +20,6 @@
               targets = [ "wasm32-wasi" ];
             };
             naerskLib = pkgs.callPackage naersk {};
-
             naerskLibWasm = pkgs.callPackage naersk {
               rustc = rustWithWasmTarget;
             };
