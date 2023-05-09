@@ -19,7 +19,7 @@ fn main() {
         CLI::Compile(compile_options) => {
             println!(
                 "{}",
-                lib::main(
+                lib::compile(
                     &compile_options.path,
                     std::fs::read_to_string(&compile_options.path).unwrap(),
                 )

@@ -1,4 +1,5 @@
 {
+  description = "Compiler for the strictly language";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
