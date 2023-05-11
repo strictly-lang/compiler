@@ -627,6 +627,8 @@ name = "strictly"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "strictly-db",
+ "strictly-ir",
  "wit-bindgen",
 ]
 

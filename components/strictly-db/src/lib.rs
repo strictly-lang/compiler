@@ -4,7 +4,7 @@ use salsa::DebugWithDb;
 
 #[derive(Default)]
 #[salsa::db(strictly_ir::Jar)]
-pub(crate) struct Database {
+pub struct Database {
     storage: salsa::Storage<Self>,
 
     // The logs are only used for testing and demonstrating reuse:
