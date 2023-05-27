@@ -9,4 +9,3 @@ edition = "2021"
 salsa = { path = "../salsa" }
 strictly-ir = { path = "../strictly-ir" }
 strictly-parse = { path = "../strictly-parse" }
-strictly-compile = { path = "../strictly-compile" }

@@ -26,3 +26,4 @@ clap = { version = "4.2.5", features = ["derive"] }
 wit-bindgen = "0.6.0"
 strictly-db = { path = "components/strictly-db" }
 strictly-ir = { path = "components/strictly-ir" }
+strictly-parse = { path = "components/strictly-parse" }

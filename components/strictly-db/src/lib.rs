@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use salsa::DebugWithDb;
 
 #[derive(Default)]
-#[salsa::db(strictly_ir::Jar)]
+#[salsa::db(strictly_ir::Jar, strictly_parse::Jar)]
 pub struct Database {
     storage: salsa::Storage<Self>,
 

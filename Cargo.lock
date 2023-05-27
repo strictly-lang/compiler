@@ -629,6 +629,7 @@ dependencies = [
  "clap",
  "strictly-db",
  "strictly-ir",
+ "strictly-parse",
  "wit-bindgen",
 ]
 
@@ -644,7 +645,6 @@ name = "strictly-db"
 version = "0.1.0"
 dependencies = [
  "salsa",
- "strictly-compile",
  "strictly-ir",
  "strictly-parse",
 ]
@@ -665,6 +665,10 @@ version = "0.1.0"
 [[package]]
 name = "strictly-parse"
 version = "0.1.0"
+dependencies = [
+ "salsa",
+ "strictly-ir",
+]
 
 [[package]]
 name = "strsim"

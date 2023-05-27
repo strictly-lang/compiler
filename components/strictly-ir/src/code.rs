@@ -5,22 +5,19 @@ use ordered_float::OrderedFloat;
 #[salsa::tracked]
 pub struct Program {
     #[return_ref]
-    statements: Vec<Statement>,
+    statements: Vec<RootStatement>,
 }
 
 #[derive(Eq, PartialEq, Debug, Hash, new)]
-pub struct Statement {
+pub struct RootStatement {
     pub span: Span,
 
-    pub data: StatementData,
+    pub data: RootStatementData,
 }
 
 #[derive(Eq, PartialEq, Debug, Hash)]
-pub enum StatementData {
-    /// Defines `fn <name>(<args>) = <body>`
-    Function(Function),
-    /// Defines `print <expr>`
-    Print(Expression),
+pub enum RootStatementData {
+    RootFunction(Function),
 }
 
 #[derive(Eq, PartialEq, Debug, Hash, new)]
