@@ -1,11 +1,16 @@
-model:main{
-	init = /-> ""
-	reducer = /_, action -> action
+store = {
+	init = ""
+	reducer : \String, String -> String
+	reducer = \_, action -> action
 }
 
-view
-	#model \<mainState, mainDispatch> <- main()
-		input{
-			value = Text(mainState)
-			oninput = /Text(value) -> mainDispatch(value)
-		}
+main : \ {}, {} -> Output
+main = \_, _ ->
+	let mainState = "";
+
+	$input{
+		type = "text"
+		value = mainState
+		oninput : \{ currentTarget : { value: String }} -> Void
+		oninput = \evt -> mainState = evt.currentTarget.value;
+	}

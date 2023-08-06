@@ -1,17 +1,14 @@
-import /vendor/strictly/prelude/src/index.js (zipWithIndex)
+reducer  : \Number[], Number -> Number[] 
+reducer = \state, multiply -> [ value, value * 2 | let value <- state;, value != 0]
 
-model:main{
-	init = / -> [0, 1, 3]
-	reducer = /state, multiply -> [ value, value * 2 | \value <- state, value != 0]
-}
+main : \{}, {} -> Output
+main = \_, _ ->
+	let action: Action;
+	let state = action:scan(reducer, [0, 1, 3]);
 
-view
-	#model \<mainState, mainDispatch> <- main()
-		button{
-			onclick = /_ -> mainDispatch(2)
-		}
-		#each \<value, index> <- zipWithIndex(mainState)
-			div
-				"${index}: ${value}"
-		#else
-			"empty"
+	$button{
+		onclick = \_ -> action = 2;
+	}
+	let [value, index] <- mainState.zip(0..);
+	$div
+		"${index}: ${value}"

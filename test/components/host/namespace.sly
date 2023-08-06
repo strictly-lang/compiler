@@ -1,3 +1,4 @@
-view
-	svg:g
+main : \{}, {} -> Output
+main = \_, _ ->
+	$svg:g
 		"foo"

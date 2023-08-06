@@ -1,21 +1,22 @@
-model:data{
-	init = / -> First( 1 )
-	reducer = / First( value ), action -> Second( value + action )
-	reducer = / Second( value ), action -> Second( value + action + action )
-}
+data State = First(Number), Second(Number);
 
-view
-	div
-		#model \<dataState, dataDispatch> <- data()
-			#match dataState
-				#case First( value )
-					button{
-						onclick = /_ -> dataDispatch(1)
-					}
-						"first: ${value} ${props.foo}"
-				#case Second( value )
-					button{
-						onclick = /_ -> dataDispatch(3)
-					}
-						"second: ${value} ${props.foo}"
-			span
+reducer : \ State, Number -> State
+reducer = \ First( value ), action -> Second( value + action )
+reducer = \ Second( value ), action -> Second( value + action + action)
+
+main = \props, _ ->
+	$div
+		let state = action:scan(reducer, First( 1 );
+
+		match stateState
+			case \First( value ) ->
+				$button{
+					onclick = \_ -> state = reducer(1);
+				}
+					"first: ${value} ${props.foo}"
+			case \Second( value ) ->
+				$button{
+					onclick = \_ -> state = reducer(3);
+				}
+					"second: ${value} ${props.foo}"
+		$span

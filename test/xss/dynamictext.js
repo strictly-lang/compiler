@@ -13,21 +13,21 @@ describe("host element handling", () => {
 
   it("dynamic text should not interpret html, but just show it as a string", () => {
     const element = document.createElement("test-components-text-dynamic");
-    element.foo = "<div />";
+    element.foo = "<div >";
     container.appendChild(element);
 
     expect(element.shadowRoot.childNodes.length).to.equal(1);
     expect(element.shadowRoot.childNodes[0].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[0].textContent).to.equal(
-      "con-<div />-cat"
+      "con-<div >-cat"
     );
     expect(element.shadowRoot.childNodes[0].querySelector("div")).to.equal(
       null
     );
-    element.foo = "<span />";
+    element.foo = "<span >";
 
     expect(element.shadowRoot.childNodes[0].textContent).to.equal(
-      "con-<span />-cat"
+      "con-<span >-cat"
     );
     expect(element.shadowRoot.childNodes[0].querySelector("span")).to.equal(
       null

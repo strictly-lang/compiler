@@ -1,9 +1,10 @@
-view
-	header
-	#if props.foo
-		div
+main : \{ foo: Boolean, bar: String }, {} -> Output
+main = \props, _ ->
+	$header
+	if props.foo then
+		$div
 			"foo-${props.bar}"
-	#else
-		span
+	else
+		$span
 			"not-foo-${props.bar}"
-	footer
+	$footer

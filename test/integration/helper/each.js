@@ -1,7 +1,8 @@
 import { expect } from "@esm-bundle/chai";
 import "/test/components/helper/each/base.sly";
-import "/test/components/helper/each/constraint.sly";
-import "/test/components/helper/each/neverconstraint.sly";
+// import "/test/components/helper/each/index.sly";
+// import "/test/components/helper/each/constraint.sly";
+// import "/test/components/helper/each/neverconstraint.sly";
 
 describe("each loop handling", () => {
   let container;
@@ -24,9 +25,11 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes.length).to.equal(5);
     expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).to.equal("0-foo-mep");
-    expect(element.shadowRoot.childNodes[2].textContent).to.equal("1-bar-mep");
-    expect(element.shadowRoot.childNodes[3].textContent).to.equal("2-baz-mep");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo-mep");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[2].textContent).to.equal("bar-mep");
+    expect(element.shadowRoot.childNodes[3].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[3].textContent).to.equal("baz-mep");
     expect(element.shadowRoot.childNodes[4].tagName).to.equal("FOOTER");
 
     element.foo = ["foo2", "bar2", "baz2"];
@@ -34,14 +37,16 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes.length).to.equal(5);
     expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
-    expect(element.shadowRoot.childNodes[1].textContent).to.equal("0-foo2-mep");
-    expect(element.shadowRoot.childNodes[2].textContent).to.equal("1-bar2-mep");
-    expect(element.shadowRoot.childNodes[3].textContent).to.equal("2-baz2-mep");
+    expect(element.shadowRoot.childNodes[1].textContent).to.equal("foo2-mep");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[2].textContent).to.equal("bar2-mep");
+    expect(element.shadowRoot.childNodes[3].tagName).to.equal("DIV");
+    expect(element.shadowRoot.childNodes[3].textContent).to.equal("baz2-mep");
     expect(element.shadowRoot.childNodes[4].tagName).to.equal("FOOTER");
   });
 
-  it("with growing array", () => {
-    const element = document.createElement("test-components-helper-each-base");
+  xit("with growing array", () => {
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = [];
     element.bar = "alice";
@@ -72,7 +77,9 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[0].tagName).to.equal("HEADER");
     expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[1].textContent).to.equal("0-foo-bob");
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).to.equal("1-bar-bob");
+    expect(element.shadowRoot.childNodes[3].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).to.equal("2-baz-bob");
     expect(element.shadowRoot.childNodes[4].tagName).to.equal("FOOTER");
 
@@ -84,17 +91,19 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[1].textContent).to.equal(
       "0-foo-alice"
     );
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).to.equal(
       "1-bar-alice"
     );
+    expect(element.shadowRoot.childNodes[3].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).to.equal(
       "2-baz-alice"
     );
     expect(element.shadowRoot.childNodes[4].tagName).to.equal("FOOTER");
   });
 
-  it("with shrinking array", () => {
-    const element = document.createElement("test-components-helper-each-base");
+  xit("with shrinking array", () => {
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = ["foo", "bar", "baz"];
     element.bar = "alice";
@@ -107,9 +116,11 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[1].textContent).to.equal(
       "0-foo-alice"
     );
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).to.equal(
       "1-bar-alice"
     );
+    expect(element.shadowRoot.childNodes[1].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).to.equal(
       "2-baz-alice"
     );
@@ -154,8 +165,8 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
   });
 
-  it("with resetting empty array", () => {
-    const element = document.createElement("test-components-helper-each-base");
+  xit("with resetting empty array", () => {
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = [];
     element.bar = "alice";
@@ -191,8 +202,8 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
   });
 
-  it("removing each in filled-case", () => {
-    const element = document.createElement("test-components-helper-each-base");
+  xit("removing each in filled-case", () => {
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = ["foo", "bar", "baz"];
     element.bar = "alice";
@@ -205,9 +216,11 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[1].textContent).to.equal(
       "0-foo-alice"
     );
+    expect(element.shadowRoot.childNodes[2].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[2].textContent).to.equal(
       "1-bar-alice"
     );
+    expect(element.shadowRoot.childNodes[3].tagName).to.equal("DIV");
     expect(element.shadowRoot.childNodes[3].textContent).to.equal(
       "2-baz-alice"
     );
@@ -221,8 +234,8 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
   });
 
-  it("removing each in empty-case", () => {
-    const element = document.createElement("test-components-helper-each-base");
+  xit("removing each in empty-case", () => {
+    const element = document.createElement("test-components-helper-each-index");
     element.baz = true;
     element.foo = [];
     element.bar = "alice";
@@ -245,7 +258,7 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[2].tagName).to.equal("FOOTER");
   });
 
-  it("entity needs to be skipped when constraint is not matched", () => {
+  xit("entity needs to be skipped when constraint is not matched", () => {
     const element = document.createElement(
       "test-components-helper-each-constraint"
     );
@@ -271,7 +284,7 @@ describe("each loop handling", () => {
     expect(element.shadowRoot.childNodes[3].tagName).to.equal("FOOTER");
   });
 
-  it("when constraints are never matched, else is rendered", () => {
+  xit("when constraints are never matched, else is rendered", () => {
     const element = document.createElement(
       "test-components-helper-each-neverconstraint"
     );

@@ -1,17 +1,15 @@
-model:data{
-	init = /-> First
-	reducer = /_, action -> action
-}
+data State = First, Second;
 
-view
-	header
-	#model \<dataState, dataDispatch> <- data()
-		#if props.foo
-			#match dataState
-				#case First
-					div{
-						onclick = /_ -> dataDispatch(Second)
+main : \{ foo: Boolean, }, {} -> Output
+main = \props, _ ->
+	$header
+	let state = action:scan(reducer, First;
+		if props.foo then
+			match stateState
+				case \First ->
+					$div{
+						onclick = \_ -> state = Second;
 					}
-		#else
-			section
-	footer
+		else
+			$section
+	$footer

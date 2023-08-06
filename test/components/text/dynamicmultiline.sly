@@ -1,4 +1,5 @@
-view
+main : \{ bar: String }, {} -> Output
+main = \props, _ ->
 	"foo"
 	"${props.bar}"
 	"baz"

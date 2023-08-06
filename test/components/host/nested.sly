@@ -1,4 +1,5 @@
-view
-	div
-		img
-	span
+main : \{}, {} -> Output
+main = \_, _ ->
+	$div
+		$img
+	$span

@@ -1,4 +1,5 @@
-view
-	.-deep-index{
+main : \{ foo: String }, {} -> Output
+main = \props, _ ->
+	$.-deep-index{
 		foo = props.foo
 	}

@@ -6,20 +6,19 @@
     "@esm-bundle/chai": "^4.3.4-fix.0",
     "@semantic-release/changelog": "^6.0.0",
     "@semantic-release/commit-analyzer": "^9.0.1",
-    "@semantic-release/github": "^8.0.0",
-    "@semantic-release/npm": "^8.0.0",
+    "@semantic-release/github": "^8.0.6",
+    "@semantic-release/npm": "^9.0.0",
     "@semantic-release/release-notes-generator": "^10.0.2",
-    "@web/test-runner": "^0.13.31",
-    "eslint": "^8.1.0",
+    "@web/test-runner": "^0.15.0",
+    "eslint": "^8.28.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "prettier": "^2.4.1",
-    "semantic-release": "^19.0.3"
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.0",
+    "semantic-release": "^19.0.2"
   },
   "scripts": {
-    "test": "cabal v2-build && yarn run web-test-runner",
-    "test:watch": "cabal v2-build && yarn run web-test-runner --watch",
-    "build:linux": "mkdir -p dist/linux-x64 && cabal install exe:strictly --install-method=copy --overwrite-policy=always --installdir=dist/linux-x64"
+    "test": "web-test-runner" ,
+    "test:watch": "web-test-runner --watch"
   },
   "repository": {
     "type": "git",

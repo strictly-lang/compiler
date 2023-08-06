@@ -1,3 +1,4 @@
-view
-	div
+main : \{ foo: String, bar: String }, {} -> Output
+main = \props, _ ->
+	$div
 		"${props.foo}-${props.bar}-${props.foo}"

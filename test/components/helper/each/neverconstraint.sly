@@ -1,9 +1,10 @@
-view
-	header
-	#each \Never(value) <- [Even(0), Odd(1), Even(2)]
-		div
+data State = Odd(Number), Even(Number), Never(Number);
+
+main : \{}, {} -> Output
+main = \_, _ ->
+	$header
+	$section
+		let Never(value) <- [Even(0), Odd(1), Even(2)];
+		$div
 			"${value}"
-	#else
-		span
-			"else"
-	footer
+	$footer

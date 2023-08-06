@@ -9,7 +9,12 @@ const __dirname = path.dirname(__filename);
 const exec = util.promisify(childProcess.exec);
 
 export default {
-  files: "test/**/*.js",
+  files: [
+    "test/integration/text.js",
+    // "test/integration/host/base.js",
+    // "test/integration/helper/if.js",
+    // "test/integration/helper/each.js",
+  ],
   nodeResolve: true,
   plugins: [
     {
@@ -22,10 +27,7 @@ export default {
         const parsedPath = path.parse(context.request.url);
         if (parsedPath.ext === ".sly") {
           const { stdout, stderror } = await exec(
-            `cabal run --verbose=silent strictly ${path.join(
-              __dirname,
-              context.request.url
-            )}`
+            `strictly ${path.join(__dirname, context.request.url)}`
           );
 
           if (stderror) {

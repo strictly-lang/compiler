@@ -1,46 +1,56 @@
-style
-	.row{
-		color = Blue
+data Action = ChangeText(String), CreateTodo, ToggleDone(Number);
+
+type Todo = { value: String, isDone: Boolean};
+type State = { currentText: String, todos: Todo[] };
+
+reducer : \State, Action -> State
+reducer = \state, ChangeText(text) ->
+	{ currentText = text | state }
+reducer = \{ todos, currentText }, CreateTodo ->
+	{ currentText = "", todos = [{ value = currentText, isDone = False }] ++ todos }
+reducer = \state@{ todos }, ToggleDone(index) ->
+	let todos' = [
+		{
+			isDone =
+				if index == index' then
+					todo.isDone == False
+				else
+					isDone
+		| todo }
+	| let [ todo@{ isDone }, index' ] <- todos.zip(0..);];
+
+	{ todos = todos' | state }
+
+main : \{}, {} -> Output
+main = \_, _ ->
+	let action: Action;
+	let state = action:scan(reducer, { currentText = "", todos = [] });
+
+	$link{
+		href="./todo.css"
+		rel="stylesheet"
 	}
-		&.done {
-			color = Grey
+	$form{
+		onsubmit = \_ -> action = CreateTodo;
+	}
+		$input{
+			type = "text"
+			value = state.textValue
+			oninput = \evt ->
+				action = ChangeText(evt.currentTarget.value);
+		}
+		$button{
+			type = "submit"
 		}
 
-model:main{
-	init = -> {currentText = "", todos = []}
-	reducer = state@{ currentText }, ChangeText(text) ->
-		{ currentText = text | state}
-	reducer = { todos, currentText }, CreateTodo ->
-		{ currentText = "",  todos = [{value = currentText, isDone = False }] ++ todos }
-	reducer = state@{ todos }, ToggleDone(index) ->
-		let todos' = [{ isDone = if index == index' then False else isDone == False | todo }} | ( todo@{ isDone }, index' ) <- zipWithIndex(todos)]
-		in { todos' | state }
-}
-
-model:text{
-	init = -> ""
-	reducer = _, value -> value
-}
-
-view
-	#model \<{todos, textValue}, todosDispatch> <- main()
-		#model 
-		input{
-			value = Text(textValue)
-			oninput = Text(textValue) ->
-				todosDispatch(ChangeText(textValue))
-		}
-		button{
-			type = Submit
-			onclick = _ -> todosDispatch(CreateTodo)
-		}
-		ul
-			#each ({ value, isDone }, index) <- zipWithIndex(todos)
-				li{
-					class = "row"
-					class?done = isDone
-					onclick = _ -> todosDispatch(ToggleDone(index))
-				}
-					"${name}"
-			#else
-				"You don't have any todos left"
+	$ul
+		if state.todos.length == 0 then
+			"You don't have any todos left"
+		else
+			let [{value, isDone}, index] <- state.todos.zip(0..);
+			$li{
+				class = "row"
+				class?done = isDone
+				onclick = \_ -> action = ToggleDone(index);
+			}
+				"${value}"

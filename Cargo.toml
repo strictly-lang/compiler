@@ -1,0 +1,29 @@
+[package]
+name = "strictly"
+version = "0.1.0"
+edition = "2021"
+
+
+[workspace]
+members = [".", "components/*"]
+
+default-members = [
+  ".",
+  "components/strictly-*",
+  "components/salsa"
+]
+
+[[bin]]
+name = "strictly"
+
+[lib]
+name = "strictly_lib"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+clap = { version = "4.2.5", features = ["derive"] }
+wit-bindgen = "0.6.0"
+strictly-db = { path = "components/strictly-db" }
+strictly-ir = { path = "components/strictly-ir" }
+strictly-parse = { path = "components/strictly-parse" }

@@ -1,12 +1,14 @@
-model:main{
-	init = / -> { x = 1, deep = { y = 0 } }
-	reducer = /state, x -> { x = state.x + x | state}
-}
+type State = { x: Ingeger, deep: { y: Number }};
 
-view
-	#model \<{x, deep = { y = yValue }}, mainDispatch> <- main()
-		button{
-			onclick = /_ -> mainDispatch(2)
-		}
-		div
-			"${x} ${yValue}"
+reducer : \State, Number -> State
+reducer = \state, x -> { x = state.x + x | state}
+
+main : \{}, {} -> Output
+main = \_, _ ->
+	let action: Action;
+	let state@{x, deep = { y = yValue }} =  action:scan(reducer, { x = 1, deep = { y = 0 } });
+	$button{
+		onclick = \_ -> action = 2;
+	}
+	$div
+		"${x} ${yValue}"

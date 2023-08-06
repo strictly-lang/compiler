@@ -1,22 +1,25 @@
-model:data{
-	init = /-> First
-	reducer = /First, action -> Second( Third( action + 2), action )
-	reducer = /Second( Third( nestedValue ), outerValue ), action -> Fourth( nestedValue + outerValue + action)
-}
+data State = First, Second(States, Number), Third(Number, Number), Fourht(Number);
 
-view
-	div
-		#model \<dataState, dataDispatch> <- data()
-			#match dataState
-				#case First
-					button{
-						onclick = /_ -> dataDispatch(1)
-					}
-						"first"
-				#case Second( Third( nestedValue ), siblingValue)
-					button{
-						onclick = /_ -> dataDispatch(2)
-					}
-						"second nestedValue: ${nestedValue} siblingValue: ${siblingValue}"
-				#case Fourth(value)
-					"third: ${value}"
+reducer : \ State, Number -> State
+reducer = \First, action -> Second( Third( action + 2), action )
+reducer = \Second( Third( nestedValue ), outerValue ), action -> Fourth( nestedValue + outerValue + action)
+
+main : \{}, {} -> Output
+main = \_, _ ->
+	$div
+		let action: Action;
+		let state = action:scan(reducer, First);
+
+		match stateState
+			case \First ->
+				$button{
+					onclick = \_ -> action = 1;
+				}
+					"first"
+			case \Second( Third( nestedValue ), siblingValue) ->
+				$button{
+					onclick = \_ -> action = 2;
+				}
+					"second nestedValue: ${nestedValue} siblingValue: ${siblingValue}"
+			case \Fourth(value) ->
+				"third: ${value}"

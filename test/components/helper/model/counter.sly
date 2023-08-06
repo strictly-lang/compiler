@@ -1,17 +1,22 @@
-model:counter{
-	init = /-> 0
-	reducer = /state, Increment -> state + 1
-	reducer = /state, Decrement -> state - 1
-}
+data Action = Increment, Decrement;
 
-view
-	#model \<counterState, counterDispatch> <- counter()
-		button{
-			onclick = /_ -> counterDispatch(Decrement)
-		}
-			"Decrement"
-		button{
-			onclick = /_ -> counterDispatch(Increment)
-		}
-			"Increment"
-		"${counterState}"
+reducer : \Number, Action -> Number
+reducer = \state, Increment -> state + 1
+reducer = \state, Decrement -> state - 1
+
+main : \ {}, {} -> Output
+main = \_, _ ->
+	let action: Action;
+	let state = action:scan(reducer,  0);
+
+	$button{
+		onclick = \_ ->
+			action = Decrement;
+	}
+		"Decrement"
+	$button{
+		onclick = \_ ->
+			action = Increment;
+	}
+		"Increment"
+	"${counterState}"

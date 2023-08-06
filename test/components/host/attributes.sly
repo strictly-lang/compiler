@@ -1,5 +1,6 @@
-view
-	div{
+main : \{ foo: String, bar: String}, {} -> Output
+main = \props, _ ->
+	$div{
 		class="foo"
 		part=props.bar
 		title="combined ${props.foo} text"

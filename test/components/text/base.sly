@@ -1,2 +1,3 @@
-view
+main : \{}, {} -> Output
+main = \_, _ ->
 	"foo"

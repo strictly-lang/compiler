@@ -1,7 +1,8 @@
-view
-	div
-		#if props.foo
-			#context \valueFromContext <- some-parent-element
-				"${valueFromContext}"
-		#else
+main : \{ foo: Boolean }, {} -> Output
+main = \props, _ ->
+	$div
+		if props.foo then
+			let valueFromContext = context(some-parent-element);
+			"${valueFromContext}"
+		else
 			"mep"

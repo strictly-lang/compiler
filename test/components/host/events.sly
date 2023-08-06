@@ -1,5 +1,8 @@
-view
-	input{
-		value = Text(props.value)
-		oninput = /Text(value) -> props.oninput(value)
+main : \{ value: String, oninput: \String -> Void }, {} -> Output
+main = \props, _ ->
+	$input{
+		type = "text"
+		value = props.value
+		oninput : \{ currentTarget : { value: String }} -> Void
+		oninput = \value -> props.oninput(value.currentTarget.value)
 	}

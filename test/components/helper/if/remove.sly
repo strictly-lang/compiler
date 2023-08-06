@@ -1,10 +1,11 @@
-view
-	header
-	#if props.foo
-		#if props.bar
-			div
-		#else
-			span
-	#else
-		section
-	footer
+main : \{ foo: Boolean, bar: String }, {} -> Output
+main = \props, _ ->
+	$header
+	if props.foo then
+		if props.bar then
+			$div
+		else
+			$span
+	else
+		$section
+	$footer
