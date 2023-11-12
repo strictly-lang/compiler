@@ -1,8 +1,0 @@
-[package]
-name = "strictly-parse"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-salsa = { path = "../salsa" }
-strictly-ir = { path = "../strictly-ir" }

@@ -1,7 +1,7 @@
-data Action = ChangeText(String), CreateTodo, ToggleDone(Number);
+data Action = ChangeText(String), CreateTodo, ToggleDone(Number)
 
-type Todo = { value: String, isDone: Boolean};
-type State = { currentText: String, todos: Todo[] };
+type Todo = { value= String, isDone= Boolean}
+type State = { currentText= String, todos= [Todo] }
 
 reducer : \State, Action -> State
 reducer = \state, ChangeText(text) ->
@@ -17,27 +17,27 @@ reducer = \state@{ todos }, ToggleDone(index) ->
 				else
 					isDone
 		| todo }
-	| let [ todo@{ isDone }, index' ] <- todos.zip(0..);];
+	| let [ todo@{ isDone }, index' ] <- todos.zip(0..)]
 
 	{ todos = todos' | state }
 
 main : \{}, {} -> Output
 main = \_, _ ->
-	let action: Action;
-	let state = action:scan(reducer, { currentText = "", todos = [] });
+	let action: Topic<Action> = #
+	let state = action:scan(reducer, { currentText = "", todos = [] })
 
 	$link{
 		href="./todo.css"
 		rel="stylesheet"
 	}
 	$form{
-		onsubmit = \_ -> action = CreateTodo;
+		onsubmit = \_ -> #action = CreateTodo
 	}
 		$input{
 			type = "text"
 			value = state.textValue
 			oninput = \evt ->
-				action = ChangeText(evt.currentTarget.value);
+				#action = ChangeText(evt.currentTarget.value)
 		}
 		$button{
 			type = "submit"
@@ -47,10 +47,10 @@ main = \_, _ ->
 		if state.todos.length == 0 then
 			"You don't have any todos left"
 		else
-			let [{value, isDone}, index] <- state.todos.zip(0..);
+			let [{value, isDone}, index] <- state.todos.zip(0..)
 			$li{
 				class = "row"
 				class?done = isDone
-				onclick = \_ -> action = ToggleDone(index);
+				onclick = \_ -> #action = ToggleDone(index)
 			}
 				"${value}"
