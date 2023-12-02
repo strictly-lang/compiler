@@ -23,7 +23,7 @@ reducer = \state@{ todos }, ToggleDone(index) ->
 
 main : \{}, {} -> Output
 main = \_, _ ->
-	let action: Topic<Action> = #
+	event action: Topic<Action>
 	let state = action:scan(reducer, { currentText = "", todos = [] })
 
 	$link{
@@ -31,13 +31,13 @@ main = \_, _ ->
 		rel="stylesheet"
 	}
 	$form{
-		onsubmit = \_ -> #action = CreateTodo
+		onsubmit = \_ -> publish action = CreateTodo
 	}
 		$input{
 			type = "text"
 			value = state.textValue
 			oninput = \evt ->
-				#action = ChangeText(evt.currentTarget.value)
+				publish action = ChangeText(evt.currentTarget.value)
 		}
 		$button{
 			type = "submit"
@@ -51,6 +51,6 @@ main = \_, _ ->
 			$li{
 				class = "row"
 				class?done = isDone
-				onclick = \_ -> #action = ToggleDone(index)
+				onclick = \_ -> publish action = ToggleDone(index)
 			}
 				"${value}"
